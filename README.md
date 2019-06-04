@@ -1,0 +1,3 @@
+# riichi-in-rust
+
+Will analyze riichi hands etc. Will be useable as a WASM library. Later...
