@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'riichi-analyzer'",
+            "name": "Debug executable 'riichi-in-rust'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=riichi-analyzer",
-                    "--package=riichi-analyzer"
+                    "--bin=riichi-in-rust",
+                    "--package=riichi-in-rust"
                 ],
                 "filter": {
-                    "name": "riichi-analyzer",
+                    "name": "riichi-in-rust",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'riichi-analyzer'",
+            "name": "Debug unit tests in executable 'riichi-in-rust'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=riichi-analyzer",
-                    "--package=riichi-analyzer"
+                    "--bin=riichi-in-rust",
+                    "--package=riichi-in-rust"
                 ],
                 "filter": {
-                    "name": "riichi-analyzer",
+                    "name": "riichi-in-rust",
                     "kind": "bin"
                 }
             },

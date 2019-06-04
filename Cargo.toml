@@ -1,5 +1,5 @@
 [package]
-name = "riichi-analyzer"
+name = "riichi-in-rust"
 version = "0.1.0"
 authors = ["harphield <harphield@gmail.com>"]
 edition = "2018"
