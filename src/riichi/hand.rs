@@ -13,6 +13,36 @@ pub struct Hand {
 }
 
 impl Hand {
+    pub fn shanten(&self) -> u8 {
+        let mut shanten = 8; // max shanten ever
+        let tiles_count = self.tiles.len();
+
+        if tiles_count < 13 {
+            panic!("Invalid hand");
+        }
+
+        let mut count = 0;
+        
+        let mut index = 0;
+
+        while index < tiles_count {
+            let tile = self.tiles.get(index);
+            match tile {
+                Some(t) => {
+                    count += 1;
+                    if index + 1 < tiles_count {
+                        // check if the next tile can be used in a shape with this one                        
+                    }
+                },
+                None => ()
+            }
+
+            index += 1;
+        }
+
+        99
+    }
+
     /// TODO
     pub fn random_hand(count: u8) -> Hand {
         if count < 13 || count > 14 {
@@ -69,5 +99,19 @@ impl fmt::Display for Hand {
             }
         }
         write!(f, "{}", out)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn kokushi_iishanten() {
+        let hand = Hand::from_text("m1m9s1s9p1p9z1z2z3z4z5z6z7");
+
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 1);
     }
 }

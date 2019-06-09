@@ -16,7 +16,7 @@ pub enum TileType {
     Dragon(u8)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TileColor {
     Manzu,
     Pinzu,
@@ -36,6 +36,7 @@ impl fmt::Display for TileColor {
 #[derive(Debug)]
 pub struct Tile {
     tile_type: TileType,
+    is_open: bool,
     is_draw: bool,
     is_chi: bool,
     is_pon: bool,
@@ -106,13 +107,51 @@ impl Tile {
         }
     }
 
-    pub fn next(&self) {
+    pub fn next(&self, dora: bool) -> Option<Tile> {
+        let new_color;
 
+        // 1-8 returns the next number
+        // 9 returns None for dora = false, 1 for dora = true
+        // honors return None for dora = false, honor order for dora = true
+        match &self.tile_type {
+            TileType::Number(number, color) => {
+                new_color = color.clone();
+                if *number < 9 {
+                    return Some(Tile::new(TileType::Number(number + 1, new_color)));
+                } else if dora {
+                    return Some(Tile::new(TileType::Number(1, new_color)));
+                } else {
+                    return None;
+                }
+            },
+            TileType::Wind(number) => {
+                if !dora {
+                    return None;
+                }
+
+                if *number < 4 {
+                    return Some(Tile::new(TileType::Wind(number + 1)));
+                } else {
+                    return Some(Tile::new(TileType::Wind(1)));
+                }
+            },
+            TileType::Dragon(number) => {
+                if !dora {
+                    return None;
+                }
+
+                if *number < 7 {
+                    return Some(Tile::new(TileType::Dragon(number + 1)));
+                } else {
+                    return Some(Tile::new(TileType::Dragon(5)));
+                }
+            }
+        }
     }
 
-    pub fn prev(&self) {
+    // pub fn prev(&self, dora: bool) -> Option(Tile) {
 
-    }
+    // }
 
     pub fn to_string(&self) -> String {
         match &self.tile_type {
@@ -162,6 +201,7 @@ impl Default for Tile {
         Tile {
             tile_type: TileType::Dragon(1),
             is_draw: false,
+            is_open: false,
             is_chi: false,
             is_pon: false,
             is_kan: false
@@ -208,5 +248,32 @@ impl Eq for Tile {
 impl Ord for Tile {
     fn cmp(&self, other: &Tile) -> Ordering {
         self.partial_cmp(other).unwrap()
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn next_number_less_than_9() {
+        let tile = Tile::new(TileType::Number(4, TileColor::Manzu));
+        let next = tile.next(false);
+        assert!(next == Some(Tile::new(TileType::Number(5, TileColor::Manzu))));
+    }
+
+    #[test]
+    fn next_number_9() {
+        let tile = Tile::new(TileType::Number(9, TileColor::Manzu));
+        let next = tile.next(false);
+        assert!(next == None);
+    }
+
+    #[test]
+    fn next_number_9_dora() {
+        let tile = Tile::new(TileType::Number(9, TileColor::Manzu));
+        let next = tile.next(true);
+        assert!(next == Some(Tile::new(TileType::Number(1, TileColor::Manzu))));
     }
 }
