@@ -107,12 +107,112 @@ impl Tile {
         }
     }
 
+    /// id is an integer value > 0 of a tile.
+    /// The order is Manzu - Pinzu - Souzu - Winds - Dragons
+    pub fn from_id(id: u8) -> Tile {
+        if id < 1 || id > 34 {
+            panic!("Wrong tile ID");
+        }
+
+        if id <= 9 {
+            return Tile::new(TileType::Number(id, TileColor::Manzu));
+        }
+
+        if id <= 18 {
+            return Tile::new(TileType::Number(id - 9, TileColor::Pinzu));
+        }
+
+        if id <= 27 {
+            return Tile::new(TileType::Number(id - 18, TileColor::Souzu));
+        }
+
+        if id <= 31 {
+            return Tile::new(TileType::Wind(id - 31));
+        }
+
+        return Tile::new(TileType::Dragon(id - 31));
+    }
+
+    /// Gets the id of this tile based on its type
+    pub fn to_id(&self) -> u8 {
+        match &self.tile_type {
+            TileType::Number(number, color) => {
+                match color {
+                    TileColor::Manzu => number + 0, // + dereferences?
+                    TileColor::Pinzu => number + 9,
+                    TileColor::Souzu => number + 18
+                }
+            },
+            TileType::Wind(number) => {
+                number + 31
+            },
+            TileType::Dragon(number) => {
+                number + 31
+            }
+        }
+    }
+
+    /// Returns an ID of the next tile in order.
+    pub fn next_id(&self, dora: bool) -> u8 {
+        let id = self.to_id();
+
+        // manzu
+        if id < 9 {
+            return id + 1;
+        }
+
+        if id == 9 && !dora {
+            return 0;
+        }
+
+        if id == 9 && dora {
+            return 1;
+        }
+
+        // pinzu
+        if id < 18 {
+            return id + 1;
+        }
+
+        if id == 18 && !dora {
+            return 0;
+        }
+
+        if id == 18 && dora {
+            return 10;
+        }
+
+        // souzu
+        if id < 27 {
+            return id + 1;
+        }
+
+        if id == 27 && !dora {
+            return 0;
+        }
+
+        if id == 27 && dora {
+            return 19;
+        }
+
+        // dragons
+        if dora {
+            if id < 34 {
+                return id + 1;
+            }
+
+            return 28;
+        }
+
+        return 0;
+    }
+
+    /// 1-8 returns the next number
+    /// 9 returns None for dora = false, 1 for dora = true
+    /// honors return None for dora = false, honor order for dora = true
     pub fn next(&self, dora: bool) -> Option<Tile> {
         let new_color;
 
-        // 1-8 returns the next number
-        // 9 returns None for dora = false, 1 for dora = true
-        // honors return None for dora = false, honor order for dora = true
         match &self.tile_type {
             TileType::Number(number, color) => {
                 new_color = color.clone();
