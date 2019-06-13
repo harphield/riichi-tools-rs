@@ -34,7 +34,7 @@ impl Hand {
         // 3. which hand has the lowest shanten?
 
         for tile in self.tiles.iter() {
-            
+            // 1234567891234
         }
 
         while index < tiles_count {
@@ -49,19 +49,19 @@ impl Hand {
                         let mut is_in_shape_with_next = false;
                         let mut is_in_shape_with_next_plus_one = false;
 
-                        let x = t.unwrap();
+                        // let x = t.unwrap();
 
-                        // check if the next tile can be used in a shape with this one
-                        if let Some(t2) = self.tiles.get(index + 1) {
-                            is_in_shape_with_next = Shape::is_in_shape(t.unwrap().to_id(), t2.unwrap().to_id());
-                        }
+                        // // check if the next tile can be used in a shape with this one
+                        // if let Some(t2) = self.tiles.get(index + 1) {
+                        //     is_in_shape_with_next = Shape::is_in_shape(t.unwrap().to_id(), t2.unwrap().to_id());
+                        // }
 
-                        // and the next
-                        if index + 2 < tiles_count {                        
-                            if let Some(t2) = self.tiles.get(index + 2) {
-                                is_in_shape_with_next_plus_one = Shape::is_in_shape(t.unwrap().to_id(), t2.unwrap().to_id());
-                            }
-                        }
+                        // // and the next
+                        // if index + 2 < tiles_count {                        
+                        //     if let Some(t2) = self.tiles.get(index + 2) {
+                        //         is_in_shape_with_next_plus_one = Shape::is_in_shape(t.unwrap().to_id(), t2.unwrap().to_id());
+                        //     }
+                        // }
                     }
                 },
                 Option::None => ()
