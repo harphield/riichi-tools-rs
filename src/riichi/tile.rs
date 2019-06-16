@@ -36,6 +36,7 @@ impl fmt::Display for TileColor {
 #[derive(Debug)]
 pub struct Tile {
     tile_type: TileType,
+    is_red: bool,
     is_open: bool,
     is_draw: bool,
     is_chi: bool,
@@ -144,10 +145,10 @@ impl Tile {
                 }
             },
             TileType::Wind(number) => {
-                number + 31
+                number + 27
             },
             TileType::Dragon(number) => {
-                number + 31
+                number + 27
             }
         }
     }
@@ -300,6 +301,7 @@ impl Default for Tile {
     fn default() -> Tile {
         Tile {
             tile_type: TileType::Dragon(1),
+            is_red: false,
             is_draw: false,
             is_open: false,
             is_chi: false,

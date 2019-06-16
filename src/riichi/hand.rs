@@ -10,67 +10,51 @@ pub struct Hand {
     // a hand consists of 13 tiles + 1 drawn tile
     // it can also have kan, which are groups of 4 tiles that behave as 3 tiles
     // so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
-    tiles: Vec<Option<Tile>>
+    tiles: Vec<Option<Tile>>,
+    shanten: u8
 }
 
 impl Hand {
-    /// We need to identify "free" tiles in a hand - tiles that don't fit into any shape and need to be discarded / upgraded to
-    /// upgrade our hand.
-    pub fn shanten(&self) -> u8 {
-        let mut shanten = 8; // max shanten ever
+    pub fn new(tiles : Vec<Option<Tile>>) -> Hand {
+        Hand {
+            tiles,
+            ..Default::default()
+        }
+    }
+
+    /// 
+    /// 
+    pub fn shanten(&self) {
+        let mut shanten = 8; // max shanten ever ???
         let tiles_count = self.tiles.len();
 
         if tiles_count < 13 {
             panic!("Invalid hand");
         }
 
-        let mut count = 0;
-        
-        let mut index = 0;
+        let mut array_34 = self.to_34_array();
 
-        // TODO:
-        // 1. find all shapes in the hand
-        // 2. make all possible valid hands from the found shapes
-        // 3. which hand has the lowest shanten?
+        self.analyze(&array_34, 0);
+    }
+
+    fn analyze(&self, mut array_34 : &[u8; 34], depth : usize) {
+
+    }
+
+    fn find_complete_shapes(&self, array_34 : &[u8; 34], depth : usize) {
+
+    }
+
+    fn to_34_array(&self) -> [u8; 34] {
+        let mut out = [0; 34];
 
         for tile in self.tiles.iter() {
-            // 1234567891234
-        }
-
-        while index < tiles_count {
-            // this returns an Option<Option<&<I as SliceIndex<[T]>>::Output> !!
-            // TODO rewrite this
-            let tile = self.tiles.get(index);
-
-            match &tile {
-                Option::Some(t) => {
-                    count += 1;
-                    if index + 1 < tiles_count {
-                        let mut is_in_shape_with_next = false;
-                        let mut is_in_shape_with_next_plus_one = false;
-
-                        // let x = t.unwrap();
-
-                        // // check if the next tile can be used in a shape with this one
-                        // if let Some(t2) = self.tiles.get(index + 1) {
-                        //     is_in_shape_with_next = Shape::is_in_shape(t.unwrap().to_id(), t2.unwrap().to_id());
-                        // }
-
-                        // // and the next
-                        // if index + 2 < tiles_count {                        
-                        //     if let Some(t2) = self.tiles.get(index + 2) {
-                        //         is_in_shape_with_next_plus_one = Shape::is_in_shape(t.unwrap().to_id(), t2.unwrap().to_id());
-                        //     }
-                        // }
-                    }
-                },
-                Option::None => ()
+            if let Option::Some(t) = tile {
+                out[(t.to_id() - 1) as usize] += 1;
             }
-
-            index += 1;
         }
 
-        99
+        out
     }
 
     /// TODO
@@ -78,9 +62,7 @@ impl Hand {
         if count < 13 || count > 14 {
             panic!("Only 13 or 14 tile hands allowed");
         } else {
-            Hand {
-                tiles: vec!(Option::Some(Tile::new(TileType::Number(1, TileColor::Manzu))))
-            }
+            Hand::new(vec!(Option::Some(Tile::new(TileType::Number(1, TileColor::Manzu)))))
         }
     }
 
@@ -110,12 +92,19 @@ impl Hand {
         tiles.sort();
 
         if tiles.len() >= 13 {
-            return Hand {
-                tiles: tiles
-            }
+            return Hand::new(tiles);
         }
 
         panic!("Couldn't parse hand representation.");
+    }
+}
+
+impl Default for Hand {
+    fn default() -> Hand {
+        Hand {
+            tiles: vec!(),
+            shanten: 99
+        }
     }
 }
 
@@ -142,6 +131,6 @@ mod tests {
 
         let shanten = hand.shanten();
 
-        assert_eq!(shanten, 1);
+        assert_eq!(hand.shanten, 1);
     }
 }
