@@ -7,9 +7,9 @@ use super::shapes::Shape;
 
 #[derive(Debug)]
 pub struct Hand {
-    // a hand consists of 13 tiles + 1 drawn tile
-    // it can also have kan, which are groups of 4 tiles that behave as 3 tiles
-    // so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
+    /// a hand consists of 13 tiles + 1 drawn tile
+    /// it can also have kan, which are groups of 4 tiles that behave as 3 tiles
+    /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
     shanten: u8
 }
@@ -66,29 +66,28 @@ impl Hand {
         }
     }
 
+    /// Parses a hand from its text representation.
     pub fn from_text(representation: &str) -> Hand {
-        if representation.len() % 2 != 0 {
-            panic!("String representation of a hand must be even length");
-        }
+        let iter = representation.chars().rev();
+        let mut tiles : Vec<Option<Tile>> = Vec::new();
 
-        let mut tiles : Vec<Option<Tile>> = Vec::with_capacity(representation.len());
-        let mut iter = representation.chars();
-        let mut pos = 0;
-        let mut len;
-
-        while pos < representation.len() {
-            len = 0;
-            for ch in iter.by_ref().take(2) {
-                len += ch.len_utf8();
+        let mut color : char = 'x';
+        let mut rep : String;
+        for ch in iter {
+            if ch.is_alphabetic() {
+                // type
+                color = ch;
             }
-            let tile_string = &representation[pos..pos + len];
 
-            let tile = Tile::from_text(tile_string);
-
-            tiles.push(Option::Some(tile));
-            pos += len;
+            if color != 'x' && ch.is_numeric() {
+                // tile value
+                rep = String::from("");
+                rep.push(color);
+                rep.push(ch);
+                tiles.push(Option::Some(Tile::from_text(&rep[..])))
+            }
         }
-
+        
         tiles.sort();
 
         if tiles.len() >= 13 {
@@ -126,8 +125,16 @@ mod tests {
     use super::*;
 
     #[test]
+    fn from_text_hand() {
+        let rep = "123m123s12345p22z";
+        let hand = Hand::from_text(rep);
+
+        
+    }
+
+    #[test]
     fn kokushi_iishanten() {
-        let hand = Hand::from_text("m1m9s1s9p1p9z1z2z3z4z5z6z7");
+        let hand = Hand::from_text("19m19s19p1234567z");
 
         let shanten = hand.shanten();
 

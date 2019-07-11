@@ -23,6 +23,17 @@ pub enum TileColor {
     Souzu
 }
 
+impl TileColor {
+    pub fn from_char(rep : &char) -> TileColor {
+        match rep {
+            'm' => TileColor::Manzu,
+            'p' => TileColor::Pinzu,
+            's' => TileColor::Souzu,
+            _ => panic!("Wrong representation of tile color!")
+        }
+    }
+}
+
 impl fmt::Display for TileColor {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
@@ -257,13 +268,13 @@ impl Tile {
     pub fn to_string(&self) -> String {
         match &self.tile_type {
             TileType::Number(number, color) => {
-                format!("{}{}", color, number)
+                format!("{}{}", number, color)
             },
             TileType::Wind(number) => {
-                format!("z{}", number)
+                format!("{}z", number)
             },
             TileType::Dragon(number) => {
-                format!("z{}", number)
+                format!("{}z", number)
             }
         }
     }
