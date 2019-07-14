@@ -5,12 +5,13 @@ use super::tile::TileType;
 use super::tile::TileColor;
 use super::shapes::Shape;
 
-#[derive(Debug)]
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
     /// it can also have kan, which are groups of 4 tiles that behave as 3 tiles
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
+    array_34: [u8; 34],
+    array_34_initialized: bool,
     shanten: u8
 }
 
@@ -22,13 +23,32 @@ impl Hand {
         }
     }
 
-    /// 
-    /// 
-    pub fn shanten(&self) {
-        let mut shanten = 8; // max shanten ever ???
-        let tiles_count = self.tiles.len();
+    /// Checks the hand for invalid things (wrong number of tiles, > 4 same tiles...)
+    pub fn validate(&mut self) -> bool {
+        let mut tile_count = 0;
+        let array34 = self.to_34_array();
 
-        if tiles_count < 13 {
+        for count in array34.iter() {
+            tile_count += count;
+            if *count > 4 {
+                return false;
+            }
+        }
+
+        // 13 tiles + 5 optional from kans & draw
+        if tile_count > 18 {
+            return false;
+        }
+
+        true
+    }
+
+    /// 
+    /// 
+    pub fn shanten(&mut self) {
+        let mut shanten = 8; // max shanten ever ???
+
+        if !self.validate() {
             panic!("Invalid hand");
         }
 
@@ -37,24 +57,52 @@ impl Hand {
         self.analyze(&array_34, 0);
     }
 
-    fn analyze(&self, mut array_34 : &[u8; 34], depth : usize) {
+    /// Gets the hand's shanten to kokushi musou.
+    fn kokushi_shanten(&mut self, mut array_34 : &[u8; 34]) -> u8 {
+        let mut shanten = 0;
+        let mut pair_found = false;
 
+        for (i, count) in array_34.iter().enumerate() {
+            if ([1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28) && *count == 1 {
+                // we only need 1 of each here + pair
+                if *count > 1 {
+                    if pair_found {
+                        shanten += count - 1; // I'm only keeping one of them, the others need to be discarded
+                    } else {
+                        shanten += count - 2; // I'm keeping two of these as a pair
+                        pair_found = true;
+                    }
+                }
+            } else {
+                shanten += count;
+            }
+        }
+
+        shanten
+    }
+
+    fn analyze(&self, mut array_34 : &[u8; 34], depth : usize) {
+        // 
     }
 
     fn find_complete_shapes(&self, array_34 : &[u8; 34], depth : usize) {
 
     }
 
-    fn to_34_array(&self) -> [u8; 34] {
-        let mut out = [0; 34];
+    fn to_34_array(&mut self) -> [u8; 34] {
+        if self.array_34_initialized {
+            return self.array_34;
+        }
 
         for tile in self.tiles.iter() {
             if let Option::Some(t) = tile {
-                out[(t.to_id() - 1) as usize] += 1;
+                self.array_34[(t.to_id() - 1) as usize] += 1;
             }
         }
 
-        out
+        self.array_34_initialized = true;
+
+        self.array_34
     }
 
     /// TODO
@@ -96,27 +144,47 @@ impl Hand {
 
         panic!("Couldn't parse hand representation.");
     }
+
+    pub fn to_string(&self) -> String {
+        let mut out = String::new();
+        let mut color = 'x';
+
+        for tile in self.tiles.iter() {
+            match &tile {
+                Option::Some(some_tile) => {
+                    if color != some_tile.get_type_char() {
+                        if color != 'x' {
+                            out.push_str(&color.to_string()[..]);
+                        }
+                        color = some_tile.get_type_char();
+                    }
+
+                    out.push_str(&some_tile.get_value().to_string()[..]);
+                },
+                Option::None => ()
+            }
+        }
+
+        out.push_str(&color.to_string()[..]);
+
+        out
+    }
 }
 
 impl Default for Hand {
     fn default() -> Hand {
         Hand {
             tiles: vec!(),
+            array_34: [0; 34],
+            array_34_initialized: false,
             shanten: 99
         }
     }
 }
 
 impl fmt::Display for Hand {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut out = String::new();
-        for tile in self.tiles.iter() {
-            match &tile {
-                Option::Some(some_tile) => out.push_str(&some_tile.to_string()[..]),
-                Option::None => ()
-            }
-        }
-        write!(f, "{}", out)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {        
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -126,18 +194,54 @@ mod tests {
 
     #[test]
     fn from_text_hand() {
-        let rep = "123m123s12345p22z";
+        let rep = "123m123p12345s22z";
         let hand = Hand::from_text(rep);
 
-        
+        let rep2 = hand.to_string();
+        assert_eq!(rep2, rep);
+    }
+
+    #[test]
+    fn validation_ok() {
+        let rep = "123m123p12345s22z";
+        let mut hand = Hand::from_text(rep);
+
+        assert!(hand.validate());
+    }
+
+    #[test]
+    fn validation_bad_5_same_tiles() {
+        let rep = "123m123p11111s22z";
+        let mut hand = Hand::from_text(rep);
+
+        assert!(!hand.validate());
+    }
+
+    #[test]
+    fn validation_bad_too_many_tiles() {
+        let rep = "123456789m123456789p12345s22z";
+        let mut hand = Hand::from_text(rep);
+
+        assert!(!hand.validate());
+    }
+
+    #[test]
+    fn kokushi_tenpai() {
+        let mut hand = Hand::from_text("19m19s19p1234567z");
+        let array34 = hand.to_34_array();
+
+        let shanten = hand.kokushi_shanten(&array34);
+
+        assert_eq!(shanten, 0);
     }
 
     #[test]
     fn kokushi_iishanten() {
-        let hand = Hand::from_text("19m19s19p1234567z");
+        let mut hand = Hand::from_text("18m19s19p1234567z");
+        let array34 = hand.to_34_array();
 
-        let shanten = hand.shanten();
+        let shanten = hand.kokushi_shanten(&array34);
 
-        assert_eq!(hand.shanten, 1);
+        assert_eq!(shanten, 1);
     }
 }

@@ -16,6 +16,16 @@ pub enum TileType {
     Dragon(u8)
 }
 
+impl TileType {
+    pub fn to_char(&self) -> char {
+        match &self {
+            TileType::Number(number, color) => color.to_char(),
+            TileType::Wind(number) => 'z',
+            TileType::Dragon(number) => 'z'
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum TileColor {
     Manzu,
@@ -32,21 +42,25 @@ impl TileColor {
             _ => panic!("Wrong representation of tile color!")
         }
     }
+
+    pub fn to_char(&self) -> char {
+        match &self {
+            TileColor::Manzu => 'm',
+            TileColor::Pinzu => 'p',
+            TileColor::Souzu => 's',
+        }
+    }
 }
 
 impl fmt::Display for TileColor {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self {
-            TileColor::Manzu => write!(f, "m"),
-            TileColor::Pinzu => write!(f, "p"),
-            TileColor::Souzu => write!(f, "s"),
-        }
+        write!(f, "{}", self.to_char())
     }
 }
 
 #[derive(Debug)]
 pub struct Tile {
-    tile_type: TileType,
+    pub tile_type: TileType,
     is_red: bool,
     is_open: bool,
     is_draw: bool,
@@ -276,6 +290,22 @@ impl Tile {
             TileType::Dragon(number) => {
                 format!("{}z", number)
             }
+        }
+    }
+
+    pub fn get_type_char(&self) -> char {
+        match &self.tile_type {
+            TileType::Number(number, color) => color.to_char(),
+            TileType::Wind(number) => 'z',
+            TileType::Dragon(number) => 'z'
+        }
+    }
+
+    pub fn get_value(&self) -> u8 {
+        match &self.tile_type {
+            TileType::Number(number, color) => *number,
+            TileType::Wind(number) => *number,
+            TileType::Dragon(number) => *number
         }
     }
 
