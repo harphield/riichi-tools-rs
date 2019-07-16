@@ -45,16 +45,20 @@ impl Hand {
 
     /// 
     /// 
-    pub fn shanten(&mut self) {
+    pub fn shanten(&mut self) -> u8 {
         if !self.validate() {
             panic!("Invalid hand");
         }
-        let mut shanten = 8; // max shanten ever ???
+        let mut shanten : u8 = 8; // max shanten ever ???
         let mut array_34 = self.to_34_array();
         let kokushi_shanten = self.kokushi_shanten(&array_34);
-
+        let chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
 
         self.analyze(&array_34, 0);
+
+        let shantens = [kokushi_shanten, chiitoi_shanten, shanten];
+
+        *shantens.iter().min().unwrap()
     }
 
     /// Gets the hand's shanten to kokushi musou.
@@ -101,6 +105,8 @@ impl Hand {
 
     }
 
+    /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
+    /// TODO automatically remove open shapes, so it doesn't interfere with shanten calculation?
     fn to_34_array(&mut self) -> [u8; 34] {
         if self.array_34_initialized {
             return self.array_34;
