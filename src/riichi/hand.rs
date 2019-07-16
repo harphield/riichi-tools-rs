@@ -29,7 +29,7 @@ impl Hand {
         let array34 = self.to_34_array();
 
         for count in array34.iter() {
-            tile_count += count;
+            tile_count += *count;
             if *count > 4 {
                 return false;
             }
@@ -46,13 +46,13 @@ impl Hand {
     /// 
     /// 
     pub fn shanten(&mut self) {
-        let mut shanten = 8; // max shanten ever ???
-
         if !self.validate() {
             panic!("Invalid hand");
         }
-
+        let mut shanten = 8; // max shanten ever ???
         let mut array_34 = self.to_34_array();
+        let kokushi_shanten = self.kokushi_shanten(&array_34);
+
 
         self.analyze(&array_34, 0);
     }
@@ -74,11 +74,23 @@ impl Hand {
                     }
                 }
             } else {
-                shanten += count;
+                shanten += *count;
             }
         }
 
         shanten
+    }
+
+    /// Gets the hand's shanten to chiitoitsu
+    fn chiitoitsu_shanten(&mut self, mut array_34 : &[u8; 34]) -> u8 {
+        let mut pairs = 0;
+        for count in array_34.iter() {
+            if *count >= 2 {
+                pairs += 1;
+            }
+        }
+
+        6 - pairs // how many pairs am I missing to tenpai?
     }
 
     fn analyze(&self, mut array_34 : &[u8; 34], depth : usize) {
@@ -243,5 +255,35 @@ mod tests {
         let shanten = hand.kokushi_shanten(&array34);
 
         assert_eq!(shanten, 1);
+    }
+
+    #[test]
+    fn chiitoitsu_tenpai() {
+        let mut hand = Hand::from_text("1133557799p22s3z");
+        let array34 = hand.to_34_array();
+
+        let shanten = hand.chiitoitsu_shanten(&array34);
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn chiitoitsu_iishanten() {
+        let mut hand = Hand::from_text("113355779p22s34z");
+        let array34 = hand.to_34_array();
+
+        let shanten = hand.chiitoitsu_shanten(&array34);
+
+        assert_eq!(shanten, 1);
+    }
+
+    #[test]
+    fn chiitoitsu_6shanten() {
+        let mut hand = Hand::from_text("123456789m123p1s");
+        let array34 = hand.to_34_array();
+
+        let shanten = hand.chiitoitsu_shanten(&array34);
+
+        assert_eq!(shanten, 6);
     }
 }
