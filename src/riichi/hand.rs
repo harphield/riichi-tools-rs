@@ -10,8 +10,7 @@ pub struct Hand {
     /// it can also have kan, which are groups of 4 tiles that behave as 3 tiles
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
-    array_34: [u8; 34],
-    array_34_initialized: bool,
+    array_34: Option<[u8; 34]>,
     shanten: u8,
 }
 
@@ -24,7 +23,7 @@ impl Hand {
     }
 
     /// Checks the hand for invalid things (wrong number of tiles, > 4 same tiles...)
-    pub fn validate(&self) -> bool {
+    pub fn validate(&mut self) -> bool {
         let mut tile_count = 0;
         let array34 = self.get_34_array();
 
@@ -54,7 +53,7 @@ impl Hand {
         let kokushi_shanten = self.kokushi_shanten(&array_34);
         let chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
 
-        self.analyze(&array_34, 0);
+        shanten = self.analyze(array_34, 0);
 
         let shantens = [kokushi_shanten, chiitoi_shanten, shanten];
 
@@ -97,28 +96,38 @@ impl Hand {
         6 - pairs // how many pairs am I missing to tenpai?
     }
 
-    fn analyze(&self, mut array_34: &[u8; 34], depth: usize) {
-        // 
+    fn analyze(&self, &mut array_34: [u8; 34], depth: usize) -> u8 {
+        let mut shanten = 1000;
+
+        // got 4 tiles
+        if array_34[depth] == 4 {
+            // use 3 as pon, leave one behind and try again
+            array_34[depth] -= 3;
+            shanten = self.analyze(array_34, depth);
+            array_34[depth] += 3;
+        }
+
+        shanten
     }
 
     fn find_complete_shapes(&self, array_34: &[u8; 34], depth: usize) {}
 
     /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
     /// TODO automatically remove open shapes, so it doesn't interfere with shanten calculation?
-    fn generate_34_array(&mut self) {
-        if !self.array_34_initialized {
-            for tile in self.tiles.iter() {
-                if let Option::Some(t) = tile {
-                    self.array_34[(t.to_id() - 1) as usize] += 1;
+    fn get_34_array(&mut self) -> [u8; 34] {
+        match self.array_34 {
+            Some(array_34) => return array_34,
+            None => {
+                let mut array_34 = [0; 34];
+                for tile in self.tiles.iter() {
+                    if let Option::Some(t) = tile {
+                        array_34[(t.to_id() - 1) as usize] += 1;
+                    }
                 }
+                self.array_34 = Some(array_34);
+                array_34
             }
-
-            self.array_34_initialized = true;
         }
-    }
-
-    fn get_34_array(&self) -> &[u8; 34] {
-        &self.array_34
     }
 
     /// TODO
@@ -191,8 +200,7 @@ impl Default for Hand {
     fn default() -> Hand {
         Hand {
             tiles: vec!(),
-            array_34: [0; 34],
-            array_34_initialized: false,
+            array_34: None,
             shanten: 99,
         }
     }
@@ -221,7 +229,6 @@ mod tests {
     fn validation_ok() {
         let rep = "123m123p12345s22z";
         let mut hand = Hand::from_text(rep);
-        hand.generate_34_array();
 
         assert!(hand.validate());
     }
@@ -230,7 +237,6 @@ mod tests {
     fn validation_bad_5_same_tiles() {
         let rep = "123m123p11111s22z";
         let mut hand = Hand::from_text(rep);
-        hand.generate_34_array();
 
         assert!(!hand.validate());
     }
@@ -239,7 +245,6 @@ mod tests {
     fn validation_bad_too_many_tiles() {
         let rep = "123456789m123456789p12345s22z";
         let mut hand = Hand::from_text(rep);
-        hand.generate_34_array();
 
         assert!(!hand.validate());
     }
@@ -247,10 +252,9 @@ mod tests {
     #[test]
     fn kokushi_tenpai() {
         let mut hand = Hand::from_text("19m19s19p1234567z");
-        hand.generate_34_array();
         let array34 = hand.get_34_array();
 
-        let shanten = hand.kokushi_shanten(array34);
+        let shanten = hand.kokushi_shanten(&array34);
 
         assert_eq!(shanten, 0);
     }
@@ -258,10 +262,9 @@ mod tests {
     #[test]
     fn kokushi_iishanten() {
         let mut hand = Hand::from_text("18m19s19p1234567z");
-        hand.generate_34_array();
         let array34 = hand.get_34_array();
 
-        let shanten = hand.kokushi_shanten(array34);
+        let shanten = hand.kokushi_shanten(&array34);
 
         assert_eq!(shanten, 1);
     }
@@ -269,10 +272,9 @@ mod tests {
     #[test]
     fn chiitoitsu_tenpai() {
         let mut hand = Hand::from_text("1133557799p22s3z");
-        hand.generate_34_array();
         let array34 = hand.get_34_array();
 
-        let shanten = hand.chiitoitsu_shanten(array34);
+        let shanten = hand.chiitoitsu_shanten(&array34);
 
         assert_eq!(shanten, 0);
     }
@@ -280,10 +282,9 @@ mod tests {
     #[test]
     fn chiitoitsu_iishanten() {
         let mut hand = Hand::from_text("113355779p22s34z");
-        hand.generate_34_array();
         let array34 = hand.get_34_array();
 
-        let shanten = hand.chiitoitsu_shanten(array34);
+        let shanten = hand.chiitoitsu_shanten(&array34);
 
         assert_eq!(shanten, 1);
     }
@@ -291,10 +292,9 @@ mod tests {
     #[test]
     fn chiitoitsu_6shanten() {
         let mut hand = Hand::from_text("123456789m123p1s");
-        hand.generate_34_array();
         let array34 = hand.get_34_array();
 
-        let shanten = hand.chiitoitsu_shanten(array34);
+        let shanten = hand.chiitoitsu_shanten(&array34);
 
         assert_eq!(shanten, 6);
     }
