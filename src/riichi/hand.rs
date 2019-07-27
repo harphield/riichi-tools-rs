@@ -53,7 +53,7 @@ impl Hand {
         let kokushi_shanten = self.kokushi_shanten(&array_34);
         let chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
 
-        shanten = self.analyze(array_34, 0);
+        shanten = self.analyze(&mut array_34, 0);
 
         let shantens = [kokushi_shanten, chiitoi_shanten, shanten];
 
@@ -96,8 +96,8 @@ impl Hand {
         6 - pairs // how many pairs am I missing to tenpai?
     }
 
-    fn analyze(&self, &mut array_34: [u8; 34], depth: usize) -> u8 {
-        let mut shanten = 1000;
+    fn analyze(&self, array_34: &mut [u8; 34], depth: usize) -> u8 {
+        let mut shanten = 100;
 
         // got 4 tiles
         if array_34[depth] == 4 {
@@ -105,6 +105,12 @@ impl Hand {
             array_34[depth] -= 3;
             shanten = self.analyze(array_34, depth);
             array_34[depth] += 3;
+        } else if array_34[depth] == 3 {
+            array_34[depth] -= 3;
+            shanten = self.analyze(array_34, depth + 1);
+            array_34[depth] += 3;
+        } else if array_34[depth] == 2 {
+
         }
 
         shanten
