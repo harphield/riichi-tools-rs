@@ -96,6 +96,8 @@ impl Hand {
         6 - pairs // how many pairs am I missing to tenpai?
     }
 
+    /// Recursive method to traverse a hand, removing shapes until only tiles that have to be
+    /// discarded and changed remain - that is the shanten of a hand.
     fn analyze(&self, array_34: &mut [u8; 34], depth: usize) -> u8 {
         let mut shanten = 100;
 
@@ -105,12 +107,20 @@ impl Hand {
             array_34[depth] -= 3;
             shanten = self.analyze(array_34, depth);
             array_34[depth] += 3;
+
+            // use 2 as pair
+
+            // use 1, check for a complete meld (3 tiles)
+
+            // use 1, check for kanchan & penchan & ryanmen shapes (2 tiles)
+
+            // use 1 as isolated tile
         } else if array_34[depth] == 3 {
             array_34[depth] -= 3;
             shanten = self.analyze(array_34, depth + 1);
             array_34[depth] += 3;
         } else if array_34[depth] == 2 {
-
+            // if we don't have a pair yet, this will be our pair
         }
 
         shanten
