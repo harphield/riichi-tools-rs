@@ -4,6 +4,7 @@ use super::tile::Tile;
 use super::tile::TileType;
 use super::tile::TileColor;
 use super::shapes::Shape;
+use super::shanten::ShantenFinder;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -11,6 +12,7 @@ pub struct Hand {
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
     array_34: Option<[u8; 34]>,
+    shanten_finder: ShantenFinder,
     shanten: u8,
 }
 
@@ -45,6 +47,7 @@ impl Hand {
     /// 
     /// 
     pub fn shanten(&mut self) -> u8 {
+        // TODO move all shanten shit into shanten.rs
         if !self.validate() {
             panic!("Invalid hand");
         }
@@ -109,6 +112,9 @@ impl Hand {
             array_34[depth] += 3;
 
             // use 2 as pair
+            array_34[depth] -= 2;
+            shanten = self.analyze(array_34, depth);
+            array_34[depth] += 2;
 
             // use 1, check for a complete meld (3 tiles)
 
@@ -217,6 +223,7 @@ impl Default for Hand {
         Hand {
             tiles: vec!(),
             array_34: None,
+            shanten_finder: ShantenFinder::new(),
             shanten: 99,
         }
     }
