@@ -24,6 +24,11 @@ impl ShantenFinder {
         }
         let mut shanten: u8 = 8; // max shanten ever ???
         let mut array_34 = hand.get_34_array();
+
+        for (id, value) in array_34.iter().enumerate() {
+            println!("{} = {}", id, value);
+        }
+
         let kokushi_shanten = self.kokushi_shanten(&array_34);
         let chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
 
@@ -75,6 +80,12 @@ impl ShantenFinder {
     fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> u8 {
         let mut shanten = 100;
 
+        if depth >= 34 {
+            return 8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs;
+        }
+
+//        println!("Analyzing {}", Tile::from_id((depth + 1) as u8).to_string());
+
         // got 4 tiles
         if array_34[depth] == 4 {
             // use 3 as pon, leave one behind and try again
@@ -87,8 +98,25 @@ impl ShantenFinder {
             shanten = self.analyze(array_34, depth);
             self.remove_pair(array_34, depth);
 
+            // use 1 as isolated tile
+        } else if array_34[depth] == 3 {
+            self.add_set(array_34, depth);
+            shanten = self.analyze(array_34, depth + 1);
+            self.remove_set(array_34, depth);
+
+            self.add_pair(array_34, depth);
+            shanten = self.analyze(array_34, depth);
+            self.remove_pair(array_34, depth);
+        } else if array_34[depth] == 2 {
+            // if we don't have a pair yet, this will be our pair
+            self.add_pair(array_34, depth);
+            shanten = self.analyze(array_34, depth + 1);
+            self.remove_pair(array_34, depth);
+        }
+
+        if array_34[depth] > 0 {
             // use 1, check for a complete meld (3 tiles)
-            let done = self.add_complete_meld(array_34, depth);
+            let mut done = self.add_complete_meld(array_34, depth);
             if done {
                 if array_34[depth] > 0 {
                     shanten = self.analyze(array_34, depth);
@@ -100,17 +128,39 @@ impl ShantenFinder {
             }
 
             // use 1, check for kanchan & penchan & ryanmen shapes (2 tiles)
+            done = self.add_incomplete_meld_1(array_34, depth);
+            if done {
+                if array_34[depth] > 0 {
+                    shanten = self.analyze(array_34, depth);
+                } else {
+                    shanten = self.analyze(array_34, depth + 1);
+                }
 
-            // use 1 as isolated tile
-        } else if array_34[depth] == 3 {
-            array_34[depth] -= 3;
-            shanten = self.analyze(array_34, depth + 1);
-            array_34[depth] += 3;
-        } else if array_34[depth] == 2 {
-            // if we don't have a pair yet, this will be our pair
+                self.remove_incomplete_meld_1(array_34, depth);
+            }
+
+            done = self.add_incomplete_meld_2(array_34, depth);
+            if done {
+                if array_34[depth] > 0 {
+                    shanten = self.analyze(array_34, depth);
+                } else {
+                    shanten = self.analyze(array_34, depth + 1);
+                }
+
+                self.remove_incomplete_meld_2(array_34, depth);
+            }
         }
 
-        shanten
+        println!("next!");
+        shanten = self.analyze(array_34, depth + 1);
+
+        let shantens = [8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs, shanten];
+
+        let ret = *shantens.iter().min().unwrap();
+
+//        println!("{}", ret);
+
+        ret
     }
 
     fn add_set(&mut self, array_34: &mut [u8; 34], depth: usize) {
@@ -134,22 +184,24 @@ impl ShantenFinder {
     }
 
     fn add_complete_meld(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let tile = Tile::from_id(depth as u8);
+        let tile = Tile::from_id((depth + 1) as u8);
         let second = tile.next(false);
 
         match second {
             Some(t2) => {
-                if array_34[t2.to_id() as usize] > 0 {
+                if array_34[(t2.to_id() - 1) as usize] > 0 {
                     let third = t2.next(false);
                     match third {
                         Some(t3) => {
-                            if array_34[t3.to_id() as usize] > 0 {
+                            if array_34[(t3.to_id() - 1) as usize] > 0 {
                                 // found a complete meld!
                                 array_34[depth] -= 1;
-                                // this should be equal to array_34[depth + 1] and array_34[depth + 2]
-                                array_34[t2.to_id() as usize] -= 1;
-                                array_34[t3.to_id() as usize] -= 1;
+                                array_34[depth + 1] -= 1;
+                                array_34[depth + 2] -= 1;
                                 self.complete_melds += 1;
+
+                                println!("found complete meld {}{}{}", tile.to_string(), t2.to_string(), t3.to_string());
+
                                 return true;
                             }
                         },
@@ -168,6 +220,67 @@ impl ShantenFinder {
         array_34[depth + 1] += 1;
         array_34[depth + 2] += 1;
         self.complete_melds -= 1;
+    }
+
+    fn add_incomplete_meld_1(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
+        let tile = Tile::from_id((depth + 1) as u8);
+        let second = tile.next(false);
+
+        match second {
+            Some(t2) => {
+                if array_34[(t2.to_id() - 1) as usize] > 0 {
+                    // found an incomplete meld!
+                    array_34[depth] -= 1;
+                    array_34[depth + 1] -= 1;
+                    self.incomplete_melds += 1;
+
+                    println!("found INcomplete meld {}{}", tile.to_string(), t2.to_string());
+
+                    return true;
+                }
+            },
+            None => ()
+        }
+
+        false
+    }
+
+    fn remove_incomplete_meld_1(&mut self, array_34: &mut [u8; 34], depth: usize) {
+        array_34[depth] += 1;
+        array_34[depth + 1] += 1;
+        self.incomplete_melds -= 1;
+    }
+
+    fn add_incomplete_meld_2(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
+        let tile = Tile::from_id((depth + 1) as u8);
+        let second = tile.next(false);
+
+        match second {
+            Some(t2) => {
+                let third = t2.next(false);
+                match third {
+                    Some(t3) => {
+                        if array_34[(t3.to_id() - 1) as usize] > 0 {
+                            // found an incomplete meld!
+                            array_34[depth] -= 1;
+                            array_34[depth + 2] -= 1;
+                            self.incomplete_melds += 1;
+                            return true;
+                        }
+                    },
+                    None => ()
+                }
+            },
+            None => ()
+        }
+
+        false
+    }
+
+    fn remove_incomplete_meld_2(&mut self, array_34: &mut [u8; 34], depth: usize) {
+        array_34[depth] += 1;
+        array_34[depth + 2] += 1;
+        self.incomplete_melds -= 1;
     }
 }
 
@@ -239,5 +352,16 @@ mod tests {
         let shanten = shanten_finder.chiitoitsu_shanten(&array34);
 
         assert_eq!(shanten, 6);
+    }
+
+    #[test]
+    fn pinfu_tenpai() {
+        let mut hand = Hand::from_text("123456789m23p11s");
+        let array34 = hand.get_34_array();
+
+        let mut shanten_finder = ShantenFinder::new();
+        let shanten = shanten_finder.shanten(&mut hand);
+
+        assert_eq!(shanten, 0);
     }
 }

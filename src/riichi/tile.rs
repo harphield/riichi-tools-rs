@@ -137,7 +137,7 @@ impl Tile {
     /// The order is Manzu - Pinzu - Souzu - Winds - Dragons
     pub fn from_id(id: u8) -> Tile {
         if id < 1 || id > 34 {
-            panic!("Wrong tile ID");
+            panic!("Wrong tile ID {}", id);
         }
 
         if id <= 9 {
@@ -153,10 +153,10 @@ impl Tile {
         }
 
         if id <= 31 {
-            return Tile::new(TileType::Wind(id - 31));
+            return Tile::new(TileType::Wind(id - 27));
         }
 
-        return Tile::new(TileType::Dragon(id - 31));
+        return Tile::new(TileType::Dragon(id - 27));
     }
 
     /// Gets the id of this tile based on its type
