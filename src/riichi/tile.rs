@@ -309,6 +309,7 @@ impl Tile {
         }
     }
 
+    /// Returns an array of 3 values: type, color and number for this tile
     fn get_ordering_values(&self) -> [u8; 3] {
         let self_type;
         let mut self_color = 0;

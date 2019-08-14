@@ -5,7 +5,6 @@ use super::hand::Hand;
 
 pub struct ShantenFinder {
     pairs: u8,
-    sets: u8,
     complete_melds: u8,
     incomplete_melds: u8,
     isolated_tiles: u8
@@ -24,10 +23,6 @@ impl ShantenFinder {
         }
         let mut shanten: u8 = 8; // max shanten ever ???
         let mut array_34 = hand.get_34_array();
-
-        for (id, value) in array_34.iter().enumerate() {
-            println!("{} = {}", id, value);
-        }
 
         let kokushi_shanten = self.kokushi_shanten(&array_34);
         let chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
@@ -78,39 +73,37 @@ impl ShantenFinder {
     /// Recursive method to traverse a hand, removing shapes until only tiles that have to be
     /// discarded and changed remain - that is the shanten of a hand.
     fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> u8 {
-        let mut shanten = 100;
+        let mut shantens = vec!();
 
         if depth >= 34 {
             return 8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs;
         }
 
-//        println!("Analyzing {}", Tile::from_id((depth + 1) as u8).to_string());
-
         // got 4 tiles
         if array_34[depth] == 4 {
             // use 3 as pon, leave one behind and try again
             self.add_set(array_34, depth);
-            shanten = self.analyze(array_34, depth);
+            shantens.push(self.analyze(array_34, depth));
             self.remove_set(array_34, depth);
 
             // use 2 as pair
             self.add_pair(array_34, depth);
-            shanten = self.analyze(array_34, depth);
+            shantens.push(self.analyze(array_34, depth));
             self.remove_pair(array_34, depth);
 
             // use 1 as isolated tile
         } else if array_34[depth] == 3 {
             self.add_set(array_34, depth);
-            shanten = self.analyze(array_34, depth + 1);
+            shantens.push(self.analyze(array_34, depth + 1));
             self.remove_set(array_34, depth);
 
             self.add_pair(array_34, depth);
-            shanten = self.analyze(array_34, depth);
+            shantens.push(self.analyze(array_34, depth));
             self.remove_pair(array_34, depth);
         } else if array_34[depth] == 2 {
             // if we don't have a pair yet, this will be our pair
             self.add_pair(array_34, depth);
-            shanten = self.analyze(array_34, depth + 1);
+            shantens.push(self.analyze(array_34, depth + 1));
             self.remove_pair(array_34, depth);
         }
 
@@ -119,9 +112,9 @@ impl ShantenFinder {
             let mut done = self.add_complete_meld(array_34, depth);
             if done {
                 if array_34[depth] > 0 {
-                    shanten = self.analyze(array_34, depth);
+                    shantens.push(self.analyze(array_34, depth));
                 } else {
-                    shanten = self.analyze(array_34, depth + 1);
+                    shantens.push(self.analyze(array_34, depth + 1));
                 }
 
                 self.remove_complete_meld(array_34, depth);
@@ -131,9 +124,9 @@ impl ShantenFinder {
             done = self.add_incomplete_meld_1(array_34, depth);
             if done {
                 if array_34[depth] > 0 {
-                    shanten = self.analyze(array_34, depth);
+                    shantens.push(self.analyze(array_34, depth));
                 } else {
-                    shanten = self.analyze(array_34, depth + 1);
+                    shantens.push(self.analyze(array_34, depth + 1));
                 }
 
                 self.remove_incomplete_meld_1(array_34, depth);
@@ -142,35 +135,33 @@ impl ShantenFinder {
             done = self.add_incomplete_meld_2(array_34, depth);
             if done {
                 if array_34[depth] > 0 {
-                    shanten = self.analyze(array_34, depth);
+                    shantens.push(self.analyze(array_34, depth));
                 } else {
-                    shanten = self.analyze(array_34, depth + 1);
+                    shantens.push(self.analyze(array_34, depth + 1));
                 }
 
                 self.remove_incomplete_meld_2(array_34, depth);
             }
+
+            self.add_isolated_tile(array_34, depth);
+            shantens.push(self.analyze(array_34, depth + 1));
+            self.remove_isolated_tile(array_34, depth);
         }
 
-        println!("next!");
-        shanten = self.analyze(array_34, depth + 1);
+        shantens.push(self.analyze(array_34, depth + 1));
+        shantens.push(8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs);
 
-        let shantens = [8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs, shanten];
-
-        let ret = *shantens.iter().min().unwrap();
-
-//        println!("{}", ret);
-
-        ret
+        *shantens.iter().min().unwrap()
     }
 
     fn add_set(&mut self, array_34: &mut [u8; 34], depth: usize) {
         array_34[depth] -= 3;
-        self.sets += 1;
+        self.complete_melds += 1;
     }
 
     fn remove_set(&mut self, array_34: &mut [u8; 34], depth: usize) {
         array_34[depth] += 3;
-        self.sets -= 1;
+        self.complete_melds -= 1;
     }
 
     fn add_pair(&mut self, array_34: &mut [u8; 34], depth: usize) {
@@ -181,6 +172,16 @@ impl ShantenFinder {
     fn remove_pair(&mut self, array_34: &mut [u8; 34], depth: usize) {
         array_34[depth] += 2;
         self.pairs -= 1;
+    }
+
+    fn add_isolated_tile(&mut self, array_34: &mut [u8; 34], depth: usize) {
+        array_34[depth] -= 1;
+        self.isolated_tiles += 1;
+    }
+
+    fn remove_isolated_tile(&mut self, array_34: &mut [u8; 34], depth: usize) {
+        array_34[depth] += 1;
+        self.isolated_tiles -= 1;
     }
 
     fn add_complete_meld(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
@@ -199,8 +200,6 @@ impl ShantenFinder {
                                 array_34[depth + 1] -= 1;
                                 array_34[depth + 2] -= 1;
                                 self.complete_melds += 1;
-
-                                println!("found complete meld {}{}{}", tile.to_string(), t2.to_string(), t3.to_string());
 
                                 return true;
                             }
@@ -233,8 +232,6 @@ impl ShantenFinder {
                     array_34[depth] -= 1;
                     array_34[depth + 1] -= 1;
                     self.incomplete_melds += 1;
-
-                    println!("found INcomplete meld {}{}", tile.to_string(), t2.to_string());
 
                     return true;
                 }
@@ -288,7 +285,6 @@ impl Default for ShantenFinder {
     fn default() -> ShantenFinder {
         ShantenFinder {
             pairs: 0,
-            sets: 0,
             complete_melds: 0,
             incomplete_melds: 0,
             isolated_tiles: 0
@@ -363,5 +359,38 @@ mod tests {
         let shanten = shanten_finder.shanten(&mut hand);
 
         assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn pinfu_2_shanten() {
+        let mut hand = Hand::from_text("1235689m23p11s14z");
+        let array34 = hand.get_34_array();
+
+        let mut shanten_finder = ShantenFinder::new();
+        let shanten = shanten_finder.shanten(&mut hand);
+
+        assert_eq!(shanten, 2);
+    }
+
+    #[test]
+    fn chinitsu_tenpai() {
+        let mut hand = Hand::from_text("1112344478999m");
+        let array34 = hand.get_34_array();
+
+        let mut shanten_finder = ShantenFinder::new();
+        let shanten = shanten_finder.shanten(&mut hand);
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn chinitsu_iishanten() {
+        let mut hand = Hand::from_text("1112224457889m");
+        let array34 = hand.get_34_array();
+
+        let mut shanten_finder = ShantenFinder::new();
+        let shanten = shanten_finder.shanten(&mut hand);
+
+        assert_eq!(shanten, 1);
     }
 }
