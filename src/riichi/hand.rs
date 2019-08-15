@@ -126,6 +126,14 @@ impl Hand {
 
         out
     }
+
+    pub fn shanten(&mut self) -> u8 {
+        if self.shanten == 99 {
+            self.shanten = self.shanten_finder.shanten(self);
+        }
+
+        self.shanten
+    }
 }
 
 impl Default for Hand {
