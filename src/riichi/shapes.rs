@@ -9,7 +9,7 @@ pub enum Shape {
     Incomplete(IncompleteShape)
 }
 
-enum CompleteShape {
+pub enum CompleteShape {
     // meld
     Shuntsu([Tile; 3]),
     // triplet
@@ -19,7 +19,7 @@ enum CompleteShape {
     Single(Tile)
 }
 
-enum IncompleteShape {
+pub enum IncompleteShape {
     TwoDifferent([Tile; 2]),
     Shanpon([Tile; 2]),
     Tanki(Tile)

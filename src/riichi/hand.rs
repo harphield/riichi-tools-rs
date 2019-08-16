@@ -3,7 +3,6 @@ use std::fmt;
 use super::tile::Tile;
 use super::tile::TileType;
 use super::tile::TileColor;
-use super::shapes::Shape;
 use super::shanten::ShantenFinder;
 
 pub struct Hand {
@@ -12,7 +11,6 @@ pub struct Hand {
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
     array_34: Option<[u8; 34]>,
-    shanten_finder: ShantenFinder,
     shanten: u8,
 }
 
@@ -73,6 +71,7 @@ impl Hand {
 
     /// Parses a hand from its text representation.
     pub fn from_text(representation: &str) -> Hand {
+        // let's read the hand from the back, because colors are written after the numbers
         let iter = representation.chars().rev();
         let mut tiles: Vec<Option<Tile>> = Vec::new();
 
@@ -127,12 +126,18 @@ impl Hand {
         out
     }
 
+    /// Get shanten of this hand (and also set it if it's not calculated yet)
     pub fn shanten(&mut self) -> u8 {
         if self.shanten == 99 {
-            self.shanten = self.shanten_finder.shanten(self);
+            self.shanten = ShantenFinder::new().shanten(self);
         }
 
         self.shanten
+    }
+
+    /// Reset shanten to 99 when we change the hand somehow
+    pub fn reset_shanten(&mut self) {
+        self.shanten = 99;
     }
 }
 
@@ -141,7 +146,6 @@ impl Default for Hand {
         Hand {
             tiles: vec!(),
             array_34: None,
-            shanten_finder: ShantenFinder::new(),
             shanten: 99,
         }
     }

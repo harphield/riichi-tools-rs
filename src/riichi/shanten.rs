@@ -1,6 +1,4 @@
 use super::tile::Tile;
-use super::tile::TileType;
-use super::tile::TileColor;
 use super::hand::Hand;
 
 pub struct ShantenFinder {
@@ -35,7 +33,7 @@ impl ShantenFinder {
     }
 
     /// Gets the hand's shanten to kokushi musou.
-    fn kokushi_shanten(&self, mut array_34: &[u8; 34]) -> u8 {
+    fn kokushi_shanten(&self, array_34: &[u8; 34]) -> u8 {
         let mut shanten = 0;
         let mut pair_found = false;
 
@@ -59,7 +57,7 @@ impl ShantenFinder {
     }
 
     /// Gets the hand's shanten to chiitoitsu
-    fn chiitoitsu_shanten(&self, mut array_34: &[u8; 34]) -> u8 {
+    fn chiitoitsu_shanten(&self, array_34: &[u8; 34]) -> u8 {
         let mut pairs = 0;
         for count in array_34.iter() {
             if *count >= 2 {
@@ -353,7 +351,6 @@ mod tests {
     #[test]
     fn pinfu_tenpai() {
         let mut hand = Hand::from_text("123456789m23p11s");
-        let array34 = hand.get_34_array();
 
         let mut shanten_finder = ShantenFinder::new();
         let shanten = shanten_finder.shanten(&mut hand);
@@ -364,7 +361,6 @@ mod tests {
     #[test]
     fn pinfu_2_shanten() {
         let mut hand = Hand::from_text("1235689m23p11s14z");
-        let array34 = hand.get_34_array();
 
         let mut shanten_finder = ShantenFinder::new();
         let shanten = shanten_finder.shanten(&mut hand);
@@ -375,7 +371,6 @@ mod tests {
     #[test]
     fn chinitsu_tenpai() {
         let mut hand = Hand::from_text("1112344478999m");
-        let array34 = hand.get_34_array();
 
         let mut shanten_finder = ShantenFinder::new();
         let shanten = shanten_finder.shanten(&mut hand);
@@ -386,7 +381,6 @@ mod tests {
     #[test]
     fn chinitsu_iishanten() {
         let mut hand = Hand::from_text("1112224457889m");
-        let array34 = hand.get_34_array();
 
         let mut shanten_finder = ShantenFinder::new();
         let shanten = shanten_finder.shanten(&mut hand);

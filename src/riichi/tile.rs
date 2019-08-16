@@ -1,13 +1,13 @@
 use std::fmt;
 use std::cmp::Ordering;
 
-// 'm0', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9',
-// 'p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9',
-// 's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9',
+// '0m', '1m', '2m', '3m', '4m', '5m', '6m', '7m', '8m', '9m',
+// '0p', '1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p',
+// '0s', '1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s', '9s',
 //  E    S    W     N
-// 'z1', 'z2', 'z3', 'z4',
+// '1z', '2z', '3z', '4z',
 //  W    G     R
-// 'z5', 'z6', 'z7'
+// '5z', '6z', '7z'
 
 #[derive(Debug)]
 pub enum TileType {
@@ -103,7 +103,7 @@ impl Tile {
         let mut r_chars = representation.chars();
         let first_char = &r_chars.next().unwrap();
         let second_char = &r_chars.next().unwrap();
-        let number = second_char.to_string().parse().unwrap();
+        let mut number = second_char.to_string().parse().unwrap();
 
         if ['m', 'p', 's'].contains(first_char) {
             let color : TileColor;
@@ -117,7 +117,16 @@ impl Tile {
                 panic!("Wrong color, only m, p an s allowed");
             }
 
-            Tile::new(TileType::Number(number, color))
+            // red fives are represented by a 0
+            let mut is_red = false;
+            if number == 0 {
+                number = 5;
+                is_red = true;
+            }
+            let mut new_tile = Tile::new(TileType::Number(number, color));
+            new_tile.is_red = is_red;
+
+            new_tile
         } else if *first_char == 'z' {
             if number > 0 && number <= 4 {
                 // winds
@@ -221,7 +230,7 @@ impl Tile {
             return 19;
         }
 
-        // dragons
+        // honors
         if dora {
             if id < 34 {
                 return id + 1;
