@@ -338,6 +338,14 @@ mod tests {
     }
 
     #[test]
+    fn chiitoitsu_iishanten_with_shanten() {
+        let mut hand = Hand::from_text("113355779p22s34z");
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 1);
+    }
+
+    #[test]
     fn chiitoitsu_6shanten() {
         let mut hand = Hand::from_text("123456789m123p1s");
         let array34 = hand.get_34_array();
@@ -351,9 +359,7 @@ mod tests {
     #[test]
     fn pinfu_tenpai() {
         let mut hand = Hand::from_text("123456789m23p11s");
-
-        let mut shanten_finder = ShantenFinder::new();
-        let shanten = shanten_finder.shanten(&mut hand);
+        let shanten = hand.shanten();
 
         assert_eq!(shanten, 0);
     }
@@ -361,9 +367,7 @@ mod tests {
     #[test]
     fn pinfu_2_shanten() {
         let mut hand = Hand::from_text("1235689m23p11s14z");
-
-        let mut shanten_finder = ShantenFinder::new();
-        let shanten = shanten_finder.shanten(&mut hand);
+        let shanten = hand.shanten();
 
         assert_eq!(shanten, 2);
     }
@@ -371,9 +375,7 @@ mod tests {
     #[test]
     fn chinitsu_tenpai() {
         let mut hand = Hand::from_text("1112344478999m");
-
-        let mut shanten_finder = ShantenFinder::new();
-        let shanten = shanten_finder.shanten(&mut hand);
+        let shanten = hand.shanten();
 
         assert_eq!(shanten, 0);
     }
@@ -381,9 +383,7 @@ mod tests {
     #[test]
     fn chinitsu_iishanten() {
         let mut hand = Hand::from_text("1112224457889m");
-
-        let mut shanten_finder = ShantenFinder::new();
-        let shanten = shanten_finder.shanten(&mut hand);
+        let shanten = hand.shanten();
 
         assert_eq!(shanten, 1);
     }

@@ -41,7 +41,7 @@ dependencies = [
 
 [[package]]
 name = "riichi-in-rust"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "wasm-bindgen 0.2.49 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
