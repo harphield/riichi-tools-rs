@@ -1,5 +1,6 @@
 use super::tile::Tile;
 use super::hand::Hand;
+use crate::riichi::riichi_error::RiichiError;
 
 pub struct ShantenFinder {
     pairs: u8,
@@ -15,9 +16,9 @@ impl ShantenFinder {
         }
     }
 
-    pub fn shanten(&mut self, hand : &mut Hand) -> u8 {
+    pub fn shanten(&mut self, hand : &mut Hand) -> Result<u8, RiichiError> {
         if !hand.validate() {
-            panic!("Invalid hand");
+            return Err(RiichiError::new(101, "Invalid hand"));
         }
         let mut shanten: u8 = 8; // max shanten ever ???
         let mut array_34 = hand.get_34_array();
@@ -29,7 +30,7 @@ impl ShantenFinder {
 
         let shantens = [kokushi_shanten, chiitoi_shanten, shanten];
 
-        *shantens.iter().min().unwrap()
+        Ok(*shantens.iter().min().unwrap())
     }
 
     /// Gets the hand's shanten to kokushi musou.

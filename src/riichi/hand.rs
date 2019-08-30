@@ -130,7 +130,12 @@ impl Hand {
     /// Get shanten of this hand (and also set it if it's not calculated yet)
     pub fn shanten(&mut self) -> u8 {
         if self.shanten == 99 {
-            self.shanten = ShantenFinder::new().shanten(self);
+            match ShantenFinder::new().shanten(self) {
+                Ok(shanten) => {
+                    self.shanten = shanten;
+                },
+                Err(error) => ()
+            }
         }
 
         self.shanten
