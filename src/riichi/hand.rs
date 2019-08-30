@@ -4,6 +4,7 @@ use super::tile::Tile;
 use super::tile::TileType;
 use super::tile::TileColor;
 use super::shanten::ShantenFinder;
+use crate::riichi::riichi_error::RiichiError;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -70,7 +71,7 @@ impl Hand {
     }
 
     /// Parses a hand from its text representation.
-    pub fn from_text(representation: &str) -> Hand {
+    pub fn from_text(representation: &str) -> Result<Hand, RiichiError> {
         // let's read the hand from the back, because colors are written after the numbers
         let iter = representation.chars().rev();
         let mut tiles: Vec<Option<Tile>> = Vec::new();
@@ -95,10 +96,10 @@ impl Hand {
         tiles.sort();
 
         if tiles.len() >= 13 {
-            return Hand::new(tiles);
+            return Result::Ok(Hand::new(tiles));
         }
 
-        panic!("Couldn't parse hand representation.");
+        Err(RiichiError::new(100, "Couldn't parse hand representation."))
     }
 
     pub fn to_string(&self) -> String {
@@ -164,7 +165,7 @@ mod tests {
     #[test]
     fn from_text_hand() {
         let rep = "123m123p12345s22z";
-        let hand = Hand::from_text(rep);
+        let hand = Hand::from_text(rep).unwrap();
 
         let rep2 = hand.to_string();
         assert_eq!(rep2, rep);
@@ -173,7 +174,7 @@ mod tests {
     #[test]
     fn validation_ok() {
         let rep = "123m123p12345s22z";
-        let mut hand = Hand::from_text(rep);
+        let mut hand = Hand::from_text(rep).unwrap();
 
         assert!(hand.validate());
     }
@@ -181,7 +182,7 @@ mod tests {
     #[test]
     fn validation_bad_5_same_tiles() {
         let rep = "123m123p11111s22z";
-        let mut hand = Hand::from_text(rep);
+        let mut hand = Hand::from_text(rep).unwrap();
 
         assert!(!hand.validate());
     }
@@ -189,7 +190,7 @@ mod tests {
     #[test]
     fn validation_bad_too_many_tiles() {
         let rep = "123456789m123456789p12345s22z";
-        let mut hand = Hand::from_text(rep);
+        let mut hand = Hand::from_text(rep).unwrap();
 
         assert!(!hand.validate());
     }
