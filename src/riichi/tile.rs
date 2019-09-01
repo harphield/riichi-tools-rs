@@ -1,5 +1,6 @@
 use std::fmt;
 use std::cmp::Ordering;
+use crate::riichi::riichi_error::RiichiError;
 
 // '0m', '1m', '2m', '3m', '4m', '5m', '6m', '7m', '8m', '9m',
 // '0p', '1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p',
@@ -34,12 +35,12 @@ pub enum TileColor {
 }
 
 impl TileColor {
-    pub fn from_char(rep : &char) -> TileColor {
+    pub fn from_char(rep : &char) -> Result<TileColor, RiichiError> {
         match rep {
-            'm' => TileColor::Manzu,
-            'p' => TileColor::Pinzu,
-            's' => TileColor::Souzu,
-            _ => panic!("Wrong representation of tile color!")
+            'm' => Ok(TileColor::Manzu),
+            'p' => Ok(TileColor::Pinzu),
+            's' => Ok(TileColor::Souzu),
+            _ => Err(RiichiError::new(106, "Wrong representation of tile color!"))
         }
     }
 
@@ -95,9 +96,9 @@ impl Tile {
         }
     }
 
-    pub fn from_text(representation: &str) -> Tile {
+    pub fn from_text(representation: &str) -> Result<Tile, RiichiError> {
         if representation.len() != 2 {
-            panic!("Tile length must be 2");
+            return Err(RiichiError::new(105, "Tile length must be 2"));
         }
 
         let mut r_chars = representation.chars();
@@ -114,7 +115,7 @@ impl Tile {
             } else if *first_char == 's' {
                 color = TileColor::Souzu;
             } else {
-                panic!("Wrong color, only m, p an s allowed");
+                return Err(RiichiError::new(102, "Wrong color, only m, p an s allowed"));
             }
 
             // red fives are represented by a 0
@@ -126,46 +127,46 @@ impl Tile {
             let mut new_tile = Tile::new(TileType::Number(number, color));
             new_tile.is_red = is_red;
 
-            new_tile
+            Ok(new_tile)
         } else if *first_char == 'z' {
             if number > 0 && number <= 4 {
                 // winds
-                Tile::new(TileType::Wind(number))
+                return Ok(Tile::new(TileType::Wind(number)));
             } else if number > 4 && number <= 7 {
                 // dragons
-                Tile::new(TileType::Dragon(number))
+                return Ok(Tile::new(TileType::Dragon(number)));
             } else {
-                panic!("Wrong number for honors!");
+                return Err(RiichiError::new(103, "Wrong number for honors!"));
             }
         } else {
-            panic!("Invalid tile definition");
+            return Err(RiichiError::new(104, "Invalid tile definition"));
         }
     }
 
     /// id is an integer value > 0 of a tile.
     /// The order is Manzu - Pinzu - Souzu - Winds - Dragons
-    pub fn from_id(id: u8) -> Tile {
+    pub fn from_id(id: u8) -> Result<Tile, RiichiError> {
         if id < 1 || id > 34 {
-            panic!("Wrong tile ID {}", id);
+            return Err(RiichiError::new(107, &format!("Wrong tile ID {}", id)[..]));
         }
 
         if id <= 9 {
-            return Tile::new(TileType::Number(id, TileColor::Manzu));
+            return Ok(Tile::new(TileType::Number(id, TileColor::Manzu)));
         }
 
         if id <= 18 {
-            return Tile::new(TileType::Number(id - 9, TileColor::Pinzu));
+            return Ok(Tile::new(TileType::Number(id - 9, TileColor::Pinzu)));
         }
 
         if id <= 27 {
-            return Tile::new(TileType::Number(id - 18, TileColor::Souzu));
+            return Ok(Tile::new(TileType::Number(id - 18, TileColor::Souzu)));
         }
 
         if id <= 31 {
-            return Tile::new(TileType::Wind(id - 27));
+            return Ok(Tile::new(TileType::Wind(id - 27)));
         }
 
-        return Tile::new(TileType::Dragon(id - 27));
+        return Ok(Tile::new(TileType::Dragon(id - 27)));
     }
 
     /// Gets the id of this tile based on its type

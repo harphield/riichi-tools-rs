@@ -22,7 +22,9 @@ pub fn get_hand_shanten(hand_string: &str) -> String {
         Ok(mut hand) => {
             let shanten = hand.shanten();
             return json!({
-                "shanten": shanten
+                "success": {
+                    "shanten": shanten
+                }
             }).to_string();
         },
         Err(error) => {

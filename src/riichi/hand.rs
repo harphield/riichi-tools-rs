@@ -89,7 +89,14 @@ impl Hand {
                 rep = String::from("");
                 rep.push(color);
                 rep.push(ch);
-                tiles.push(Option::Some(Tile::from_text(&rep[..])))
+                match Tile::from_text(&rep[..]) {
+                    Ok(tile) => {
+                        tiles.push(Option::Some(tile));
+                    },
+                    Err(error) => {
+                        return Err(error);
+                    }
+                }
             }
         }
 

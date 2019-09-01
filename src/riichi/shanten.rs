@@ -72,7 +72,7 @@ impl ShantenFinder {
     /// Recursive method to traverse a hand, removing shapes until only tiles that have to be
     /// discarded and changed remain - that is the shanten of a hand.
     fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> u8 {
-        let mut shantens = vec!();
+        let mut shantens: Vec<u8> = vec!();
 
         if depth >= 34 {
             return 8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs;
@@ -109,6 +109,7 @@ impl ShantenFinder {
         if array_34[depth] > 0 {
             // use 1, check for a complete meld (3 tiles)
             let mut done = self.add_complete_meld(array_34, depth);
+
             if done {
                 if array_34[depth] > 0 {
                     shantens.push(self.analyze(array_34, depth));
@@ -184,7 +185,15 @@ impl ShantenFinder {
     }
 
     fn add_complete_meld(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let tile = Tile::from_id((depth + 1) as u8);
+        let tile;
+        match Tile::from_id((depth + 1) as u8) {
+            Ok(t) => {
+                tile = t;
+            },
+            Err(error) => {
+                return false;
+            }
+        };
         let second = tile.next(false);
 
         match second {
@@ -221,7 +230,13 @@ impl ShantenFinder {
     }
 
     fn add_incomplete_meld_1(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let tile = Tile::from_id((depth + 1) as u8);
+        let mut tile;
+
+        match Tile::from_id((depth + 1) as u8) {
+            Ok(t) => tile = t,
+            Err(error) => return false
+        }
+
         let second = tile.next(false);
 
         match second {
@@ -248,7 +263,11 @@ impl ShantenFinder {
     }
 
     fn add_incomplete_meld_2(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let tile = Tile::from_id((depth + 1) as u8);
+        let mut tile;
+        match Tile::from_id((depth + 1) as u8) {
+            Ok(t) => tile = t,
+            Err(error) => return false
+        }
         let second = tile.next(false);
 
         match second {
