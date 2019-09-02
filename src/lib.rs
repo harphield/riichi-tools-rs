@@ -1,10 +1,13 @@
 mod riichi;
 extern crate wasm_bindgen;
+extern crate serde;
 extern crate serde_json;
 
 use wasm_bindgen::prelude::*;
 use riichi::hand::Hand;
 use serde_json::json;
+use serde::{Deserialize, Serialize};
+use serde_json::Result;
 
 #[wasm_bindgen]
 extern {
