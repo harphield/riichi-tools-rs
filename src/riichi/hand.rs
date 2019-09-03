@@ -36,7 +36,7 @@ impl Hand {
         }
 
         // 13 tiles + 5 optional from kans & draw
-        if tile_count > 18 {
+        if tile_count > 18 || tile_count < 13 {
             return false;
         }
 
@@ -71,7 +71,8 @@ impl Hand {
     }
 
     /// Parses a hand from its text representation.
-    pub fn from_text(representation: &str) -> Result<Hand, RiichiError> {
+    /// force_return: will return even a partial hand
+    pub fn from_text(representation: &str, force_return: bool) -> Result<Hand, RiichiError> {
         // let's read the hand from the back, because colors are written after the numbers
         let iter = representation.chars().rev();
         let mut tiles: Vec<Option<Tile>> = Vec::new();
@@ -102,7 +103,7 @@ impl Hand {
 
         tiles.sort();
 
-        if tiles.len() >= 13 {
+        if force_return || tiles.len() >= 13 {
             return Result::Ok(Hand::new(tiles));
         }
 
@@ -132,6 +133,31 @@ impl Hand {
         out.push_str(&color.to_string()[..]);
 
         out
+    }
+
+    pub fn to_array_of_strings(&self) -> Vec<String> {
+        let mut tile_vec = vec!();
+        let mut color = 'x';
+
+        for tile in self.tiles.iter() {
+            match &tile {
+                Option::Some(some_tile) => {
+                    let mut tile_string = String::from("");
+                    if color != some_tile.get_type_char() {
+                        color = some_tile.get_type_char();
+                    }
+
+                    if color != 'x' {
+                        tile_string.push(color);
+                    }
+                    tile_string.push_str(&format!("{}", some_tile.get_value())[..]);
+                    tile_vec.push(tile_string);
+                },
+                Option::None => ()
+            }
+        }
+
+        tile_vec
     }
 
     /// Get shanten of this hand (and also set it if it's not calculated yet)
@@ -177,7 +203,7 @@ mod tests {
     #[test]
     fn from_text_hand() {
         let rep = "123m123p12345s22z";
-        let hand = Hand::from_text(rep).unwrap();
+        let hand = Hand::from_text(rep, false).unwrap();
 
         let rep2 = hand.to_string();
         assert_eq!(rep2, rep);
@@ -186,7 +212,7 @@ mod tests {
     #[test]
     fn validation_ok() {
         let rep = "123m123p12345s22z";
-        let mut hand = Hand::from_text(rep).unwrap();
+        let mut hand = Hand::from_text(rep, false).unwrap();
 
         assert!(hand.validate());
     }
@@ -194,7 +220,7 @@ mod tests {
     #[test]
     fn validation_bad_5_same_tiles() {
         let rep = "123m123p11111s22z";
-        let mut hand = Hand::from_text(rep).unwrap();
+        let mut hand = Hand::from_text(rep, false).unwrap();
 
         assert!(!hand.validate());
     }
@@ -202,7 +228,7 @@ mod tests {
     #[test]
     fn validation_bad_too_many_tiles() {
         let rep = "123456789m123456789p12345s22z";
-        let mut hand = Hand::from_text(rep).unwrap();
+        let mut hand = Hand::from_text(rep, false).unwrap();
 
         assert!(!hand.validate());
     }

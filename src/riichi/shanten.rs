@@ -315,7 +315,7 @@ mod tests {
 
     #[test]
     fn kokushi_tenpai() {
-        let mut hand = Hand::from_text("19m19s19p1234567z").unwrap();
+        let mut hand = Hand::from_text("19m19s19p1234567z", false).unwrap();
         let array34 = hand.get_34_array();
 
         let shanten_finder = ShantenFinder::new();
@@ -326,7 +326,7 @@ mod tests {
 
     #[test]
     fn kokushi_iishanten() {
-        let mut hand = Hand::from_text("18m19s19p1234567z").unwrap();
+        let mut hand = Hand::from_text("18m19s19p1234567z", false).unwrap();
         let array34 = hand.get_34_array();
 
         let shanten_finder = ShantenFinder::new();
@@ -337,7 +337,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_tenpai() {
-        let mut hand = Hand::from_text("1133557799p22s3z").unwrap();
+        let mut hand = Hand::from_text("1133557799p22s3z", false).unwrap();
         let array34 = hand.get_34_array();
 
         let shanten_finder = ShantenFinder::new();
@@ -348,7 +348,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_iishanten() {
-        let mut hand = Hand::from_text("113355779p22s34z").unwrap();
+        let mut hand = Hand::from_text("113355779p22s34z", false).unwrap();
         let array34 = hand.get_34_array();
 
         let shanten_finder = ShantenFinder::new();
@@ -359,7 +359,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_iishanten_with_shanten() {
-        let mut hand = Hand::from_text("113355779p22s34z").unwrap();
+        let mut hand = Hand::from_text("113355779p22s34z", false).unwrap();
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 1);
@@ -367,7 +367,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_6shanten() {
-        let mut hand = Hand::from_text("123456789m123p1s").unwrap();
+        let mut hand = Hand::from_text("123456789m123p1s", false).unwrap();
         let array34 = hand.get_34_array();
 
         let shanten_finder = ShantenFinder::new();
@@ -378,7 +378,7 @@ mod tests {
 
     #[test]
     fn pinfu_tenpai() {
-        let mut hand = Hand::from_text("123456789m23p11s").unwrap();
+        let mut hand = Hand::from_text("123456789m23p11s", false).unwrap();
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 0);
@@ -386,7 +386,7 @@ mod tests {
 
     #[test]
     fn pinfu_2_shanten() {
-        let mut hand = Hand::from_text("1235689m23p11s14z").unwrap();
+        let mut hand = Hand::from_text("1235689m23p11s14z", false).unwrap();
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 2);
@@ -394,7 +394,7 @@ mod tests {
 
     #[test]
     fn chinitsu_tenpai() {
-        let mut hand = Hand::from_text("1112344478999m").unwrap();
+        let mut hand = Hand::from_text("1112344478999m", false).unwrap();
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 0);
@@ -402,7 +402,7 @@ mod tests {
 
     #[test]
     fn chinitsu_iishanten() {
-        let mut hand = Hand::from_text("1112224457889m").unwrap();
+        let mut hand = Hand::from_text("1112224457889m", false).unwrap();
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 1);
