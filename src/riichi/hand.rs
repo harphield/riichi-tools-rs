@@ -12,7 +12,7 @@ pub struct Hand {
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
     array_34: Option<[u8; 34]>,
-    shanten: u8,
+    shanten: i8,
 }
 
 impl Hand {
@@ -91,7 +91,11 @@ impl Hand {
                 rep.push(color);
                 rep.push(ch);
                 match Tile::from_text(&rep[..]) {
-                    Ok(tile) => {
+                    Ok(mut tile) => {
+                        if tiles.is_empty() {
+                            // the last tile you write in your hand representation is your drawn tile
+                            tile.is_draw = true;
+                        }
                         tiles.push(Option::Some(tile));
                     },
                     Err(error) => {
@@ -103,8 +107,10 @@ impl Hand {
 
         tiles.sort();
 
-        if force_return || tiles.len() >= 13 {
-            return Result::Ok(Hand::new(tiles));
+        let mut hand = Hand::new(tiles);
+
+        if force_return || hand.validate() {
+            return Result::Ok(hand);
         }
 
         Err(RiichiError::new(100, "Couldn't parse hand representation."))
@@ -138,6 +144,7 @@ impl Hand {
     pub fn to_array_of_strings(&self) -> Vec<String> {
         let mut tile_vec = vec!();
         let mut color = 'x';
+        let mut last_tile: Option<String> = Option::None;
 
         for tile in self.tiles.iter() {
             match &tile {
@@ -151,17 +158,30 @@ impl Hand {
                         tile_string.push(color);
                     }
                     tile_string.push_str(&format!("{}", some_tile.get_value())[..]);
-                    tile_vec.push(tile_string);
+
+                    if some_tile.is_draw {
+                        last_tile = Option::Some(tile_string);
+                    } else {
+                        tile_vec.push(tile_string);
+                    }
                 },
                 Option::None => ()
             }
+        }
+
+        // tsumo tile will always be the last in the array
+        match last_tile {
+            Option::Some(tile_repr) => {
+                tile_vec.push(tile_repr)
+            },
+            Option::None => ()
         }
 
         tile_vec
     }
 
     /// Get shanten of this hand (and also set it if it's not calculated yet)
-    pub fn shanten(&mut self) -> u8 {
+    pub fn shanten(&mut self) -> i8 {
         if self.shanten == 99 {
             match ShantenFinder::new().shanten(self) {
                 Ok(shanten) => {
@@ -220,7 +240,7 @@ mod tests {
     #[test]
     fn validation_bad_5_same_tiles() {
         let rep = "123m123p11111s22z";
-        let mut hand = Hand::from_text(rep, false).unwrap();
+        let mut hand = Hand::from_text(rep, true).unwrap();
 
         assert!(!hand.validate());
     }
@@ -228,7 +248,15 @@ mod tests {
     #[test]
     fn validation_bad_too_many_tiles() {
         let rep = "123456789m123456789p12345s22z";
-        let mut hand = Hand::from_text(rep, false).unwrap();
+        let mut hand = Hand::from_text(rep, true).unwrap();
+
+        assert!(!hand.validate());
+    }
+
+    #[test]
+    fn validation_bad_not_enough_tiles() {
+        let rep = "123456m";
+        let mut hand = Hand::from_text(rep, true).unwrap();
 
         assert!(!hand.validate());
     }

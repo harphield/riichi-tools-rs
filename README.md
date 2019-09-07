@@ -1,5 +1,5 @@
 # riichi-in-rust
-v0.0.32
+v0.0.35
 
 Rust + WASM. I wanted to learn these exciting technologies. What project to pick though?
 Well, since I like to play Riichi, why not something like an analyzer for
@@ -18,11 +18,12 @@ Lots of inspiration from other mahjong tools, like https://euophrys.itch.io/mahj
 ## Roadmap
 - Hand analysis
     - Shanten for 13 tiles [DONE]
-    - Shanten for 14 tiles
+    - Shanten for 14 tiles with complete hand indication [DONE]
     - Potential discards and their value
     - Ukeire
     - Hand value for complete hand (14 tiles)
     - Hand value for tenpai hand with possible outcomes
+    - All of the above also for hands with calls
 - Table analysis
     - Safe tiles
     - Wait probability percentages

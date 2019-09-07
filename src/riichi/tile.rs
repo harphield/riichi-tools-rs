@@ -64,7 +64,7 @@ pub struct Tile {
     pub tile_type: TileType,
     is_red: bool,
     is_open: bool,
-    is_draw: bool,
+    pub is_draw: bool,
     is_chi: bool,
     is_pon: bool,
     is_kan: bool

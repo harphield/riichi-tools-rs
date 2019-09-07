@@ -3,10 +3,10 @@ use super::hand::Hand;
 use crate::riichi::riichi_error::RiichiError;
 
 pub struct ShantenFinder {
-    pairs: u8,
-    complete_melds: u8,
-    incomplete_melds: u8,
-    isolated_tiles: u8
+    pairs: i8,
+    complete_melds: i8,
+    incomplete_melds: i8,
+    isolated_tiles: i8
 }
 
 impl ShantenFinder {
@@ -16,11 +16,11 @@ impl ShantenFinder {
         }
     }
 
-    pub fn shanten(&mut self, hand : &mut Hand) -> Result<u8, RiichiError> {
+    pub fn shanten(&mut self, hand : &mut Hand) -> Result<i8, RiichiError> {
         if !hand.validate() {
             return Err(RiichiError::new(101, "Invalid hand"));
         }
-        let mut shanten: u8 = 8; // max shanten ever ???
+        let mut shanten: i8 = 8; // max shanten ever ???
         let mut array_34 = hand.get_34_array();
 
         let kokushi_shanten = self.kokushi_shanten(&array_34);
@@ -34,8 +34,8 @@ impl ShantenFinder {
     }
 
     /// Gets the hand's shanten to kokushi musou.
-    fn kokushi_shanten(&self, array_34: &[u8; 34]) -> u8 {
-        let mut shanten = 0;
+    fn kokushi_shanten(&self, array_34: &[u8; 34]) -> i8 {
+        let mut shanten: i8 = 0;
         let mut pair_found = false;
 
         for (i, count) in array_34.iter().enumerate() {
@@ -43,14 +43,14 @@ impl ShantenFinder {
                 // we only need 1 of each here + pair
                 if *count > 1 {
                     if pair_found {
-                        shanten += count - 1; // I'm only keeping one of them, the others need to be discarded
+                        shanten += (count - 1) as i8; // I'm only keeping one of them, the others need to be discarded
                     } else {
-                        shanten += count - 2; // I'm keeping two of these as a pair
+                        shanten += (count - 2) as i8; // I'm keeping two of these as a pair
                         pair_found = true;
                     }
                 }
             } else {
-                shanten += *count;
+                shanten += (*count as i8);
             }
         }
 
@@ -58,7 +58,7 @@ impl ShantenFinder {
     }
 
     /// Gets the hand's shanten to chiitoitsu
-    fn chiitoitsu_shanten(&self, array_34: &[u8; 34]) -> u8 {
+    fn chiitoitsu_shanten(&self, array_34: &[u8; 34]) -> i8 {
         let mut pairs = 0;
         for count in array_34.iter() {
             if *count >= 2 {
@@ -71,11 +71,17 @@ impl ShantenFinder {
 
     /// Recursive method to traverse a hand, removing shapes until only tiles that have to be
     /// discarded and changed remain - that is the shanten of a hand.
-    fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> u8 {
-        let mut shantens: Vec<u8> = vec!();
+    fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> i8 {
+        let mut shantens: Vec<i8> = vec!();
+        let mut has_pair_check = 1;
 
         if depth >= 34 {
-            return 8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs;
+            if self.pairs > 0 {
+                has_pair_check = 0;
+            } else {
+                has_pair_check = 1;
+            }
+            return (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check) as i8;
         }
 
         // got 4 tiles
@@ -149,7 +155,12 @@ impl ShantenFinder {
         }
 
         shantens.push(self.analyze(array_34, depth + 1));
-        shantens.push(8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs);
+        if self.pairs > 0 {
+            has_pair_check = 0;
+        } else {
+            has_pair_check = 1;
+        }
+        shantens.push((8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check) as i8);
 
         *shantens.iter().min().unwrap()
     }
@@ -406,5 +417,30 @@ mod tests {
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 1);
+    }
+
+    #[test]
+    fn with_14_tiles_tenpai() {
+        let mut hand = Hand::from_text("123456789m239p11s", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn with_14_tiles_tenpai_no_pair() {
+        let mut hand = Hand::from_text("12345m567s111222z", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn with_14_tiles_complete() {
+        let mut hand = Hand::from_text("123456789m234p11s", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, -1);
+
     }
 }
