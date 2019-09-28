@@ -5,6 +5,7 @@ use super::tile::TileType;
 use super::tile::TileColor;
 use super::shanten::ShantenFinder;
 use crate::riichi::riichi_error::RiichiError;
+use std::collections::HashMap;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -94,6 +95,8 @@ impl Hand {
                     Ok(mut tile) => {
                         if tiles.is_empty() {
                             // the last tile you write in your hand representation is your drawn tile
+                            // TODO only if it's the 14th tile though!
+                            // TODO check for kans!
                             tile.is_draw = true;
                         }
                         tiles.push(Option::Some(tile));
@@ -198,6 +201,17 @@ impl Hand {
     pub fn reset_shanten(&mut self) {
         self.shanten = 99;
     }
+
+    /// Returns tiles that can be used to improve this hand.
+    /// For 13 tile hands, there is only one option.
+    /// For 14 tile hands, we list options for all discards that don't lower our shanten.
+    pub fn find_shanten_improving_tiles(&mut self) -> HashMap<Option<Tile>, Vec<Tile>> {
+        let mut imp_tiles = HashMap::new();
+
+        // for 13 tile hands, the Option for the discard tile is None
+
+        imp_tiles
+    }
 }
 
 impl Default for Hand {
@@ -259,5 +273,14 @@ mod tests {
         let mut hand = Hand::from_text(rep, true).unwrap();
 
         assert!(!hand.validate());
+    }
+
+    #[test]
+    fn find_improving_tiles_2_shanten() {
+        let mut hand = Hand::from_text("237m13478s45699p", false).unwrap();
+
+        let tiles = hand.find_shanten_improving_tiles();
+
+        assert_eq!(tiles.len(), 6);
     }
 }

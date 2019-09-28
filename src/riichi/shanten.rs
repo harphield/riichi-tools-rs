@@ -37,9 +37,10 @@ impl ShantenFinder {
     fn kokushi_shanten(&self, array_34: &[u8; 34]) -> i8 {
         let mut shanten: i8 = 0;
         let mut pair_found = false;
+        let mut needed_count = 0;
 
         for (i, count) in array_34.iter().enumerate() {
-            if ([1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28) && *count == 1 {
+            if [1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28 {
                 // we only need 1 of each here + pair
                 if *count > 1 {
                     if pair_found {
@@ -49,10 +50,16 @@ impl ShantenFinder {
                         pair_found = true;
                     }
                 }
+
+                if *count > 0 {
+                    needed_count += 1;
+                }
             } else {
                 shanten += (*count as i8);
             }
         }
+
+        shanten += 13 - needed_count;
 
         shanten
     }
@@ -337,7 +344,7 @@ mod tests {
 
     #[test]
     fn kokushi_iishanten() {
-        let mut hand = Hand::from_text("18m19s19p1234567z", false).unwrap();
+        let mut hand = Hand::from_text("19m19s19p1234566z", false).unwrap();
         let array34 = hand.get_34_array();
 
         let shanten_finder = ShantenFinder::new();

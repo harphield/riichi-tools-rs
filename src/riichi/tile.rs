@@ -10,7 +10,7 @@ use crate::riichi::riichi_error::RiichiError;
 //  W    G     R
 // '5z', '6z', '7z'
 
-#[derive(Debug)]
+#[derive(Debug, Hash)]
 pub enum TileType {
     Number(u8, TileColor),
     Wind(u8),
@@ -27,7 +27,7 @@ impl TileType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub enum TileColor {
     Manzu,
     Pinzu,
@@ -59,7 +59,7 @@ impl fmt::Display for TileColor {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash)]
 pub struct Tile {
     pub tile_type: TileType,
     is_red: bool,

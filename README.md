@@ -19,8 +19,8 @@ Lots of inspiration from other mahjong tools, like https://euophrys.itch.io/mahj
 - Hand analysis
     - Shanten for 13 tiles [DONE]
     - Shanten for 14 tiles with complete hand indication [DONE]
-    - Potential discards and their value
-    - Ukeire
+    - Ukeire, tile acceptance
+    - Potential discards and their value    
     - Hand value for complete hand (14 tiles)
     - Hand value for tenpai hand with possible outcomes
     - All of the above also for hands with calls
