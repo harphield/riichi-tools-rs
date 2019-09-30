@@ -119,6 +119,29 @@ impl Hand {
         Err(RiichiError::new(100, "Couldn't parse hand representation."))
     }
 
+    /// Returns the size of a hand - usually 13 or 14 tiles, depending on the situation.
+    pub fn count_tiles(&self) -> usize {
+        let mut hand_size = 0;
+        let mut kan_tiles = 0;
+
+        for tile in self.tiles.iter() {
+            match tile {
+                Some(t) => {
+                    hand_size += 1;
+                    if t.is_kan {
+                        kan_tiles += 1;
+                    }
+                },
+                None => ()
+            }
+        }
+
+        // subtract 1 tile for each kan
+        hand_size -= (kan_tiles / 4);
+
+        hand_size
+    }
+
     pub fn to_string(&self) -> String {
         let mut out = String::new();
         let mut color = 'x';
@@ -283,4 +306,19 @@ mod tests {
 
         assert_eq!(tiles.len(), 6);
     }
+
+    #[test]
+    fn count_hand_normal_13() {
+        let mut hand = Hand::from_text("237m13478s45699p", false).unwrap();
+
+        assert_eq!(hand.count_tiles(), 13);
+    }
+
+    #[test]
+    fn count_hand_normal_14() {
+        let mut hand = Hand::from_text("1237m13478s45699p", false).unwrap();
+
+        assert_eq!(hand.count_tiles(), 14);
+    }
+
 }

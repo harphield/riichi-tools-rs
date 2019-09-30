@@ -13,7 +13,7 @@ What I really like about this is that after implementing a frontend, the whole
 thing will work offline, in the client, no serverside stuff needed at all.
 Only the frontend will be in Javascript+HTML, so no logic in JS, all in Rust, hooray!
 
-Lots of inspiration from other mahjong tools, like https://euophrys.itch.io/mahjong-efficiency-trainer, http://tenhou.net/2/ etc.
+Lots of inspiration from other mahjong tools, like https://euophrys.itch.io/mahjong-efficiency-trainer, http://tenhou.net/2/, http://kobalab.net/majiang/dapai.html etc.
 
 ## Roadmap
 - Hand analysis

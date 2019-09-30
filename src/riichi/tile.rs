@@ -62,12 +62,12 @@ impl fmt::Display for TileColor {
 #[derive(Debug, Hash)]
 pub struct Tile {
     pub tile_type: TileType,
-    is_red: bool,
-    is_open: bool,
+    pub is_red: bool,
+    pub is_open: bool,
     pub is_draw: bool,
-    is_chi: bool,
-    is_pon: bool,
-    is_kan: bool
+    pub is_chi: bool,
+    pub is_pon: bool,
+    pub is_kan: bool
 }
 
 impl Tile {
