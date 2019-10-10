@@ -119,6 +119,19 @@ impl Hand {
         Err(RiichiError::new(100, "Couldn't parse hand representation."))
     }
 
+    /// Adds a tile to this hand
+    pub fn add_tile(&self, tile: Tile) {
+
+    }
+
+    pub fn remove_tile(&self, tile: Tile) {
+
+    }
+
+    pub fn remove_tile_by_id(&self, tile_id: u8) {
+
+    }
+
     /// Returns the size of a hand - usually 13 or 14 tiles, depending on the situation.
     pub fn count_tiles(&self) -> usize {
         let mut hand_size = 0;
@@ -232,6 +245,20 @@ impl Hand {
         let mut imp_tiles = HashMap::new();
 
         // for 13 tile hands, the Option for the discard tile is None
+        let hand_count = self.count_tiles();
+        if hand_count == 13 {
+            let mut tiles : Vec<Tile> = vec!();
+
+            // we draw a tile and count shanten - if it improves, we add it to the tiles
+            for i in 1..34 {
+                let drawn_tile = Tile::from_id(i).unwrap();
+                self.add_tile(drawn_tile);
+            }
+
+            imp_tiles.insert(None, tiles);
+        } else if hand_count == 14 {
+            // first we choose a tile to discard, then we look at our tiles
+        }
 
         imp_tiles
     }
