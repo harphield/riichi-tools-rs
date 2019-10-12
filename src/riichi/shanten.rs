@@ -81,14 +81,21 @@ impl ShantenFinder {
     fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> i8 {
         let mut shantens: Vec<i8> = vec!();
         let mut has_pair_check = 1;
+        let mut too_much_groups = 0;
 
         if depth >= 34 {
-            if self.pairs > 0 {
+            if self.pairs == 1 {
                 has_pair_check = 0;
-            } else {
+            } else if self.pairs == 0 {
                 has_pair_check = 1;
+            } else {
+                has_pair_check = self.pairs - 1;
             }
-            return (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check) as i8;
+
+            if self.complete_melds + self.incomplete_melds > 4 {
+                too_much_groups += self.complete_melds + self.incomplete_melds - 4;
+            }
+            return (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check + too_much_groups) as i8;
         }
 
         // got 4 tiles
@@ -162,12 +169,18 @@ impl ShantenFinder {
         }
 
         shantens.push(self.analyze(array_34, depth + 1));
-        if self.pairs > 0 {
+        if self.pairs == 1 {
             has_pair_check = 0;
-        } else {
+        } else if self.pairs == 0 {
             has_pair_check = 1;
+        } else {
+            has_pair_check = self.pairs - 1;
         }
-        shantens.push((8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check) as i8);
+
+        if self.complete_melds + self.incomplete_melds > 4 {
+            too_much_groups += self.complete_melds + self.incomplete_melds - 4;
+        }
+        shantens.push((8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check + too_much_groups) as i8);
 
         *shantens.iter().min().unwrap()
     }
@@ -175,6 +188,7 @@ impl ShantenFinder {
     fn add_set(&mut self, array_34: &mut [u8; 34], depth: usize) {
         array_34[depth] -= 3;
         self.complete_melds += 1;
+
     }
 
     fn remove_set(&mut self, array_34: &mut [u8; 34], depth: usize) {
@@ -439,6 +453,14 @@ mod tests {
     #[test]
     fn with_14_tiles_ryanshanten() {
         let mut hand = Hand::from_text("2357m13478s45699p", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 2);
+    }
+
+    #[test]
+    fn with_14_tiles_ryanshanten_2() {
+        let mut hand = Hand::from_text("2377m13478s45699p", false).unwrap();
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 2);
