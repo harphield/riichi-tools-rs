@@ -104,15 +104,15 @@ impl Tile {
         let mut r_chars = representation.chars();
         let first_char = &r_chars.next().unwrap();
         let second_char = &r_chars.next().unwrap();
-        let mut number = second_char.to_string().parse().unwrap();
+        let mut number = first_char.to_string().parse().unwrap();
 
-        if ['m', 'p', 's'].contains(first_char) {
+        if ['m', 'p', 's'].contains(second_char) {
             let color : TileColor;
-            if *first_char == 'm' {
+            if *second_char == 'm' {
                 color = TileColor::Manzu;
-            } else if *first_char == 'p' {
+            } else if *second_char == 'p' {
                 color = TileColor::Pinzu;
-            } else if *first_char == 's' {
+            } else if *second_char == 's' {
                 color = TileColor::Souzu;
             } else {
                 return Err(RiichiError::new(102, "Wrong color, only m, p an s allowed"));
@@ -128,7 +128,7 @@ impl Tile {
             new_tile.is_red = is_red;
 
             Ok(new_tile)
-        } else if *first_char == 'z' {
+        } else if *second_char == 'z' {
             if number > 0 && number <= 4 {
                 // winds
                 return Ok(Tile::new(TileType::Wind(number)));
@@ -323,7 +323,7 @@ impl Tile {
     fn get_ordering_values(&self) -> [u8; 3] {
         let self_type;
         let mut self_color = 0;
-        let self_number : u8;        
+        let self_number : u8;
 
         match &self.tile_type {
             TileType::Number(number, color) => {
@@ -333,7 +333,7 @@ impl Tile {
                     TileColor::Manzu => 1,
                     TileColor::Pinzu => 2,
                     TileColor::Souzu => 3
-                };                
+                };
             },
             TileType::Wind(number) => {
                 self_type = 2;
@@ -341,7 +341,7 @@ impl Tile {
             },
             TileType::Dragon(number) => {
                 self_type = 3;
-                self_number = *number;                
+                self_number = *number;
             }
         };
 

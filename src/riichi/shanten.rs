@@ -247,6 +247,7 @@ impl ShantenFinder {
         self.complete_melds -= 1;
     }
 
+    /// ryanmen or penchan wait
     fn add_incomplete_meld_1(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
         let mut tile;
 
@@ -280,6 +281,7 @@ impl ShantenFinder {
         self.incomplete_melds -= 1;
     }
 
+    /// kanchan wait
     fn add_incomplete_meld_2(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
         let mut tile;
         match Tile::from_id((depth + 1) as u8) {
@@ -424,6 +426,22 @@ mod tests {
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 1);
+    }
+
+    #[test]
+    fn with_14_tiles_iishanten() {
+        let mut hand = Hand::from_text("237m45699p123478s", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 1);
+    }
+
+    #[test]
+    fn with_14_tiles_ryanshanten() {
+        let mut hand = Hand::from_text("2357m13478s45699p", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 2);
     }
 
     #[test]

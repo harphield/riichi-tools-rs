@@ -89,8 +89,8 @@ impl Hand {
             if color != 'x' && ch.is_numeric() {
                 // tile value
                 rep = String::from("");
-                rep.push(color);
                 rep.push(ch);
+                rep.push(color);
                 match Tile::from_text(&rep[..]) {
                     Ok(mut tile) => {
                         if tiles.is_empty() {
@@ -120,16 +120,33 @@ impl Hand {
     }
 
     /// Adds a tile to this hand
-    pub fn add_tile(&self, tile: Tile) {
-
+    pub fn add_tile(&mut self, tile: Tile) {
+        self.tiles.push(Some(tile));
+        self.tiles.sort();
     }
 
-    pub fn remove_tile(&self, tile: Tile) {
+    pub fn remove_tile(&mut self, tile: Tile) {
+        let mut found: usize = 999;
+        for (i, hand_tile) in self.tiles.iter().enumerate() {
+            match hand_tile {
+                Some(t) => {
+                    if t.to_id() == tile.to_id() {
+                        found = i;
+                        break;
+                    }
+                },
+                None => ()
+            }
+        }
 
+        if found != 999 {
+            self.tiles.remove(found);
+        }
     }
 
-    pub fn remove_tile_by_id(&self, tile_id: u8) {
-
+    pub fn remove_tile_by_id(&mut self, tile_id: u8) {
+        let tile = Tile::from_id(tile_id).unwrap();
+        self.remove_tile(tile);
     }
 
     /// Returns the size of a hand - usually 13 or 14 tiles, depending on the situation.
@@ -236,6 +253,7 @@ impl Hand {
     /// Reset shanten to 99 when we change the hand somehow
     pub fn reset_shanten(&mut self) {
         self.shanten = 99;
+        self.array_34 = None;
     }
 
     /// Returns tiles that can be used to improve this hand.
@@ -244,6 +262,7 @@ impl Hand {
     pub fn find_shanten_improving_tiles(&mut self) -> HashMap<Option<Tile>, Vec<Tile>> {
         let mut imp_tiles = HashMap::new();
 
+        let current_shanten = self.shanten();
         // for 13 tile hands, the Option for the discard tile is None
         let hand_count = self.count_tiles();
         if hand_count == 13 {
@@ -252,13 +271,27 @@ impl Hand {
             // we draw a tile and count shanten - if it improves, we add it to the tiles
             for i in 1..34 {
                 let drawn_tile = Tile::from_id(i).unwrap();
+                let tile_str = drawn_tile.to_string();
                 self.add_tile(drawn_tile);
+
+                self.reset_shanten();
+                let new_shanten = self.shanten();
+                println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
+
+                if new_shanten < current_shanten {
+                    tiles.push(Tile::from_id(i).unwrap());
+                }
+
+                self.remove_tile(Tile::from_id(i).unwrap());
             }
 
             imp_tiles.insert(None, tiles);
         } else if hand_count == 14 {
             // first we choose a tile to discard, then we look at our tiles
+            // TODO
         }
+
+        self.reset_shanten();
 
         imp_tiles
     }
@@ -331,7 +364,7 @@ mod tests {
 
         let tiles = hand.find_shanten_improving_tiles();
 
-        assert_eq!(tiles.len(), 6);
+        assert_eq!(tiles.get(&None).unwrap().len(), 6);
     }
 
     #[test]
@@ -348,4 +381,23 @@ mod tests {
         assert_eq!(hand.count_tiles(), 14);
     }
 
+    #[test]
+    fn remove_tile() {
+        let mut hand = Hand::from_text("1237m13478s45699p", false).unwrap();
+        let tile = Tile::from_text("1m").unwrap();
+        hand.remove_tile(tile);
+
+        assert_eq!(hand.count_tiles(), 13);
+        assert_eq!(hand.to_string(), "237m45699p13478s")
+    }
+
+    #[test]
+    fn remove_tile_by_id() {
+        let mut hand = Hand::from_text("1237m13478s45699p", false).unwrap();
+        let tile_id = 1;
+        hand.remove_tile_by_id(tile_id);
+
+        assert_eq!(hand.count_tiles(), 13);
+        assert_eq!(hand.to_string(), "237m45699p13478s")
+    }
 }
