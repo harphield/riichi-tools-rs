@@ -261,16 +261,33 @@ impl Hand {
     /// For 14 tile hands, we list options for all discards that don't lower our shanten.
     pub fn find_shanten_improving_tiles(&mut self) -> HashMap<Option<Tile>, Vec<Tile>> {
         let mut imp_tiles = HashMap::new();
+        let mut try_tiles: Vec<u8> = vec!();
 
         let current_shanten = self.shanten();
         // for 13 tile hands, the Option for the discard tile is None
         let hand_count = self.count_tiles();
         if hand_count == 13 {
-            let mut tiles : Vec<Tile> = vec!();
+            let mut tiles: Vec<Tile> = vec!();
+
+            for o_tile in self.tiles.iter() {
+                match o_tile {
+                    Some(t) => {
+                        // get this tile, -1, -2, +1, +2
+                        let t_id = t.to_id();
+                        if !try_tiles.contains(&t_id) {
+                            try_tiles.push(t_id);
+                        }
+
+                        let t_prev = t.prev_id(false);
+                        // TODO
+                    },
+                    None => ()
+                }
+            }
 
             // we draw a tile and count shanten - if it improves, we add it to the tiles
-            for i in 1..34 {
-                let drawn_tile = Tile::from_id(i).unwrap();
+            for i in try_tiles.iter() {
+                let drawn_tile = Tile::from_id(*i).unwrap();
                 let tile_str = drawn_tile.to_string();
                 self.add_tile(drawn_tile);
 
@@ -279,10 +296,10 @@ impl Hand {
                 println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
 
                 if new_shanten < current_shanten {
-                    tiles.push(Tile::from_id(i).unwrap());
+                    tiles.push(Tile::from_id(*i).unwrap());
                 }
 
-                self.remove_tile(Tile::from_id(i).unwrap());
+                self.remove_tile(Tile::from_id(*i).unwrap());
             }
 
             imp_tiles.insert(None, tiles);

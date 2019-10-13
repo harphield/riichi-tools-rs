@@ -232,12 +232,69 @@ impl Tile {
         }
 
         // honors
+        // TODO wrong! Needs to distinguish winds vs dragons, write test on it
         if dora {
             if id < 34 {
                 return id + 1;
             }
 
             return 28;
+        }
+
+        return 0;
+    }
+
+    /// Returns an ID of the previous tile in order.
+    pub fn prev_id(&self, dora: bool) -> u8 {
+        let id = self.to_id();
+
+        // manzu
+        if id > 1 && id < 9 {
+            return id - 1;
+        }
+
+        if id == 1 && !dora {
+            return 0;
+        }
+
+        if id == 1 && dora {
+            return 9;
+        }
+
+        // pinzu
+        if id > 10 {
+            return id - 1;
+        }
+
+        if id == 10 && !dora {
+            return 0;
+        }
+
+        if id == 10 && dora {
+            return 18;
+        }
+
+        // souzu
+        if id > 19 {
+            return id - 1;
+        }
+
+        if id == 19 && !dora {
+            return 0;
+        }
+
+        if id == 19 && dora {
+            return 27;
+        }
+
+        // honors
+        // TODO wrong! Needs to distinguish winds vs dragons, write test on it
+        if dora {
+            if id > 28 {
+                return id - 1;
+            }
+
+            return 34;
         }
 
         return 0;
