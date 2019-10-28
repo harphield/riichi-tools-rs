@@ -285,11 +285,30 @@ impl Hand {
                         }
 
                         let t_prev = t.prev_id(false, 1);
-                        // TODO
+                        if t_prev > 0 && !try_tiles.contains(&t_prev) {
+                            try_tiles.push(t_prev);
+                        }
+
+                        let t_prev_2 = t.prev_id(false, 2);
+                        if t_prev_2 > 0 && !try_tiles.contains(&t_prev_2) {
+                            try_tiles.push(t_prev_2);
+                        }
+
+                        let t_next = t.next_id(false, 1);
+                        if t_next > 0 && !try_tiles.contains(&t_next) {
+                            try_tiles.push(t_next);
+                        }
+
+                        let t_next_2 = t.next_id(false, 2);
+                        if t_next_2 > 0 && !try_tiles.contains(&t_next_2) {
+                            try_tiles.push(t_next_2);
+                        }
                     },
                     None => ()
                 }
             }
+
+//            println!("{:#?}", try_tiles);
 
             // we draw a tile and count shanten - if it improves, we add it to the tiles
             for i in try_tiles.iter() {
@@ -299,7 +318,7 @@ impl Hand {
 
                 self.reset_shanten();
                 let new_shanten = self.shanten();
-                println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
+//                println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
 
                 if new_shanten < current_shanten {
                     tiles.push(Tile::from_id(*i).unwrap());

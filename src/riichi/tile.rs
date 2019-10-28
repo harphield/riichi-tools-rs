@@ -193,8 +193,8 @@ impl Tile {
         let id = self.to_id();
 
         // manzu
-        if id < 9 {
-            return id + 1;
+        if id < 9 - (depth - 1) {
+            return id + depth;
         }
 
         if id == 9 && !dora {
@@ -202,12 +202,12 @@ impl Tile {
         }
 
         if id == 9 && dora {
-            return 1;
+            return depth;
         }
 
         // pinzu
-        if id < 18 {
-            return id + 1;
+        if id < 18 - (depth - 1) {
+            return id + depth;
         }
 
         if id == 18 && !dora {
@@ -215,12 +215,12 @@ impl Tile {
         }
 
         if id == 18 && dora {
-            return 10;
+            return 10 + (depth - 1);
         }
 
         // souzu
-        if id < 27 {
-            return id + 1;
+        if id < 27 - (depth - 1) {
+            return id + depth;
         }
 
         if id == 27 && !dora {
@@ -228,19 +228,19 @@ impl Tile {
         }
 
         if id == 27 && dora {
-            return 19;
+            return 19 + (depth - 1);
         }
 
         // honors
         if dora {
-            if id < 31 { // winds
-                return id + 1;
+            if id < 31 - (depth - 1) { // winds
+                return id + depth;
             } else if id == 31 {
-                return 28;
-            } else if id < 34 { // dragons
-                return id + 1;
+                return 28 + (depth - 1);
+            } else if id < 34 - (depth - 1) { // dragons
+                return id + depth;
             } else if id == 34 {
-                return 31;
+                return 31 + (depth - 1);
             }
         }
 
@@ -527,9 +527,16 @@ mod tests {
     }
 
     #[test]
+    fn next_id_depth_2() {
+        let tile = Tile::new(TileType::Number(7, TileColor::Manzu));
+        let prev = tile.next_id(true, 2);
+
+        assert_eq!(prev, 9);
+    }
+
+    #[test]
     fn prev_id_depth_2() {
         let tile = Tile::new(TileType::Number(9, TileColor::Manzu));
-        println!("{}", tile.to_id());
         let prev = tile.prev_id(true, 2);
 
         assert_eq!(prev, 7);
