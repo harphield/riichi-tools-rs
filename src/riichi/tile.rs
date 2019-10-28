@@ -189,7 +189,7 @@ impl Tile {
     }
 
     /// Returns an ID of the next tile in order.
-    pub fn next_id(&self, dora: bool) -> u8 {
+    pub fn next_id(&self, dora: bool, depth: u8) -> u8 {
         let id = self.to_id();
 
         // manzu
@@ -232,25 +232,28 @@ impl Tile {
         }
 
         // honors
-        // TODO wrong! Needs to distinguish winds vs dragons, write test on it
         if dora {
-            if id < 34 {
+            if id < 31 { // winds
                 return id + 1;
+            } else if id == 31 {
+                return 28;
+            } else if id < 34 { // dragons
+                return id + 1;
+            } else if id == 34 {
+                return 31;
             }
-
-            return 28;
         }
 
         return 0;
     }
 
     /// Returns an ID of the previous tile in order.
-    pub fn prev_id(&self, dora: bool) -> u8 {
+    pub fn prev_id(&self, dora: bool, depth: u8) -> u8 {
         let id = self.to_id();
 
         // manzu
-        if id > 1 && id < 9 {
-            return id - 1;
+        if id > (1 + depth - 1) && id <= 9 {
+            return id - depth;
         }
 
         if id == 1 && !dora {
@@ -258,12 +261,12 @@ impl Tile {
         }
 
         if id == 1 && dora {
-            return 9;
+            return 9 - (depth - 1);
         }
 
         // pinzu
-        if id > 10 {
-            return id - 1;
+        if id > (10 + depth - 1) && id <= 18 {
+            return id - depth;
         }
 
         if id == 10 && !dora {
@@ -271,12 +274,12 @@ impl Tile {
         }
 
         if id == 10 && dora {
-            return 18;
+            return 18 - (depth - 1);
         }
 
         // souzu
-        if id > 19 {
-            return id - 1;
+        if id > (19 + depth - 1) && id < 27 {
+            return id - depth;
         }
 
         if id == 19 && !dora {
@@ -284,17 +287,20 @@ impl Tile {
         }
 
         if id == 19 && dora {
-            return 27;
+            return 27 - (depth - 1);
         }
 
         // honors
-        // TODO wrong! Needs to distinguish winds vs dragons, write test on it
         if dora {
-            if id > 28 {
-                return id - 1;
+            if id > (28 + depth - 1) && id < 32 {
+                return id - depth;
+            } else if id == 28 {
+                return 31 - (depth - 1);
+            } else if id > (32 + depth - 1) && id <= 34 {
+                return id - depth;
+            } else if id == 32 {
+                return 34 - (depth - 1);
             }
-
-            return 34;
         }
 
         return 0;
@@ -487,4 +493,46 @@ mod tests {
         let next = tile.next(true);
         assert!(next == Some(Tile::new(TileType::Number(1, TileColor::Manzu))));
     }
+
+    #[test]
+    fn next_id_wind_dora() {
+        let tile = Tile::new(TileType::Wind(4));
+        let next = tile.next_id(true, 1);
+
+        assert_eq!(next, 28);
+    }
+
+    #[test]
+    fn next_id_dragon_dora() {
+        let tile = Tile::new(TileType::Dragon(7));
+        let next = tile.next_id(true, 1);
+
+        assert_eq!(next, 31);
+    }
+
+    #[test]
+    fn prev_id_wind_dora() {
+        let tile = Tile::new(TileType::Wind(1));
+        let prev = tile.prev_id(true, 1);
+
+        assert_eq!(prev, 31);
+    }
+
+    #[test]
+    fn prev_id_dragon_dora() {
+        let tile = Tile::new(TileType::Dragon(5));
+        let prev = tile.prev_id(true, 1);
+
+        assert_eq!(prev, 34);
+    }
+
+    #[test]
+    fn prev_id_depth_2() {
+        let tile = Tile::new(TileType::Number(9, TileColor::Manzu));
+        println!("{}", tile.to_id());
+        let prev = tile.prev_id(true, 2);
+
+        assert_eq!(prev, 7);
+    }
+
 }

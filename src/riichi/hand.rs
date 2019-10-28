@@ -269,6 +269,12 @@ impl Hand {
         if hand_count == 13 {
             let mut tiles: Vec<Tile> = vec!();
 
+            // we don't need to try all tiles:
+            // - the same tile
+            // - next tile
+            // - next + 1
+            // - previous tile
+            // - previous - 1
             for o_tile in self.tiles.iter() {
                 match o_tile {
                     Some(t) => {
@@ -278,7 +284,7 @@ impl Hand {
                             try_tiles.push(t_id);
                         }
 
-                        let t_prev = t.prev_id(false);
+                        let t_prev = t.prev_id(false, 1);
                         // TODO
                     },
                     None => ()
