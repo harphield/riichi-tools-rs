@@ -28,7 +28,8 @@ pub enum IncompleteShape {
 impl Shape {
     // pub fn get_shape(tile_ids : )
 
-    pub fn is_in_shape(first_tile_id : u8, second_tile_id : u8) -> bool {
+    /// Are these two tiles in a shape together?
+    pub fn are_in_shape(first_tile_id : u8, second_tile_id : u8) -> bool {
         if first_tile_id < 1 || first_tile_id > 34 || second_tile_id < 1 || second_tile_id > 34 {
             panic!("Wrong tile IDs");
         }

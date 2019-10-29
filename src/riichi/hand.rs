@@ -6,6 +6,7 @@ use super::tile::TileColor;
 use super::shanten::ShantenFinder;
 use crate::riichi::riichi_error::RiichiError;
 use std::collections::HashMap;
+use crate::riichi::shapes::Shape;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -13,6 +14,7 @@ pub struct Hand {
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
     array_34: Option<[u8; 34]>,
+    shapes: Option<Vec<Shape>>,
     shanten: i8,
 }
 
@@ -318,7 +320,7 @@ impl Hand {
 
                 self.reset_shanten();
                 let new_shanten = self.shanten();
-//                println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
+                println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
 
                 if new_shanten < current_shanten {
                     tiles.push(Tile::from_id(*i).unwrap());
@@ -337,6 +339,21 @@ impl Hand {
 
         imp_tiles
     }
+
+    pub fn find_all_shapes(&mut self) -> &Vec<Shape> {
+        match &self.shapes {
+            Some(shapes) => (),
+            None => {
+                let shapes = vec!();
+
+                // TODO find shapes
+
+                self.shapes = Some(shapes);
+            }
+        }
+
+        self.shapes.as_ref().unwrap()
+    }
 }
 
 impl Default for Hand {
@@ -344,6 +361,7 @@ impl Default for Hand {
         Hand {
             tiles: vec!(),
             array_34: None,
+            shapes: None,
             shanten: 99,
         }
     }
