@@ -333,6 +333,20 @@ impl Hand {
         } else if hand_count == 14 {
             // first we choose a tile to discard, then we look at our tiles
             // TODO
+            for o_tile in self.tiles.iter() {
+                match o_tile {
+                    Some(t) => {
+                        let original_shanten = self.shanten();
+                        self.remove_tile(*t);
+                        self.reset_shanten();
+                        if self.shanten() <= original_shanten {
+                            // only cares about tiles that don't raise our shanten
+
+                        }
+                    },
+                    None => ()
+                }
+            }
         }
 
         self.reset_shanten();
