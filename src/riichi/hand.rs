@@ -127,7 +127,7 @@ impl Hand {
         self.tiles.sort();
     }
 
-    pub fn remove_tile(&mut self, tile: Tile) {
+    pub fn remove_tile(&mut self, tile: &Tile) {
         let mut found: usize = 999;
         for (i, hand_tile) in self.tiles.iter().enumerate() {
             match hand_tile {
@@ -148,7 +148,7 @@ impl Hand {
 
     pub fn remove_tile_by_id(&mut self, tile_id: u8) {
         let tile = Tile::from_id(tile_id).unwrap();
-        self.remove_tile(tile);
+        self.remove_tile(&tile);
     }
 
     /// Returns the size of a hand - usually 13 or 14 tiles, depending on the situation.
@@ -263,85 +263,29 @@ impl Hand {
     /// For 14 tile hands, we list options for all discards that don't lower our shanten.
     pub fn find_shanten_improving_tiles(&mut self) -> HashMap<Option<Tile>, Vec<Tile>> {
         let mut imp_tiles = HashMap::new();
-        let mut try_tiles: Vec<u8> = vec!();
 
         let current_shanten = self.shanten();
         // for 13 tile hands, the Option for the discard tile is None
         let hand_count = self.count_tiles();
         if hand_count == 13 {
-            let mut tiles: Vec<Tile> = vec!();
-
-            // we don't need to try all tiles:
-            // - the same tile
-            // - next tile
-            // - next + 1
-            // - previous tile
-            // - previous - 1
-            for o_tile in self.tiles.iter() {
-                match o_tile {
-                    Some(t) => {
-                        // get this tile, -1, -2, +1, +2
-                        let t_id = t.to_id();
-                        if !try_tiles.contains(&t_id) {
-                            try_tiles.push(t_id);
-                        }
-
-                        let t_prev = t.prev_id(false, 1);
-                        if t_prev > 0 && !try_tiles.contains(&t_prev) {
-                            try_tiles.push(t_prev);
-                        }
-
-                        let t_prev_2 = t.prev_id(false, 2);
-                        if t_prev_2 > 0 && !try_tiles.contains(&t_prev_2) {
-                            try_tiles.push(t_prev_2);
-                        }
-
-                        let t_next = t.next_id(false, 1);
-                        if t_next > 0 && !try_tiles.contains(&t_next) {
-                            try_tiles.push(t_next);
-                        }
-
-                        let t_next_2 = t.next_id(false, 2);
-                        if t_next_2 > 0 && !try_tiles.contains(&t_next_2) {
-                            try_tiles.push(t_next_2);
-                        }
-                    },
-                    None => ()
-                }
-            }
-
-//            println!("{:#?}", try_tiles);
-
-            // we draw a tile and count shanten - if it improves, we add it to the tiles
-            for i in try_tiles.iter() {
-                let drawn_tile = Tile::from_id(*i).unwrap();
-                let tile_str = drawn_tile.to_string();
-                self.add_tile(drawn_tile);
-
-                self.reset_shanten();
-                let new_shanten = self.shanten();
-                println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
-
-                if new_shanten < current_shanten {
-                    tiles.push(Tile::from_id(*i).unwrap());
-                }
-
-                self.remove_tile(Tile::from_id(*i).unwrap());
-            }
+            let tiles = self.get_shanten_improving_tiles_13(current_shanten);
 
             imp_tiles.insert(None, tiles);
         } else if hand_count == 14 {
             // first we choose a tile to discard, then we look at our tiles
-            // TODO
-            for o_tile in self.tiles.iter() {
+            let original_shanten = self.shanten();
+            let mut hand_tiles = vec![];
+
+            hand_tiles.clone_from_slice(&self.tiles[..]);
+
+            for o_tile in hand_tiles.iter() {
                 match o_tile {
                     Some(t) => {
-                        let original_shanten = self.shanten();
-                        self.remove_tile(*t);
+                        self.remove_tile(t);
                         self.reset_shanten();
                         if self.shanten() <= original_shanten {
                             // only cares about tiles that don't raise our shanten
-
+                            imp_tiles.insert(Some(t.clone()), self.get_shanten_improving_tiles_13(current_shanten));
                         }
                     },
                     None => ()
@@ -352,6 +296,69 @@ impl Hand {
         self.reset_shanten();
 
         imp_tiles
+    }
+
+    fn get_shanten_improving_tiles_13(&mut self, current_shanten: i8) -> Vec<Tile> {
+        let mut try_tiles: Vec<u8> = vec!();
+        let mut tiles: Vec<Tile> = vec!();
+
+        // we don't need to try all tiles:
+        // - the same tile
+        // - next tile
+        // - next + 1
+        // - previous tile
+        // - previous - 1
+        for o_tile in self.tiles.iter() {
+            match o_tile {
+                Some(t) => {
+                    // get this tile, -1, -2, +1, +2
+                    let t_id = t.to_id();
+                    if !try_tiles.contains(&t_id) {
+                        try_tiles.push(t_id);
+                    }
+
+                    let t_prev = t.prev_id(false, 1);
+                    if t_prev > 0 && !try_tiles.contains(&t_prev) {
+                        try_tiles.push(t_prev);
+                    }
+
+                    let t_prev_2 = t.prev_id(false, 2);
+                    if t_prev_2 > 0 && !try_tiles.contains(&t_prev_2) {
+                        try_tiles.push(t_prev_2);
+                    }
+
+                    let t_next = t.next_id(false, 1);
+                    if t_next > 0 && !try_tiles.contains(&t_next) {
+                        try_tiles.push(t_next);
+                    }
+
+                    let t_next_2 = t.next_id(false, 2);
+                    if t_next_2 > 0 && !try_tiles.contains(&t_next_2) {
+                        try_tiles.push(t_next_2);
+                    }
+                },
+                None => ()
+            }
+        }
+
+        // we draw a tile and count shanten - if it improves, we add it to the tiles
+        for i in try_tiles.iter() {
+            let drawn_tile = Tile::from_id(*i).unwrap();
+            let tile_str = drawn_tile.to_string();
+            self.add_tile(drawn_tile);
+
+            self.reset_shanten();
+            let new_shanten = self.shanten();
+            println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
+
+            if new_shanten < current_shanten {
+                tiles.push(Tile::from_id(*i).unwrap());
+            }
+
+            self.remove_tile(&Tile::from_id(*i).unwrap());
+        }
+
+        tiles
     }
 
     pub fn find_all_shapes(&mut self) -> &Vec<Shape> {
@@ -459,7 +466,7 @@ mod tests {
     fn remove_tile() {
         let mut hand = Hand::from_text("1237m13478s45699p", false).unwrap();
         let tile = Tile::from_text("1m").unwrap();
-        hand.remove_tile(tile);
+        hand.remove_tile(&tile);
 
         assert_eq!(hand.count_tiles(), 13);
         assert_eq!(hand.to_string(), "237m45699p13478s")
