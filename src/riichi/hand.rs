@@ -267,6 +267,7 @@ impl Hand {
         let current_shanten = self.shanten();
         // for 13 tile hands, the Option for the discard tile is None
         let hand_count = self.count_tiles();
+
         if hand_count == 13 {
             let tiles = self.get_shanten_improving_tiles_13(current_shanten);
 
@@ -274,19 +275,23 @@ impl Hand {
         } else if hand_count == 14 {
             // first we choose a tile to discard, then we look at our tiles
             let original_shanten = self.shanten();
-            let mut hand_tiles = vec![];
+            let mut hand_tiles = vec!();
 
-            hand_tiles.clone_from_slice(&self.tiles[..]);
+            hand_tiles = self.tiles.to_vec();
 
             for o_tile in hand_tiles.iter() {
                 match o_tile {
                     Some(t) => {
                         self.remove_tile(t);
                         self.reset_shanten();
-                        if self.shanten() <= original_shanten {
+                        let new_shanten = self.shanten();
+
+                        if new_shanten <= original_shanten {
                             // only cares about tiles that don't raise our shanten
                             imp_tiles.insert(Some(t.clone()), self.get_shanten_improving_tiles_13(current_shanten));
                         }
+
+                        self.add_tile(*t);
                     },
                     None => ()
                 }
@@ -349,7 +354,6 @@ impl Hand {
 
             self.reset_shanten();
             let new_shanten = self.shanten();
-            println!("hand: {} old: {} new: {}", tile_str, current_shanten, new_shanten);
 
             if new_shanten < current_shanten {
                 tiles.push(Tile::from_id(*i).unwrap());
@@ -446,6 +450,34 @@ mod tests {
         let tiles = hand.find_shanten_improving_tiles();
 
         assert_eq!(tiles.get(&None).unwrap().len(), 6);
+    }
+
+    #[test]
+    fn find_improving_tiles_2_shanten_14() {
+        let mut hand = Hand::from_text("237m13478s45699p1z", false).unwrap();
+
+        let map = hand.find_shanten_improving_tiles();
+
+        assert_eq!(map.len(), 4);
+
+        for (o_tile, tiles) in map.iter() {
+            match o_tile {
+                Some(tile) => {
+                    if tile.to_string() == "7m" {
+                        assert_eq!(tiles.len(), 6);
+                    } else if tile.to_string() == "1s" {
+                        assert_eq!(tiles.len(), 6);
+                    } else if tile.to_string() == "1z" {
+                        assert_eq!(tiles.len(), 6);
+                    } else if tile.to_string() == "4s" {
+                        assert_eq!(tiles.len(), 5);
+                    } else {
+                        panic!("Test failed: wrong tiles found");
+                    }
+                },
+                None => ()
+            }
+        }
     }
 
     #[test]

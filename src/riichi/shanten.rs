@@ -30,8 +30,6 @@ impl ShantenFinder {
         self.recursion_count = 0;
         shanten = self.analyze(&mut array_34, 0);
 
-        println!("recursions: {}", self.recursion_count);
-
         let shantens = [kokushi_shanten, chiitoi_shanten, shanten];
 
         Ok(*shantens.iter().min().unwrap())
@@ -191,8 +189,6 @@ impl ShantenFinder {
         if !shantens.contains(&final_shanten) {
             shantens.push(final_shanten);
         }
-
-//        println!("{:?}", shantens);
 
         *shantens.iter().min().unwrap()
     }
