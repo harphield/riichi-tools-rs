@@ -1,10 +1,17 @@
 use super::tile::Tile;
+use crate::riichi::tile::TileColor;
 
 /// A hand consists of shapes.
 /// A tenpai hand has (usually) only 1 incomplete shape.
 /// Exceptions are for example 23456 wait, where you can either have 234 (complete) & 56 (incomplete), or 23 (incomplete) and 456 (complete)
 /// Or, 13-sided kokushi, or 9-sided nine gates
-pub enum Shape {
+pub struct Shape {
+    shape_type: ShapeType,
+    color: TileColor,
+    tile_count: u8,
+}
+
+pub enum ShapeType {
     Complete(CompleteShape),
     Incomplete(IncompleteShape)
 }
@@ -25,7 +32,7 @@ pub enum IncompleteShape {
     Tanki(Tile)
 }
 
-impl Shape {
+impl ShapeType {
     // pub fn get_shape(tile_ids : )
 
     /// Are these two tiles in a shape together?

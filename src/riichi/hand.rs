@@ -97,7 +97,7 @@ impl Hand {
                     Ok(mut tile) => {
                         if tiles.is_empty() {
                             // the last tile you write in your hand representation is your drawn tile
-                            // TODO only if it's the 14th tile though!
+                            // TODO this is wrong: should only set for the 14th tile
                             // TODO check for kans!
                             tile.is_draw = true;
                         }
@@ -363,21 +363,6 @@ impl Hand {
         }
 
         tiles
-    }
-
-    pub fn find_all_shapes(&mut self) -> &Vec<Shape> {
-        match &self.shapes {
-            Some(shapes) => (),
-            None => {
-                let shapes = vec!();
-
-                // TODO find shapes
-
-                self.shapes = Some(shapes);
-            }
-        }
-
-        self.shapes.as_ref().unwrap()
     }
 }
 
