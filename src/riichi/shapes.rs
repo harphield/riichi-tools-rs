@@ -42,17 +42,17 @@ impl Shape {
         }
     }
 
-    pub fn from_tiles(tiles: Vec<Tile>) -> Result<Shape, RiichiError> {
+    pub fn from_tiles(tiles: Vec<Tile>, only_complete: bool) -> Result<Shape, RiichiError> {
         let shape_type: ShapeType;
-        let tile_count: u8 = tiles.count() as u8;
+        let tile_count: u8 = tiles.iter().count() as u8;
 
         if tile_count < 1 || tile_count > 4 { // 4 = kan?
             return Err(RiichiError::new(120, "Not a valid shape - wrong tile count"));
         }
 
         // is this a valid shape?
-        for i in 0..tile_count {
-            if i < tile_count - 1 {
+        for i in 0..tile_count as usize {
+            if i < tile_count as usize - 1 {
                 if !Shape::are_in_shape(tiles.get(i).unwrap().to_id(), tiles.get(i + 1).unwrap().to_id()) {
                     return Err(RiichiError::new(121, "Not a valid shape - tiles are not relevant to each other"));
                 }
@@ -65,31 +65,81 @@ impl Shape {
         // TODO kans
         if tile_count == 3 {
             let tile_1 = tiles.get(0).unwrap();
+            let tile_2 = tiles.get(1).unwrap();
+            let tile_3 = tiles.get(2).unwrap();
+
             match tile_1.tile_type {
                 Number(value, color) => {
-                    let tile_2 = tiles.get(1).unwrap();
-                    let tile_3 = tiles.get(2).unwrap();
-                    if tile_2.eq(tile_1.next(false).unwrap().as_ref()) &&
-                        tile_3.eq(tile_2.next(false).unwrap().as_ref()) {
+                    if tile_2.eq(&tile_1.next(false).unwrap()) &&
+                        tile_3.eq(&tile_2.next(false).unwrap()) {
                         shape_type = ShapeType::Complete(CompleteShape::Shuntsu([
-                            *tile_1, tile_2, tile_3
+                            *tile_1, *tile_2, *tile_3
                         ]));
+                        return Result::Ok(Shape::new(shape_type, tile_count));
+                    } else {
+                        let shape_type_o = Shape::_koutsu_shape_type(tile_1, tile_2, tile_3);
+                        match shape_type_o {
+                            Option::Some(st) => {
+                                shape_type = st;
+                                return Result::Ok(Shape::new(shape_type, tile_count));
+                            }
+                            Option::None => {
+                                return Err(RiichiError::new(122, "Bad shape"));
+                            }
+                        }
                     }
                 }
                 Wind(value) => {
-                    shape_type = ShapeType::Complete(CompleteShape::Koutsu([
-                        *tile_1, tiles.get(1).unwrap(), tiles.get(2).unwrap()
-                    ]));
+                    let shape_type_o = Shape::_koutsu_shape_type(tile_1, tile_2, tile_3);
+                    match shape_type_o {
+                        Option::Some(st) => {
+                            shape_type = st;
+                            return Result::Ok(Shape::new(shape_type, tile_count));
+                        }
+                        Option::None => {
+                            return Err(RiichiError::new(122, "Bad shape"));
+                        }
+                    }
                 }
                 Dragon(value) => {
-                    shape_type = ShapeType::Complete(CompleteShape::Koutsu([
-                        *tile_1, tiles.get(1).unwrap(), tiles.get(2).unwrap()
+                    let shape_type_o = Shape::_koutsu_shape_type(tile_1, tile_2, tile_3);
+                    match shape_type_o {
+                        Option::Some(st) => {
+                            shape_type = st;
+                            return Result::Ok(Shape::new(shape_type, tile_count));
+                        }
+                        Option::None => {
+                            return Err(RiichiError::new(122, "Bad shape"));
+                        }
+                    }
+                }
+            }
+        } else if tile_count == 2 {
+            let tile_1 = tiles.get(0).unwrap();
+            let tile_2 = tiles.get(1).unwrap();
+
+            if tile_1.eq(tile_2) {
+                if only_complete {
+                    shape_type = ShapeType::Complete(CompleteShape::Toitsu([
+                        *tile_1, *tile_2
                     ]));
+                    return Result::Ok(Shape::new(shape_type, tile_count));
                 }
             }
         }
 
-        Result::Ok(Shape::new(shape_type, tile_count))
+        return Err(RiichiError::new(124, "No suitable shape found"));
+//        Result::Ok(Shape::new(shape_type, tile_count))
+    }
+
+    fn _koutsu_shape_type(tile_1: &Tile, tile_2: &Tile, tile_3: &Tile) -> Option<ShapeType> {
+        if tile_1.eq(tile_2) && tile_2.eq(tile_3) {
+            return Option::Some(ShapeType::Complete(CompleteShape::Koutsu([
+                *tile_1, *tile_2, *tile_3
+            ])));
+        } else {
+            return Option::None;
+        }
     }
 
     /// Are these two tiles in a shape together?
