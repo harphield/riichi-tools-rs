@@ -3,3 +3,4 @@ mod tile;
 mod shapes;
 mod shanten;
 mod riichi_error;
+mod scores;
