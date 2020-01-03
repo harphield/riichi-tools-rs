@@ -42,6 +42,8 @@ impl Shape {
         }
     }
 
+    /// Creates a shape from the given tiles.
+    /// TODO incomplete shapes
     pub fn from_tiles(tiles: Vec<Tile>, only_complete: bool) -> Result<Shape, RiichiError> {
         let shape_type: ShapeType;
         let tile_count: u8 = tiles.iter().count() as u8;
