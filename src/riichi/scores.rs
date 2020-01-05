@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Score {
     han: u8,
     fu: u8,
@@ -18,6 +19,94 @@ impl Score {
         }
     }
 
+    /// Finds the first han + fu combination that reaches at least the value of points given.
+    /// TODO exact - do I need this anyway?
+    pub fn from_points(points: u32, oya: bool, tsumo: bool, exact: bool) -> Option<Vec<Score>> {
+        let mut base_points: f32 = 0f32;
+        if oya {
+            base_points = points as f32 / 6f32;
+        } else {
+            base_points = points as f32 / 4f32;
+        }
+
+        // 8000 is base for yakuman - if it's more, this score can't be reached by a hand
+        // TODO double yakumans?
+        if base_points > 8000f32 {
+            return None;
+        }
+
+        let mut scores = vec!();
+
+        if base_points >= 6000f32 {
+            scores.push(Score::new(11, 0, oya, tsumo));
+            scores.push(Score::new(12, 0, oya, tsumo));
+            return Some(scores);
+        }
+
+        if base_points >= 4000f32 {
+            scores.push(Score::new(8, 0, oya, tsumo));
+            scores.push(Score::new(9, 0, oya, tsumo));
+            scores.push(Score::new(10, 0, oya, tsumo));
+            return Some(scores);
+        }
+
+        if base_points >= 3000f32 {
+            scores.push(Score::new(6, 0, oya, tsumo));
+            scores.push(Score::new(7, 0, oya, tsumo));
+            return Some(scores);
+        }
+
+        if base_points >= 2000f32 {
+            scores.push(Score::new(3, 70, oya, tsumo));
+            scores.push(Score::new(4, 40, oya, tsumo));
+            scores.push(Score::new(5, 0, oya, tsumo));
+            return Some(scores);
+        }
+
+        let mut fu= 0;
+        let mut done = false;
+        for mut han in 1..4 {
+            fu = 20;
+            while fu <= 110 {
+                let s = Score::new(han, fu, oya, tsumo);
+                if s.total_points() >= points {
+                    // found!
+                    scores.push(s);
+                    done = true;
+
+                    loop {
+                        han += 1;
+                        fu = fu / 2;
+                        if fu >= 20 && (fu == 25 || fu as f32 % 10f32 == 0f32) {
+                            scores.push(Score::new(han, fu, oya, tsumo));
+
+                            if fu == 25 {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+
+                fu += 10;
+            }
+
+            if done {
+                break;
+            }
+        }
+
+        if !scores.is_empty() {
+            return Some(scores);
+        }
+
+        None
+    }
+
+    /// Returns the base points of this Score. See http://arcturus.su/wiki/Japanese_mahjong_scoring_rules#Scoring_procedure
     fn base_points(&self) -> u32 {
         let mut points: u32 = 0;
 
@@ -44,6 +133,7 @@ impl Score {
         self.fu as u32 * (2u32.pow(2u32 + self.han as u32))
     }
 
+    /// Returns total points that will be distributed from this Score
     pub fn total_points(&self) -> u32 {
         let mut points: u32 = 0;
         let base_points = self.base_points();
@@ -102,6 +192,7 @@ impl Score {
         points
     }
 
+    /// How many points will oya pay from this Score?
     pub fn points_from_oya(&self) -> u32 {
         let base_points = self.base_points();
 
@@ -112,6 +203,7 @@ impl Score {
         (((4 * base_points) as f32 / 100f32).ceil() * 100f32) as u32
     }
 
+    /// How many points will non-oya pay from this Score?
     pub fn points_from_ko(&self) -> u32 {
         let base_points = self.base_points();
 
@@ -210,5 +302,49 @@ mod tests {
     fn ko_points_1_30() {
         let score = Score::new(1, 30, false, false);
         assert_eq!(score.points_from_ko(), 1000);
+    }
+
+    #[test]
+    fn ko_points_1_30_tsumo() {
+        let score = Score::new(1, 30, false, true);
+        assert_eq!(score.points_from_ko(), 300);
+    }
+
+    #[test]
+    fn from_points_2000() {
+        let scores = Score::from_points(2000, false, false, false).unwrap();
+
+        assert_eq!(scores.len(), 2);
+
+        assert_eq!(scores[0].han, 1);
+        assert_eq!(scores[0].fu, 60);
+
+        assert_eq!(scores[1].han, 2);
+        assert_eq!(scores[1].fu, 30);
+    }
+
+    #[test]
+    fn from_points_3800() {
+        let scores = Score::from_points(3800, false, false, false).unwrap();
+
+        assert_eq!(scores.len(), 2);
+
+        assert_eq!(scores[0].han, 2);
+        assert_eq!(scores[0].fu, 60);
+
+        assert_eq!(scores[1].han, 3);
+        assert_eq!(scores[1].fu, 30);
+    }
+
+    #[test]
+    fn from_points_4000() {
+        let scores = Score::from_points(4000, false, false, false).unwrap();
+
+        println!("{:#?}", scores);
+
+        assert_eq!(scores.len(), 1);
+
+        assert_eq!(scores[0].han, 2);
+        assert_eq!(scores[0].fu, 70);
     }
 }
