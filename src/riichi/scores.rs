@@ -78,6 +78,11 @@ impl Score {
                         han += 1;
                         fu = fu / 2;
                         if fu >= 20 && (fu == 25 || fu as f32 % 10f32 == 0f32) {
+                            // fu 20 can only be achieved with a tsumo
+                            if fu == 20 && !tsumo {
+                                break;
+                            }
+
                             scores.push(Score::new(han, fu, oya, tsumo));
 
                             if fu == 25 {
@@ -337,14 +342,80 @@ mod tests {
     }
 
     #[test]
+    fn from_points_3800_oya() {
+        let scores = Score::from_points(3800, true, false, false).unwrap();
+
+//        println!("{:#?}", scores);
+
+        assert_eq!(scores.len(), 2);
+
+        assert_eq!(scores[0].han, 1);
+        assert_eq!(scores[0].fu, 80);
+
+        assert_eq!(scores[1].han, 2);
+        assert_eq!(scores[1].fu, 40);
+    }
+
+    #[test]
+    fn from_points_3800_oya_tsumo() {
+        let scores = Score::from_points(3800, true, true, false).unwrap();
+
+//        println!("{:#?}", scores);
+
+        assert_eq!(scores.len(), 3);
+
+        assert_eq!(scores[0].han, 1);
+        assert_eq!(scores[0].fu, 80);
+
+        assert_eq!(scores[1].han, 2);
+        assert_eq!(scores[1].fu, 40);
+
+        assert_eq!(scores[2].han, 3);
+        assert_eq!(scores[2].fu, 20);
+    }
+
+    #[test]
     fn from_points_4000() {
         let scores = Score::from_points(4000, false, false, false).unwrap();
 
-        println!("{:#?}", scores);
+//        println!("{:#?}", scores);
 
         assert_eq!(scores.len(), 1);
 
         assert_eq!(scores[0].han, 2);
         assert_eq!(scores[0].fu, 70);
+    }
+
+    #[test]
+    fn from_points_7600() {
+        let scores = Score::from_points(7600, false, false, false).unwrap();
+
+//        println!("{:#?}", scores);
+
+        assert_eq!(scores.len(), 2);
+
+        assert_eq!(scores[0].han, 3);
+        assert_eq!(scores[0].fu, 60);
+
+        assert_eq!(scores[1].han, 4);
+        assert_eq!(scores[1].fu, 30);
+    }
+
+    #[test]
+    fn from_points_8000() {
+        let scores = Score::from_points(8000, false, false, false).unwrap();
+
+//        println!("{:#?}", scores);
+
+        assert_eq!(scores.len(), 3);
+
+        assert_eq!(scores[0].han, 3);
+        assert_eq!(scores[0].fu, 70);
+
+        assert_eq!(scores[1].han, 4);
+        assert_eq!(scores[1].fu, 40);
+
+        assert_eq!(scores[2].han, 5);
+        assert_eq!(scores[2].fu, 0);
     }
 }
