@@ -1,6 +1,7 @@
 extern crate rand;
 
 use rand::Rng;
+use crate::riichi::scores::Score;
 
 /// TODO honba
 /// TODO riichi sticks
@@ -37,27 +38,62 @@ impl South4Simulator {
 
     /// Checks if the player correctly estimated the hands they need.
     /// Player must always check for point differences with a direct hit, non-direct ron and a tsumo win.
-    pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8)) {
+    pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8)) -> (bool, bool, bool) {
         let point_difference = self.opponent_score - self.my_score + 100;
 
         let direct_ron_points = point_difference / 2; // opponent pays all, so I only need 1/2 of our point difference
         let mut tsumo_points = point_difference;
 
-        if self.oya_state == 1 { // opponent will pay 1/4 of the winnings, so I only need to find 3/4 of the difference to beat them
-            tsumo_points -= tsumo_points / 4;
+        let mut oya = false;
+
+        if self.oya_state == 1 { // opponent will pay 1/4 of the winnings, so I only need to find 4/5 of the difference to beat them
+            tsumo_points = (point_difference as f32 * (4f32 / 5f32)).ceil() as u32;
         } else if self.oya_state == 2 { // opponent will pay 1/3 of the winnings
-            tsumo_points = point_difference * 3 / 4;
+            tsumo_points = (point_difference as f32 * (3f32 / 4f32)).ceil() as u32;
+            oya = true;
         } else if self.oya_state == 3 { // opponent pays 1/2 of the winnings, so our difference changes accordingly
-            tsumo_points = (point_difference as f64 / 1.5).ceil() as u32;
+            tsumo_points = (point_difference as f32 * (2f32 / 3f32)).ceil() as u32;
         }
 
         println!("tsumo points: {}", tsumo_points);
 
-//        w + w/3 = 8000
-//        4/3w = 8000
-//            4w = 8000 * 3
-//                w = 8000 * 3 / 4
-//        w = 8000 / 1.5
+        let direct_ron_score = Score::new(direct_ron.0, direct_ron.1, oya, false);
+        let direct_ron_correct_scores = Score::from_points(direct_ron_points, oya, false, false);
+        let mut direct_ron_correct_points: u32 = 0;
+        match direct_ron_correct_scores {
+            Some(scores) => {
+                direct_ron_correct_points = scores[0].total_points();
+            },
+            None => ()
+        }
+
+        let other_ron_score = Score::new(other_ron.0, other_ron.1, oya, false);
+        let other_ron_correct_scores = Score::from_points(point_difference, oya, false, false);
+        let mut other_ron_correct_points: u32 = 0;
+        match other_ron_correct_scores {
+            Some(scores) => {
+                other_ron_correct_points = scores[0].total_points();
+            },
+            None => ()
+        }
+
+        let tsumo_score = Score::new(tsumo.0, tsumo.1, oya, true);
+        let tsumo_correct_scores = Score::from_points(tsumo_points, oya, true, false);
+        let mut tsumo_correct_points: u32 = 0;
+        match tsumo_correct_scores {
+            Some(scores) => {
+                tsumo_correct_points = scores[0].total_points();
+            },
+            None => ()
+        }
+
+//        println!("tsumo correct: {}, tsumo guessed: {}", tsumo_correct_points, tsumo_score.total_points());
+
+        (
+            direct_ron_correct_points == direct_ron_score.total_points(),
+            other_ron_correct_points == other_ron_score.total_points(),
+            tsumo_correct_points == tsumo_score.total_points(),
+        )
     }
 }
 
@@ -66,14 +102,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn eval_16000() {
+    fn eval_7900() {
         let simulator = South4Simulator {
             my_score: 30000,
             opponent_score: 37900,
-            oya_state: 2
+            oya_state: 1
         };
 
-        simulator.evaluate((2, 70), (5, 0), (4, 25));
+        let result = simulator.evaluate((2, 70), (5, 0), (4, 25));
+
+//        println!("{:#?}", result);
+
+        assert_eq!(result.0, true);
+        assert_eq!(result.1, true);
+        assert_eq!(result.2, true);
     }
 }
 

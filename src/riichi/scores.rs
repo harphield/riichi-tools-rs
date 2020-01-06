@@ -8,8 +8,10 @@ pub struct Score {
 
 impl Score {
     pub fn new(han: u8, fu: u8, oya: bool, tsumo: bool) -> Score {
-        // TODO chiitoitsu 25 fu
-        let new_fu = ((fu as f32 / 10f32).round() * 10f32) as u8;
+        let mut new_fu = fu;
+        if fu != 25 {
+            new_fu = ((fu as f32 / 10f32).round() * 10f32) as u8;
+        }
 
         Score {
             han,
@@ -289,6 +291,12 @@ mod tests {
     fn score_3_50() {
         let score = Score::new(3, 70, false, false);
         assert_eq!(score.total_points(), 8000);
+    }
+
+    #[test]
+    fn score_4_25() {
+        let score = Score::new(4, 25, false, false);
+        assert_eq!(score.total_points(), 6400);
     }
 
     #[test]
