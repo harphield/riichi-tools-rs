@@ -121,6 +121,12 @@ mod tests {
     use super::*;
 
     #[test]
+    fn generate() {
+        let simulator = South4Simulator::new();
+
+        assert!(simulator.my_score < simulator.opponent_score);
+    }
+
     fn eval_7900() {
         let simulator = South4Simulator {
             my_score: 30000,

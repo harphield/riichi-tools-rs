@@ -63,6 +63,8 @@ pub fn get_hand_tiles(hand_string: &str) -> String {
 
 #[wasm_bindgen]
 pub fn s4s_start_game() -> String {
+    console_error_panic_hook::set_once();
+
     let simulator = South4Simulator::new();
 
     json!({
@@ -115,4 +117,16 @@ pub fn s4s_evaluate(my_score: u32,
             }
         }
     }).to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::s4s_start_game;
+
+    #[test]
+    fn s4s_start() {
+        let json = s4s_start_game();
+
+        println!("{}", json);
+    }
 }
