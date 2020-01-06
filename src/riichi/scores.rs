@@ -1,7 +1,7 @@
 #[derive(Debug)]
 pub struct Score {
-    han: u8,
-    fu: u8,
+    pub han: u8,
+    pub fu: u8,
     oya: bool,
     tsumo: bool,
 }

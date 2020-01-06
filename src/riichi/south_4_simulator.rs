@@ -38,7 +38,7 @@ impl South4Simulator {
 
     /// Checks if the player correctly estimated the hands they need.
     /// Player must always check for point differences with a direct hit, non-direct ron and a tsumo win.
-    pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8)) -> (bool, bool, bool) {
+    pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8)) -> ((bool, bool, bool), ((u8, u8), (u8, u8), (u8, u8))) {
         let point_difference = self.opponent_score - self.my_score + 100;
 
         let direct_ron_points = point_difference / 2; // opponent pays all, so I only need 1/2 of our point difference
@@ -60,9 +60,13 @@ impl South4Simulator {
         let direct_ron_score = Score::new(direct_ron.0, direct_ron.1, oya, false);
         let direct_ron_correct_scores = Score::from_points(direct_ron_points, oya, false, false);
         let mut direct_ron_correct_points: u32 = 0;
+        let mut direct_ron_correct_han: u8 = 0;
+        let mut direct_ron_correct_fu: u8 = 0;
         match direct_ron_correct_scores {
             Some(scores) => {
                 direct_ron_correct_points = scores[0].total_points();
+                direct_ron_correct_han = scores[0].han;
+                direct_ron_correct_fu = scores[0].fu;
             },
             None => ()
         }
@@ -70,9 +74,13 @@ impl South4Simulator {
         let other_ron_score = Score::new(other_ron.0, other_ron.1, oya, false);
         let other_ron_correct_scores = Score::from_points(point_difference, oya, false, false);
         let mut other_ron_correct_points: u32 = 0;
+        let mut other_ron_correct_han: u8 = 0;
+        let mut other_ron_correct_fu: u8 = 0;
         match other_ron_correct_scores {
             Some(scores) => {
                 other_ron_correct_points = scores[0].total_points();
+                other_ron_correct_han = scores[0].han;
+                other_ron_correct_fu = scores[0].fu;
             },
             None => ()
         }
@@ -80,9 +88,13 @@ impl South4Simulator {
         let tsumo_score = Score::new(tsumo.0, tsumo.1, oya, true);
         let tsumo_correct_scores = Score::from_points(tsumo_points, oya, true, false);
         let mut tsumo_correct_points: u32 = 0;
+        let mut tsumo_correct_han: u8 = 0;
+        let mut tsumo_correct_fu: u8 = 0;
         match tsumo_correct_scores {
             Some(scores) => {
                 tsumo_correct_points = scores[0].total_points();
+                tsumo_correct_han = scores[0].han;
+                tsumo_correct_fu = scores[0].fu;
             },
             None => ()
         }
@@ -90,9 +102,16 @@ impl South4Simulator {
 //        println!("tsumo correct: {}, tsumo guessed: {}", tsumo_correct_points, tsumo_score.total_points());
 
         (
-            direct_ron_correct_points == direct_ron_score.total_points(),
-            other_ron_correct_points == other_ron_score.total_points(),
-            tsumo_correct_points == tsumo_score.total_points(),
+            (
+                direct_ron_correct_points == direct_ron_score.total_points(),
+                other_ron_correct_points == other_ron_score.total_points(),
+                tsumo_correct_points == tsumo_score.total_points(),
+            ),
+            (
+                (direct_ron_correct_han, direct_ron_correct_fu),
+                (other_ron_correct_han, other_ron_correct_fu),
+                (tsumo_correct_han, tsumo_correct_fu),
+            )
         )
     }
 }
@@ -113,9 +132,44 @@ mod tests {
 
 //        println!("{:#?}", result);
 
-        assert_eq!(result.0, true);
-        assert_eq!(result.1, true);
-        assert_eq!(result.2, true);
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+    }
+
+    #[test]
+    fn eval_7900_oya() {
+        let simulator = South4Simulator {
+            my_score: 30000,
+            opponent_score: 37900,
+            oya_state: 2
+        };
+
+        let result = simulator.evaluate((1, 90), (2, 90), (2, 60));
+
+        println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+    }
+
+    #[test]
+    fn eval_7900_opponent_oya() {
+        let simulator = South4Simulator {
+            my_score: 30000,
+            opponent_score: 37900,
+            oya_state: 3
+        };
+
+        let result = simulator.evaluate((2, 70), (5, 0), (2, 90));
+
+        println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+
     }
 }
 
