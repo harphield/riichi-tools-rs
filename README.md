@@ -1,5 +1,5 @@
 # riichi-in-rust
-v0.0.40
+v0.0.41
 
 Rust + WASM. I wanted to learn these exciting technologies. What project to pick though?
 Well, since I like to play Riichi, why not something like an analyzer for
