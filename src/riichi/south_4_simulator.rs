@@ -55,7 +55,8 @@ impl South4Simulator {
             tsumo_points = (point_difference as f32 * (2f32 / 3f32)).ceil() as u32;
         }
 
-        println!("tsumo points: {}", tsumo_points);
+//        println!("pd {}", point_difference);
+//        println!("tsumo points: {}", tsumo_points);
 
         let direct_ron_score = Score::new(direct_ron.0, direct_ron.1, oya, false);
         let direct_ron_correct_scores = Score::from_points(direct_ron_points, oya, false, false);
@@ -176,6 +177,23 @@ mod tests {
         assert_eq!({result.0}.1, true);
         assert_eq!({result.0}.2, true);
 
+    }
+
+    #[test]
+    fn eval_16100_oya() {
+        let simulator = South4Simulator {
+            my_score: 33200,
+            opponent_score: 49200,
+            oya_state: 2
+        };
+
+        let result = simulator.evaluate((2, 90), (6, 0), (6, 0));
+
+        println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
     }
 }
 

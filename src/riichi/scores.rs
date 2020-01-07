@@ -31,6 +31,8 @@ impl Score {
             base_points = points as f32 / 4f32;
         }
 
+//        println!("base points {}", base_points);
+
         // 8000 is base for yakuman - if it's more, this score can't be reached by a hand
         // TODO double yakumans?
         if base_points > 8000f32 {
@@ -39,26 +41,31 @@ impl Score {
 
         let mut scores = vec!();
 
-        if base_points >= 6000f32 {
+        if base_points > 6000f32 {
+            scores.push(Score::new(13, 0, oya, tsumo));
+            return Some(scores);
+        }
+
+        if base_points > 4000f32 {
             scores.push(Score::new(11, 0, oya, tsumo));
             scores.push(Score::new(12, 0, oya, tsumo));
             return Some(scores);
         }
 
-        if base_points >= 4000f32 {
+        if base_points > 3000f32 {
             scores.push(Score::new(8, 0, oya, tsumo));
             scores.push(Score::new(9, 0, oya, tsumo));
             scores.push(Score::new(10, 0, oya, tsumo));
             return Some(scores);
         }
 
-        if base_points >= 3000f32 {
+        if base_points > 2000f32 {
             scores.push(Score::new(6, 0, oya, tsumo));
             scores.push(Score::new(7, 0, oya, tsumo));
             return Some(scores);
         }
 
-        if base_points >= 2000f32 {
+        if base_points > 1920f32 {
             scores.push(Score::new(3, 70, oya, tsumo));
             scores.push(Score::new(4, 40, oya, tsumo));
             scores.push(Score::new(5, 0, oya, tsumo));
