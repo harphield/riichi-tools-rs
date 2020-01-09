@@ -76,6 +76,12 @@ impl Score {
         let mut done = false;
         for mut han in 1..4 {
             fu = 20;
+
+            // 1 han hands and rons can't have 20 fu
+            if han == 1 || !tsumo {
+                fu = 30;
+            }
+
             while fu <= 110 {
                 let s = Score::new(han, fu, oya, tsumo);
                 if s.total_points() >= points {

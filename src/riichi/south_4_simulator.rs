@@ -249,5 +249,24 @@ mod tests {
         assert_eq!({result.0}.1, true);
         assert_eq!({result.0}.2, true);
     }
+
+    #[test]
+    fn eval_100() {
+        let simulator = South4Simulator {
+            my_score: 30000,
+            opponent_score: 30100,
+            oya_state: 1,
+            riichi_sticks: 0,
+            tsumibo: 0,
+        };
+
+        let result = simulator.evaluate((1, 30), (1, 30), (1, 30));
+
+        println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+    }
 }
 
