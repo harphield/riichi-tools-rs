@@ -71,7 +71,9 @@ pub fn s4s_start_game() -> String {
         "game": {
             "my_score": simulator.my_score,
             "opponent_score": simulator.opponent_score,
-            "oya_state": simulator.oya_state
+            "oya_state": simulator.oya_state,
+            "riichi_sticks": simulator.riichi_sticks,
+            "tsumibo": simulator.tsumibo,
         }
     }).to_string()
 }
@@ -80,6 +82,8 @@ pub fn s4s_start_game() -> String {
 pub fn s4s_evaluate(my_score: u32,
                     opponent_score: u32,
                     oya_state: u8,
+                    riichi_sticks: u8,
+                    tsumibo: u8,
                     direct_ron_han: u8,
                     direct_ron_fu: u8,
                     other_ron_han: u8,
@@ -90,7 +94,9 @@ pub fn s4s_evaluate(my_score: u32,
     let simulator = South4Simulator {
         my_score,
         opponent_score,
-        oya_state
+        oya_state,
+        riichi_sticks,
+        tsumibo,
     };
 
     let result = simulator.evaluate((direct_ron_han, direct_ron_fu), (other_ron_han, other_ron_fu), (tsumo_han, tsumo_fu));

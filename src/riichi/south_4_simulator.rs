@@ -12,6 +12,8 @@ pub struct South4Simulator {
     /// 2 = I am oya
     /// 3 = opponent is oya
     pub oya_state: u8,
+    pub riichi_sticks: u8,
+    pub tsumibo: u8,
 }
 
 impl South4Simulator {
@@ -19,10 +21,16 @@ impl South4Simulator {
         let points = South4Simulator::generate_players_state();
         let mut rng = rand::thread_rng();
 
+        // I want the chance of getting more sticks to be lower
+        let sticks_roll = [0,0,0,0,1,1,2,3];
+        let tsumibo_roll = [0,0,0,1,1,2,2,3,4,5];
+
         South4Simulator {
             my_score: points.0,
             opponent_score: points.1,
-            oya_state: rng.gen_range(1, 4)
+            oya_state: rng.gen_range(1, 4),
+            riichi_sticks: *sticks_roll.get(rng.gen_range(0, sticks_roll.len())).unwrap() as u8,
+            tsumibo: *tsumibo_roll.get(rng.gen_range(0, tsumibo_roll.len())).unwrap() as u8,
         }
     }
 
@@ -39,7 +47,7 @@ impl South4Simulator {
     /// Checks if the player correctly estimated the hands they need.
     /// Player must always check for point differences with a direct hit, non-direct ron and a tsumo win.
     pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8)) -> ((bool, bool, bool), ((u8, u8), (u8, u8), (u8, u8))) {
-        let point_difference = self.opponent_score - self.my_score + 100;
+        let point_difference = self.opponent_score - self.my_score + 100 - (1000 * self.riichi_sticks as u32) - (300 * self.tsumibo as u32);
 
         let direct_ron_points = point_difference / 2; // opponent pays all, so I only need 1/2 of our point difference
         let mut tsumo_points = point_difference;
@@ -132,7 +140,9 @@ mod tests {
         let simulator = South4Simulator {
             my_score: 30000,
             opponent_score: 37900,
-            oya_state: 1
+            oya_state: 1,
+            riichi_sticks: 0,
+            tsumibo: 0,
         };
 
         let result = simulator.evaluate((2, 70), (5, 0), (4, 25));
@@ -149,7 +159,9 @@ mod tests {
         let simulator = South4Simulator {
             my_score: 30000,
             opponent_score: 37900,
-            oya_state: 2
+            oya_state: 2,
+            riichi_sticks: 0,
+            tsumibo: 0,
         };
 
         let result = simulator.evaluate((1, 90), (2, 90), (2, 60));
@@ -166,7 +178,9 @@ mod tests {
         let simulator = South4Simulator {
             my_score: 30000,
             opponent_score: 37900,
-            oya_state: 3
+            oya_state: 3,
+            riichi_sticks: 0,
+            tsumibo: 0,
         };
 
         let result = simulator.evaluate((2, 70), (5, 0), (2, 90));
@@ -184,12 +198,52 @@ mod tests {
         let simulator = South4Simulator {
             my_score: 33200,
             opponent_score: 49200,
-            oya_state: 2
+            oya_state: 2,
+            riichi_sticks: 0,
+            tsumibo: 0,
         };
 
         let result = simulator.evaluate((2, 90), (6, 0), (6, 0));
 
         println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+    }
+
+    #[test]
+    fn eval_8900_with_riichi_stick() {
+        let simulator = South4Simulator {
+            my_score: 30000,
+            opponent_score: 38900,
+            oya_state: 1,
+            riichi_sticks: 1,
+            tsumibo: 0,
+        };
+
+        let result = simulator.evaluate((2, 70), (5, 0), (4, 25));
+
+//        println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+    }
+
+    #[test]
+    fn eval_9500_with_riichi_stick_2_tsumibo() {
+        let simulator = South4Simulator {
+            my_score: 30000,
+            opponent_score: 39500,
+            oya_state: 1,
+            riichi_sticks: 1,
+            tsumibo: 2,
+        };
+
+        let result = simulator.evaluate((2, 70), (5, 0), (4, 25));
+
+//        println!("{:#?}", result);
 
         assert_eq!({result.0}.0, true);
         assert_eq!({result.0}.1, true);

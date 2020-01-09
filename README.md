@@ -1,5 +1,5 @@
 # riichi-in-rust
-v0.0.41
+v0.0.42
 
 Rust + WASM. I wanted to learn these exciting technologies. What project to pick though?
 Well, since I like to play Riichi, why not something like an analyzer for
@@ -16,6 +16,8 @@ Only the frontend will be in Javascript+HTML, so no logic in JS, all in Rust, ho
 Lots of inspiration from other mahjong tools, like https://euophrys.itch.io/mahjong-efficiency-trainer, http://tenhou.net/2/, http://kobalab.net/majiang/dapai.html etc.
 
 ## Roadmap
+- South 4 Simulator
+    - A game where you try to win in the last round
 - Hand analysis
     - Shanten for 13 tiles [DONE]
     - Shanten for 14 tiles with complete hand indication [DONE]
