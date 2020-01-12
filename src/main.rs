@@ -1,4 +1,4 @@
-mod riichi;
+pub mod riichi;
 
 use riichi::hand::Hand;
 

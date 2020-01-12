@@ -17,22 +17,22 @@ extern {
 
 #[wasm_bindgen]
 pub fn get_hand_shanten(hand_string: &str) -> String {
-    match Hand::from_text(hand_string, false) {
+    return match Hand::from_text(hand_string, false) {
         Ok(mut hand) => {
             let shanten = hand.shanten();
-            return json!({
+            json!({
                 "success": {
                     "shanten": shanten
                 }
-            }).to_string();
+            }).to_string()
         },
         Err(error) => {
-            return json!({
+            json!({
                 "error": {
                     "code": error.code,
                     "message": error.message
                 }
-            }).to_string();
+            }).to_string()
         }
     }
 }
@@ -40,23 +40,23 @@ pub fn get_hand_shanten(hand_string: &str) -> String {
 /// Checks the validity of the hand and returns tiles that it found
 #[wasm_bindgen]
 pub fn get_hand_tiles(hand_string: &str) -> String {
-    match Hand::from_text(hand_string, true) {
+    return match Hand::from_text(hand_string, true) {
         Ok(mut hand) => {
             let valid = hand.validate();
-            return json!({
+            json!({
                 "hand": {
                     "valid": valid,
                     "tiles": hand.to_array_of_strings()
                 }
-            }).to_string();
+            }).to_string()
         },
         Err(error) => {
-            return json!({
+            json!({
                 "error": {
                     "code": error.code,
                     "message": error.message
                 }
-            }).to_string();
+            }).to_string()
         }
     }
 }
