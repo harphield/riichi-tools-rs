@@ -3,8 +3,6 @@ extern crate rand;
 use rand::Rng;
 use crate::riichi::scores::Score;
 
-/// TODO honba
-/// TODO riichi sticks
 pub struct South4Simulator {
     pub my_score: u32,
     pub opponent_score: u32,
@@ -47,10 +45,14 @@ impl South4Simulator {
     /// Checks if the player correctly estimated the hands they need.
     /// Player must always check for point differences with a direct hit, non-direct ron and a tsumo win.
     pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8)) -> ((bool, bool, bool), ((u8, u8), (u8, u8), (u8, u8))) {
-        let point_difference = self.opponent_score - self.my_score + 100 - (1000 * self.riichi_sticks as u32) - (300 * self.tsumibo as u32);
+        let mut point_difference: i32 = (self.opponent_score as i32 - self.my_score as i32 + 100 - (1000 * self.riichi_sticks as i32) - (300 * self.tsumibo as i32)) as i32;
 
-        let direct_ron_points = point_difference / 2; // opponent pays all, so I only need 1/2 of our point difference
-        let mut tsumo_points = point_difference;
+        if point_difference <= 0 {
+            point_difference = 100; // you can just win with whatever
+        }
+
+        let direct_ron_points = (point_difference / 2) as u32; // opponent pays all, so I only need 1/2 of our point difference
+        let mut tsumo_points = point_difference as u32;
 
         let mut oya = false;
 
@@ -81,7 +83,7 @@ impl South4Simulator {
         }
 
         let other_ron_score = Score::new(other_ron.0, other_ron.1, oya, false);
-        let other_ron_correct_scores = Score::from_points(point_difference, oya, false, false);
+        let other_ron_correct_scores = Score::from_points(point_difference as u32, oya, false, false);
         let mut other_ron_correct_points: u32 = 0;
         let mut other_ron_correct_han: u8 = 0;
         let mut other_ron_correct_fu: u8 = 0;
@@ -258,6 +260,25 @@ mod tests {
             oya_state: 1,
             riichi_sticks: 0,
             tsumibo: 0,
+        };
+
+        let result = simulator.evaluate((1, 30), (1, 30), (1, 30));
+
+        println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+    }
+
+    #[test]
+    fn eval_negative() {
+        let simulator = South4Simulator {
+            my_score: 30000,
+            opponent_score: 32000,
+            oya_state: 1,
+            riichi_sticks: 2,
+            tsumibo: 1,
         };
 
         let result = simulator.evaluate((1, 30), (1, 30), (1, 30));
