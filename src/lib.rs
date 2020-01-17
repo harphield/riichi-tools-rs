@@ -90,6 +90,7 @@ pub fn s4s_evaluate(my_score: u32,
                     other_ron_fu: u8,
                     tsumo_han: u8,
                     tsumo_fu: u8,
+                    hard_mode: bool
 ) -> String {
     let simulator = South4Simulator {
         my_score,
@@ -99,7 +100,7 @@ pub fn s4s_evaluate(my_score: u32,
         tsumibo,
     };
 
-    let result = simulator.evaluate((direct_ron_han, direct_ron_fu), (other_ron_han, other_ron_fu), (tsumo_han, tsumo_fu));
+    let result = simulator.evaluate((direct_ron_han, direct_ron_fu), (other_ron_han, other_ron_fu), (tsumo_han, tsumo_fu), hard_mode);
 
     let result_direct_ron = {result.0}.0;
     let result_other_ron = {result.0}.1;

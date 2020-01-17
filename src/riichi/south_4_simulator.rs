@@ -44,8 +44,13 @@ impl South4Simulator {
 
     /// Checks if the player correctly estimated the hands they need.
     /// Player must always check for point differences with a direct hit, non-direct ron and a tsumo win.
-    pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8)) -> ((bool, bool, bool), ((u8, u8), (u8, u8), (u8, u8))) {
+    pub fn evaluate(&self, direct_ron: (u8, u8), other_ron: (u8, u8), tsumo: (u8, u8), hard_mode: bool) -> ((bool, bool, bool), ((u8, u8), (u8, u8), (u8, u8))) {
         let mut point_difference: i32 = (self.opponent_score as i32 - self.my_score as i32 + 100 - (1000 * self.riichi_sticks as i32) - (300 * self.tsumibo as i32)) as i32;
+
+        let mut fu_limit = 60;
+        if hard_mode {
+            fu_limit = 110;
+        }
 
         if point_difference <= 0 {
             point_difference = 100; // you can just win with whatever
@@ -69,7 +74,7 @@ impl South4Simulator {
 //        println!("tsumo points: {}", tsumo_points);
 
         let direct_ron_score = Score::new(direct_ron.0, direct_ron.1, oya, false);
-        let direct_ron_correct_scores = Score::from_points(direct_ron_points, oya, false, false);
+        let direct_ron_correct_scores = Score::from_points(direct_ron_points, oya, false, fu_limit);
         let mut direct_ron_correct_points: u32 = 0;
         let mut direct_ron_correct_han: u8 = 0;
         let mut direct_ron_correct_fu: u8 = 0;
@@ -83,7 +88,7 @@ impl South4Simulator {
         }
 
         let other_ron_score = Score::new(other_ron.0, other_ron.1, oya, false);
-        let other_ron_correct_scores = Score::from_points(point_difference as u32, oya, false, false);
+        let other_ron_correct_scores = Score::from_points(point_difference as u32, oya, false, fu_limit);
         let mut other_ron_correct_points: u32 = 0;
         let mut other_ron_correct_han: u8 = 0;
         let mut other_ron_correct_fu: u8 = 0;
@@ -97,7 +102,7 @@ impl South4Simulator {
         }
 
         let tsumo_score = Score::new(tsumo.0, tsumo.1, oya, true);
-        let tsumo_correct_scores = Score::from_points(tsumo_points, oya, true, false);
+        let tsumo_correct_scores = Score::from_points(tsumo_points, oya, true, fu_limit);
         let mut tsumo_correct_points: u32 = 0;
         let mut tsumo_correct_han: u8 = 0;
         let mut tsumo_correct_fu: u8 = 0;
@@ -147,7 +152,7 @@ mod tests {
             tsumibo: 0,
         };
 
-        let result = simulator.evaluate((2, 70), (5, 0), (4, 25));
+        let result = simulator.evaluate((2, 70), (5, 0), (4, 25), true);
 
 //        println!("{:#?}", result);
 
@@ -166,7 +171,7 @@ mod tests {
             tsumibo: 0,
         };
 
-        let result = simulator.evaluate((1, 90), (2, 90), (2, 60));
+        let result = simulator.evaluate((2, 50), (3, 50), (3, 30), false);
 
         println!("{:#?}", result);
 
@@ -185,7 +190,7 @@ mod tests {
             tsumibo: 0,
         };
 
-        let result = simulator.evaluate((2, 70), (5, 0), (2, 90));
+        let result = simulator.evaluate((3, 40), (5, 0), (3, 50), false);
 
         println!("{:#?}", result);
 
@@ -205,7 +210,7 @@ mod tests {
             tsumibo: 0,
         };
 
-        let result = simulator.evaluate((2, 90), (6, 0), (6, 0));
+        let result = simulator.evaluate((2, 90), (6, 0), (6, 0), true);
 
         println!("{:#?}", result);
 
@@ -224,7 +229,7 @@ mod tests {
             tsumibo: 0,
         };
 
-        let result = simulator.evaluate((2, 70), (5, 0), (4, 25));
+        let result = simulator.evaluate((2, 70), (5, 0), (4, 25), true);
 
 //        println!("{:#?}", result);
 
@@ -243,7 +248,7 @@ mod tests {
             tsumibo: 2,
         };
 
-        let result = simulator.evaluate((2, 70), (5, 0), (4, 25));
+        let result = simulator.evaluate((3, 40), (5, 0), (4, 25), false);
 
 //        println!("{:#?}", result);
 
@@ -262,7 +267,7 @@ mod tests {
             tsumibo: 0,
         };
 
-        let result = simulator.evaluate((1, 30), (1, 30), (1, 30));
+        let result = simulator.evaluate((1, 30), (1, 30), (1, 30), false);
 
         println!("{:#?}", result);
 
@@ -281,7 +286,7 @@ mod tests {
             tsumibo: 1,
         };
 
-        let result = simulator.evaluate((1, 30), (1, 30), (1, 30));
+        let result = simulator.evaluate((1, 30), (1, 30), (1, 30), false);
 
         println!("{:#?}", result);
 

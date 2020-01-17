@@ -22,8 +22,7 @@ impl Score {
     }
 
     /// Finds the first han + fu combination that reaches at least the value of points given.
-    /// TODO exact - do I need this anyway?
-    pub fn from_points(points: u32, oya: bool, tsumo: bool, exact: bool) -> Option<Vec<Score>> {
+    pub fn from_points(points: u32, oya: bool, tsumo: bool, fu_limit: u8) -> Option<Vec<Score>> {
         let mut base_points: f32 = 0f32;
         if oya {
             base_points = points as f32 / 6f32;
@@ -82,7 +81,7 @@ impl Score {
                 fu = 30;
             }
 
-            while fu <= 110 {
+            while fu <= fu_limit {
                 let s = Score::new(han, fu, oya, tsumo);
                 if s.total_points() >= points {
                     // found!
@@ -338,7 +337,7 @@ mod tests {
 
     #[test]
     fn from_points_2000() {
-        let scores = Score::from_points(2000, false, false, false).unwrap();
+        let scores = Score::from_points(2000, false, false, 60).unwrap();
 
         assert_eq!(scores.len(), 2);
 
@@ -351,7 +350,7 @@ mod tests {
 
     #[test]
     fn from_points_3800() {
-        let scores = Score::from_points(3800, false, false, false).unwrap();
+        let scores = Score::from_points(3800, false, false, 60).unwrap();
 
         assert_eq!(scores.len(), 2);
 
@@ -364,52 +363,46 @@ mod tests {
 
     #[test]
     fn from_points_3800_oya() {
-        let scores = Score::from_points(3800, true, false, false).unwrap();
-
-//        println!("{:#?}", scores);
-
-        assert_eq!(scores.len(), 2);
-
-        assert_eq!(scores[0].han, 1);
-        assert_eq!(scores[0].fu, 80);
-
-        assert_eq!(scores[1].han, 2);
-        assert_eq!(scores[1].fu, 40);
-    }
-
-    #[test]
-    fn from_points_3800_oya_tsumo() {
-        let scores = Score::from_points(3800, true, true, false).unwrap();
-
-//        println!("{:#?}", scores);
-
-        assert_eq!(scores.len(), 3);
-
-        assert_eq!(scores[0].han, 1);
-        assert_eq!(scores[0].fu, 80);
-
-        assert_eq!(scores[1].han, 2);
-        assert_eq!(scores[1].fu, 40);
-
-        assert_eq!(scores[2].han, 3);
-        assert_eq!(scores[2].fu, 20);
-    }
-
-    #[test]
-    fn from_points_4000() {
-        let scores = Score::from_points(4000, false, false, false).unwrap();
+        let scores = Score::from_points(3800, true, false, 60).unwrap();
 
 //        println!("{:#?}", scores);
 
         assert_eq!(scores.len(), 1);
 
         assert_eq!(scores[0].han, 2);
-        assert_eq!(scores[0].fu, 70);
+        assert_eq!(scores[0].fu, 40);
+    }
+
+    #[test]
+    fn from_points_3800_oya_tsumo() {
+        let scores = Score::from_points(3800, true, true, 60).unwrap();
+
+//        println!("{:#?}", scores);
+
+        assert_eq!(scores.len(), 2);
+
+        assert_eq!(scores[0].han, 2);
+        assert_eq!(scores[0].fu, 40);
+
+        assert_eq!(scores[1].han, 3);
+        assert_eq!(scores[1].fu, 20);
+    }
+
+    #[test]
+    fn from_points_4000() {
+        let scores = Score::from_points(4000, false, false, 60).unwrap();
+
+//        println!("{:#?}", scores);
+
+        assert_eq!(scores.len(), 1);
+
+        assert_eq!(scores[0].han, 3);
+        assert_eq!(scores[0].fu, 40);
     }
 
     #[test]
     fn from_points_7600() {
-        let scores = Score::from_points(7600, false, false, false).unwrap();
+        let scores = Score::from_points(7600, false, false, 60).unwrap();
 
 //        println!("{:#?}", scores);
 
@@ -424,7 +417,7 @@ mod tests {
 
     #[test]
     fn from_points_8000() {
-        let scores = Score::from_points(8000, false, false, false).unwrap();
+        let scores = Score::from_points(8000, false, false, 60).unwrap();
 
 //        println!("{:#?}", scores);
 
