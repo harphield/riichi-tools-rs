@@ -65,7 +65,9 @@ impl Score {
         }
 
         if base_points > 1920f32 {
-            scores.push(Score::new(3, 70, oya, tsumo));
+            if fu_limit > 60 {
+                scores.push(Score::new(3, 70, oya, tsumo));
+            }
             scores.push(Score::new(4, 40, oya, tsumo));
             scores.push(Score::new(5, 0, oya, tsumo));
             return Some(scores);

@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.45
+v0.0.46
 
 A tool library for riichi mahjong written in Rust, mostly to be used as a WASM component.
 
