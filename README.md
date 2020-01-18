@@ -1,6 +1,8 @@
 # riichi-tools-rs
 v0.0.47
 
+[![Build Status](https://travis-ci.org/harphield/riichi-tools-rs.png?branch=master)](https://travis-ci.org/harphield/riichi-tools-rs)
+
 A tool library for riichi mahjong written in Rust, made mostly to be used as a WASM component.
 
 Lots of inspiration from other mahjong tools, like https://euophrys.itch.io/mahjong-efficiency-trainer, http://tenhou.net/2/, 
