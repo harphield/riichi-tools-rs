@@ -4,6 +4,8 @@ version = "0.0.47"
 authors = ["harphield <harphield@gmail.com>"]
 edition = "2018"
 license = "MIT"
+description = "Riichi Mahjong tools library, mostly for WASM"
+readme = "README.md"
 
 [lib]
 crate-type = ["cdylib"]
