@@ -421,17 +421,14 @@ mod tests {
     fn from_points_8000() {
         let scores = Score::from_points(8000, false, false, 60).unwrap();
 
-//        println!("{:#?}", scores);
+        println!("{:#?}", scores);
 
-        assert_eq!(scores.len(), 3);
+        assert_eq!(scores.len(), 2);
 
-        assert_eq!(scores[0].han, 3);
-        assert_eq!(scores[0].fu, 70);
+        assert_eq!(scores[0].han, 4);
+        assert_eq!(scores[0].fu, 40);
 
-        assert_eq!(scores[1].han, 4);
-        assert_eq!(scores[1].fu, 40);
-
-        assert_eq!(scores[2].han, 5);
-        assert_eq!(scores[2].fu, 0);
+        assert_eq!(scores[1].han, 5);
+        assert_eq!(scores[1].fu, 0);
     }
 }
