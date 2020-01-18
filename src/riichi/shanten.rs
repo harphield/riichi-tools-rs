@@ -99,6 +99,13 @@ impl ShantenFinder {
             if self.complete_melds + self.incomplete_melds > 4 {
                 too_many_groups += self.complete_melds + self.incomplete_melds - 4;
             }
+
+            if self.complete_melds == 4 && self.incomplete_melds == 0 && self.isolated_tiles == 1 && self.pairs == 0 {
+                // the isolated tile is an incomplete pair meld
+                self.incomplete_melds += 1;
+            }
+
+//            println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
             return (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check + too_many_groups) as i8;
         }
 
@@ -185,6 +192,12 @@ impl ShantenFinder {
             too_many_groups += self.complete_melds + self.incomplete_melds - 4;
         }
 
+        if self.complete_melds == 4 && self.incomplete_melds == 0 && self.isolated_tiles == 1 && self.pairs == 0 {
+            // the isolated tile is an incomplete pair meld
+            self.incomplete_melds += 1;
+        }
+
+//        println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
         let final_shanten = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check + too_many_groups) as i8;
         if !shantens.contains(&final_shanten) {
             shantens.push(final_shanten);
@@ -456,6 +469,30 @@ mod tests {
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 1);
+    }
+
+    #[test]
+    fn honors_suuankou_tenpai() {
+        let mut hand = Hand::from_text("1112223334445z", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn nonhonors_suuankou_tenpai() {
+        let mut hand = Hand::from_text("111m222s333444p5s", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn weird_hand_shanten() {
+        let mut hand = Hand::from_text("37m13478s45699p1z", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 3);
     }
 
     #[test]

@@ -495,6 +495,13 @@ mod tests {
     }
 
     #[test]
+    fn next_wind_east() {
+        let tile = Tile::new(TileType::Wind(1));
+        let next = tile.next(false);
+        assert!(next == None);
+    }
+
+    #[test]
     fn next_id_wind_dora() {
         let tile = Tile::new(TileType::Wind(4));
         let next = tile.next_id(true, 1);
