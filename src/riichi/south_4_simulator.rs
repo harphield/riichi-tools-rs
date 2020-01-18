@@ -57,17 +57,17 @@ impl South4Simulator {
         }
 
         let direct_ron_points = (point_difference / 2) as u32; // opponent pays all, so I only need 1/2 of our point difference
-        let mut tsumo_points = point_difference as u32;
+        let mut tsumo_points = point_difference as u32 - (self.tsumibo * 100) as u32; // the leader pays 100 points per stick
 
         let mut oya = false;
 
         if self.oya_state == 1 { // opponent will pay 1/4 of the winnings, so I only need to find 4/5 of the difference to beat them
-            tsumo_points = (point_difference as f32 * (4f32 / 5f32)).ceil() as u32;
+            tsumo_points = (tsumo_points as f32 * (4f32 / 5f32)).ceil() as u32;
         } else if self.oya_state == 2 { // opponent will pay 1/3 of the winnings
-            tsumo_points = (point_difference as f32 * (3f32 / 4f32)).ceil() as u32;
+            tsumo_points = (tsumo_points as f32 * (3f32 / 4f32)).ceil() as u32;
             oya = true;
         } else if self.oya_state == 3 { // opponent pays 1/2 of the winnings, so our difference changes accordingly
-            tsumo_points = (point_difference as f32 * (2f32 / 3f32)).ceil() as u32;
+            tsumo_points = (tsumo_points as f32 * (2f32 / 3f32)).ceil() as u32;
         }
 
 //        println!("pd {}", point_difference);
@@ -287,6 +287,25 @@ mod tests {
         };
 
         let result = simulator.evaluate((1, 30), (1, 30), (1, 30), false);
+
+        println!("{:#?}", result);
+
+        assert_eq!({result.0}.0, true);
+        assert_eq!({result.0}.1, true);
+        assert_eq!({result.0}.2, true);
+    }
+
+    #[test]
+    fn eval_tsumo_with_sticks() {
+        let simulator = South4Simulator {
+            my_score: 30000,
+            opponent_score: 40300,
+            oya_state: 1,
+            riichi_sticks: 0,
+            tsumibo: 1,
+        };
+
+        let result = simulator.evaluate((3, 40), (6, 0), (5, 0), false);
 
         println!("{:#?}", result);
 
