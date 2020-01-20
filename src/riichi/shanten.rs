@@ -88,25 +88,7 @@ impl ShantenFinder {
         let mut too_many_groups = 0;
 
         if depth >= 34 {
-            if self.pairs == 1 {
-                has_pair_check = 0;
-            } else if self.pairs == 0 {
-                has_pair_check = 1;
-            } else {
-                has_pair_check = self.pairs - 1;
-            }
-
-            if self.complete_melds + self.incomplete_melds > 4 {
-                too_many_groups += self.complete_melds + self.incomplete_melds - 4;
-            }
-
-            if self.complete_melds == 4 && self.incomplete_melds == 0 && self.isolated_tiles == 1 && self.pairs == 0 {
-                // the isolated tile is an incomplete pair meld
-                self.incomplete_melds += 1;
-            }
-
-//            println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
-            return (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check + too_many_groups) as i8;
+            return self.final_calculations(&mut has_pair_check, &mut too_many_groups);
         }
 
         // got 4 tiles
@@ -180,16 +162,26 @@ impl ShantenFinder {
         }
 
         self.analyze_and_push(array_34, depth + 1, &mut shantens);
+
+        let final_shanten = self.final_calculations(&mut has_pair_check, &mut too_many_groups);
+        if !shantens.contains(&final_shanten) {
+            shantens.push(final_shanten);
+        }
+
+        *shantens.iter().min().unwrap()
+    }
+
+    fn final_calculations(&mut self, has_pair_check: &mut i8, too_many_groups: &mut i8) -> i8 {
         if self.pairs == 1 {
-            has_pair_check = 0;
+            *has_pair_check = 0;
         } else if self.pairs == 0 {
-            has_pair_check = 1;
+            *has_pair_check = 1;
         } else {
-            has_pair_check = self.pairs - 1;
+            *has_pair_check = self.pairs - 1;
         }
 
         if self.complete_melds + self.incomplete_melds > 4 {
-            too_many_groups += self.complete_melds + self.incomplete_melds - 4;
+            *too_many_groups += self.complete_melds + self.incomplete_melds - 4;
         }
 
         if self.complete_melds == 4 && self.incomplete_melds == 0 && self.isolated_tiles == 1 && self.pairs == 0 {
@@ -197,13 +189,13 @@ impl ShantenFinder {
             self.incomplete_melds += 1;
         }
 
-//        println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
-        let final_shanten = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + has_pair_check + too_many_groups) as i8;
-        if !shantens.contains(&final_shanten) {
-            shantens.push(final_shanten);
+        if self.pairs == 2 && self.incomplete_melds == 0 && self.isolated_tiles == 0 {
+            // shanpon wait - one of them is an incomplete ankou meld
+            self.incomplete_melds += 1;
         }
 
-        *shantens.iter().min().unwrap()
+//        println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
+        return (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + *has_pair_check + *too_many_groups) as i8;
     }
 
     fn analyze_and_push(&mut self, array_34: &mut [u8; 34], depth: usize, shantens: &mut Vec<i8>) {
@@ -542,5 +534,13 @@ mod tests {
 
         assert_eq!(shanten, -1);
 
+    }
+
+    #[test]
+    fn honors_shanpon_tenpai() {
+        let mut hand = Hand::from_text("1112223334455z", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
     }
 }

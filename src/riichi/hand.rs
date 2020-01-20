@@ -43,6 +43,10 @@ impl Hand {
             return false;
         }
 
+        if self.count_tiles() > 14 {
+            return false;
+        }
+
         true
     }
 
