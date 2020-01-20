@@ -484,6 +484,16 @@ mod tests {
     }
 
     #[test]
+    fn find_improving_tiles_13_3() {
+        let mut hand = Hand::from_text("1234s123p999m456z", false).unwrap();
+        let map = hand.find_shanten_improving_tiles();
+
+        println!("{:#?}", map);
+
+        assert_eq!(map.len(), 1);
+    }
+
+    #[test]
     fn count_hand_normal_13() {
         let mut hand = Hand::from_text("237m13478s45699p", false).unwrap();
 
