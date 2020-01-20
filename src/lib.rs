@@ -9,20 +9,22 @@ use riichi::south_4_simulator::South4Simulator;
 use serde_json::json;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
+use wasm_bindgen_futures::future_to_promise;
+use std::collections::HashMap;
 
 #[wasm_bindgen]
 extern {
     pub fn alert(s: &str);
 }
 
-#[wasm_bindgen]
-pub fn get_hand_shanten(hand_string: &str) -> String {
+pub async fn async_hand_shanten(hand_string: &str) -> String {
     return match Hand::from_text(hand_string, false) {
         Ok(mut hand) => {
             let shanten = hand.shanten();
             json!({
                 "success": {
-                    "shanten": shanten
+                    "shanten": shanten,
+                    "async": true,
                 }
             }).to_string()
         },
@@ -37,9 +39,15 @@ pub fn get_hand_shanten(hand_string: &str) -> String {
     }
 }
 
+#[wasm_bindgen(js_name = get_hand_shanten)]
+pub fn run_get_hand_shanten(hand_string: String) -> js_sys::Promise {
+    future_to_promise(async move {
+        Ok(JsValue::from_str(&async_hand_shanten(&hand_string[..]).await))
+    })
+}
+
 /// Checks the validity of the hand and returns tiles that it found
-#[wasm_bindgen]
-pub fn get_hand_tiles(hand_string: &str) -> String {
+pub async fn async_hand_tiles(hand_string: &str) -> String {
     return match Hand::from_text(hand_string, true) {
         Ok(mut hand) => {
             let valid = hand.validate();
@@ -59,6 +67,53 @@ pub fn get_hand_tiles(hand_string: &str) -> String {
             }).to_string()
         }
     }
+}
+
+#[wasm_bindgen(js_name = get_hand_tiles)]
+pub fn run_get_hand_tiles(hand_string: String) -> js_sys::Promise {
+    future_to_promise(async move {
+        Ok(JsValue::from_str(&async_hand_tiles(&hand_string[..]).await))
+    })
+}
+
+pub async fn async_shanten_improving_tiles(hand_string: &str) -> String {
+    return match Hand::from_text(hand_string, false) {
+        Ok(mut hand) => {
+            let imp_tiles = hand.find_shanten_improving_tiles();
+            let mut imp_hm = HashMap::new();
+
+            for (key, value) in imp_tiles.iter() {
+                for tile in value {
+                    imp_hm.insert(match key {
+                        Some(t) => t.to_string(),
+                        None => "x".to_string(),
+                    }, value);
+//                    imp_hm.insert(tile.to_string());
+                }
+            }
+
+            json!({
+                "success": {
+                    "imp_tiles": imp_hm
+                }
+            }).to_string()
+        },
+        Err(error) => {
+            json!({
+                "error": {
+                    "code": error.code,
+                    "message": error.message
+                }
+            }).to_string()
+        }
+    }
+}
+
+#[wasm_bindgen(js_name = get_shanten_improving_tiles)]
+pub fn run_shanten_improving_tiles(hand_string: String) -> js_sys::Promise {
+    future_to_promise(async move {
+        Ok(JsValue::from_str(&async_shanten_improving_tiles(&hand_string[..]).await))
+    })
 }
 
 #[wasm_bindgen]
@@ -128,12 +183,13 @@ pub fn s4s_evaluate(my_score: u32,
 
 #[cfg(test)]
 mod tests {
-    use crate::s4s_start_game;
-
-    #[test]
-    fn s4s_start() {
-        let json = s4s_start_game();
-
-        println!("{}", json);
-    }
+    use crate::*;
+//
+//    #[test]
+//    fn s4s_start() {
+//        let json = async_shanten_improving_tiles("1234s123p999m45z");
+//
+//        assert!(false);
+////        println!("{:?}", json.await);
+//    }
 }
