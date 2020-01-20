@@ -7,7 +7,9 @@ pub struct ShantenFinder {
     complete_melds: i8,
     incomplete_melds: i8,
     isolated_tiles: i8,
-    recursion_count: u32
+    hand_count: usize,
+    recursion_count: u32,
+    min_found: i8,
 }
 
 impl ShantenFinder {
@@ -21,6 +23,8 @@ impl ShantenFinder {
         if !hand.validate() {
             return Err(RiichiError::new(101, "Invalid hand"));
         }
+        self.hand_count = hand.count_tiles();
+
         let mut shanten: i8 = 8; // max shanten ever ???
         let mut array_34 = hand.get_34_array();
 
@@ -81,6 +85,10 @@ impl ShantenFinder {
     /// Recursive method to traverse a hand, removing shapes until only tiles that have to be
     /// discarded and changed remain - that is the shanten of a hand.
     fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> i8 {
+        if (self.hand_count == 13 && self.min_found <= 0) || (self.hand_count == 14 && self.min_found < 0) {
+            return 99;
+        }
+
         self.recursion_count += 1;
 
         let mut shantens: Vec<i8> = vec!();
@@ -163,10 +171,10 @@ impl ShantenFinder {
 
         self.analyze_and_push(array_34, depth + 1, &mut shantens);
 
-        let final_shanten = self.final_calculations(&mut has_pair_check, &mut too_many_groups);
-        if !shantens.contains(&final_shanten) {
-            shantens.push(final_shanten);
-        }
+//        let final_shanten = self.final_calculations(&mut has_pair_check, &mut too_many_groups);
+//        if !shantens.contains(&final_shanten) {
+//            shantens.push(final_shanten);
+//        }
 
         *shantens.iter().min().unwrap()
     }
@@ -184,9 +192,14 @@ impl ShantenFinder {
             *too_many_groups += self.complete_melds + self.incomplete_melds - 4;
         }
 
-        if self.complete_melds == 4 && self.incomplete_melds == 0 && self.isolated_tiles == 1 && self.pairs == 0 {
+        if self.complete_melds == 4 && self.incomplete_melds == 0 && self.isolated_tiles >= 1 && self.pairs == 0 {
             // the isolated tile is an incomplete pair meld
             self.incomplete_melds += 1;
+        }
+
+        if self.hand_count == 14 && self.complete_melds == 4 && self.incomplete_melds == 1 {
+            // 5 melds with 14 tiles -> -1 shanten?
+            *has_pair_check -= 1;
         }
 
         if self.pairs == 2 && self.incomplete_melds == 0 && self.isolated_tiles == 0 {
@@ -194,8 +207,14 @@ impl ShantenFinder {
             self.incomplete_melds += 1;
         }
 
-//        println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
-        return (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + *has_pair_check + *too_many_groups) as i8;
+        let s = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + *has_pair_check + *too_many_groups) as i8;
+
+        if s < self.min_found {
+//            println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
+            self.min_found = s;
+        }
+
+        s
     }
 
     fn analyze_and_push(&mut self, array_34: &mut [u8; 34], depth: usize, shantens: &mut Vec<i8>) {
@@ -360,7 +379,9 @@ impl Default for ShantenFinder {
             complete_melds: 0,
             incomplete_melds: 0,
             isolated_tiles: 0,
-            recursion_count: 0
+            hand_count: 0,
+            recursion_count: 0,
+            min_found: 99,
         }
     }
 }
@@ -522,6 +543,14 @@ mod tests {
     #[test]
     fn with_14_tiles_tenpai_no_pair() {
         let mut hand = Hand::from_text("12345m567s111222z", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn with_14_tiles_tenpai_no_pair_2() {
+        let mut hand = Hand::from_text("123456789p12345m", false).unwrap();
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 0);

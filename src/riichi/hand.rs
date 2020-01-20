@@ -269,6 +269,12 @@ impl Hand {
         let mut imp_tiles = HashMap::new();
 
         let current_shanten = self.shanten();
+
+        // tenpai / finished hand has no improving tiles
+        if current_shanten <= 0 {
+            return imp_tiles;
+        }
+
         // for 13 tile hands, the Option for the discard tile is None
         let hand_count = self.count_tiles();
 
@@ -467,6 +473,14 @@ mod tests {
                 None => ()
             }
         }
+    }
+
+    #[test]
+    fn find_improving_tiles_14_tenpai() {
+        let mut hand = Hand::from_text("123456789p12345m", false).unwrap();
+        let map = hand.find_shanten_improving_tiles();
+
+        assert_eq!(map.len(), 0);
     }
 
     #[test]

@@ -1,6 +1,7 @@
 use std::fmt;
 use std::cmp::Ordering;
 use crate::riichi::riichi_error::RiichiError;
+use serde::Serializer;
 
 // '0m', '1m', '2m', '3m', '4m', '5m', '6m', '7m', '8m', '9m',
 // '0p', '1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p',
@@ -468,6 +469,12 @@ impl Ord for Tile {
     }
 }
 
+impl serde::Serialize for Tile {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
+        S: Serializer {
+        serializer.serialize_str(&self.to_string()[..])
+    }
+}
 
 #[cfg(test)]
 mod tests {
