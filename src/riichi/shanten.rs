@@ -210,7 +210,7 @@ impl ShantenFinder {
         let s = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + *has_pair_check + *too_many_groups) as i8;
 
         if s < self.min_found {
-//            println!("cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
+            println!("sh: {}, cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", s, self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
             self.min_found = s;
         }
 
@@ -531,6 +531,14 @@ mod tests {
 
         assert_eq!(shanten, 2);
     }
+
+//    #[test]
+//    fn with_14_tiles_ryanshanten_3() {
+//        let mut hand = Hand::from_text("1234s123p999m3456z", false).unwrap();
+//        let shanten = hand.shanten();
+//
+//        assert_eq!(shanten, 2);
+//    }
 
     #[test]
     fn with_14_tiles_tenpai() {
