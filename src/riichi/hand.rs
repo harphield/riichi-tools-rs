@@ -459,12 +459,20 @@ mod tests {
             match o_tile {
                 Some(tile) => {
                     if tile.to_string() == "7m" {
+                        println!("tajl: {}", tile.to_string());
+                        println!("{:#?}", tiles);
                         assert_eq!(tiles.len(), 6);
                     } else if tile.to_string() == "1s" {
+                        println!("tajl: {}", tile.to_string());
+                        println!("{:#?}", tiles);
                         assert_eq!(tiles.len(), 6);
                     } else if tile.to_string() == "1z" {
+                        println!("tajl: {}", tile.to_string());
+                        println!("{:#?}", tiles);
                         assert_eq!(tiles.len(), 6);
                     } else if tile.to_string() == "4s" {
+                        println!("tajl: {}", tile.to_string());
+                        println!("{:#?}", tiles);
                         assert_eq!(tiles.len(), 5);
                     } else {
                         panic!("Test failed: wrong tiles found");

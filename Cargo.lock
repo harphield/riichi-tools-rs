@@ -156,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "riichi-tools-rs"
-version = "0.0.54"
+version = "0.0.55"
 dependencies = [
  "console_error_panic_hook 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "js-sys 0.3.35 (registry+https://github.com/rust-lang/crates.io-index)",

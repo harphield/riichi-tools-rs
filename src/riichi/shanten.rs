@@ -1,6 +1,7 @@
 use super::tile::Tile;
 use super::hand::Hand;
 use crate::riichi::riichi_error::RiichiError;
+use core::cmp;
 
 pub struct ShantenFinder {
     pairs: i8,
@@ -91,137 +92,100 @@ impl ShantenFinder {
 
         self.recursion_count += 1;
 
-        let mut shantens: Vec<i8> = vec!();
-        let mut has_pair_check = 1;
-        let mut too_many_groups = 0;
-
         if depth >= 34 {
-            return self.final_calculations(&mut has_pair_check, &mut too_many_groups);
+            return self.final_calculations();
         }
 
-        // got 4 tiles
-        if array_34[depth] == 4 {
+        if array_34[depth] == 4 && (self.complete_melds + self.incomplete_melds < 4) {
             // use 3 as pon, leave one behind and try again
             self.add_set(array_34, depth);
-            self.analyze_and_push(array_34, depth, &mut shantens);
+            self.analyze(array_34, depth);
             self.remove_set(array_34, depth);
 
             // use 2 as pair
             self.add_pair(array_34, depth);
-            self.analyze_and_push(array_34, depth, &mut shantens);
+            self.analyze(array_34, depth);
             self.remove_pair(array_34, depth);
 
             // use 1 as isolated tile
-        } else if array_34[depth] == 3 {
+        } else if array_34[depth] == 3 && (self.complete_melds + self.incomplete_melds < 4) {
             self.add_set(array_34, depth);
-            self.analyze_and_push(array_34, depth + 1, &mut shantens);
+            self.analyze(array_34, depth + 1);
             self.remove_set(array_34, depth);
 
             self.add_pair(array_34, depth);
-            self.analyze_and_push(array_34, depth, &mut shantens);
+            self.analyze(array_34, depth);
             self.remove_pair(array_34, depth);
         } else if array_34[depth] == 2 {
             // if we don't have a pair yet, this will be our pair
             self.add_pair(array_34, depth);
-            self.analyze_and_push(array_34, depth + 1, &mut shantens);
+            self.analyze(array_34, depth + 1);
             self.remove_pair(array_34, depth);
         }
 
         if array_34[depth] > 0 {
-            // use 1, check for a complete meld (3 tiles)
-            let mut done = self.add_complete_meld(array_34, depth);
+            if self.complete_melds + self.incomplete_melds < 4 {
+                // use 1, check for a complete meld (3 tiles)
+                let mut done = self.add_complete_meld(array_34, depth);
 
-            if done {
-                if array_34[depth] > 0 {
-                    self.analyze_and_push(array_34, depth, &mut shantens);
-                } else {
-                    self.analyze_and_push(array_34, depth + 1, &mut shantens);
+                if done {
+                    if array_34[depth] > 0 {
+                        self.analyze(array_34, depth);
+                    } else {
+                        self.analyze(array_34, depth + 1);
+                    }
+
+                    self.remove_complete_meld(array_34, depth);
                 }
 
-                self.remove_complete_meld(array_34, depth);
-            }
+                // use 1, check for kanchan & penchan & ryanmen shapes (2 tiles)
+                done = self.add_incomplete_meld_1(array_34, depth);
+                if done {
+                    if array_34[depth] > 0 {
+                        self.analyze(array_34, depth);
+                    } else {
+                        self.analyze(array_34, depth + 1);
+                    }
 
-            // use 1, check for kanchan & penchan & ryanmen shapes (2 tiles)
-            done = self.add_incomplete_meld_1(array_34, depth);
-            if done {
-                if array_34[depth] > 0 {
-                    self.analyze_and_push(array_34, depth, &mut shantens);
-                } else {
-                    self.analyze_and_push(array_34, depth + 1, &mut shantens);
+                    self.remove_incomplete_meld_1(array_34, depth);
                 }
 
-                self.remove_incomplete_meld_1(array_34, depth);
-            }
+                done = self.add_incomplete_meld_2(array_34, depth);
+                if done {
+                    if array_34[depth] > 0 {
+                        self.analyze(array_34, depth);
+                    } else {
+                        self.analyze(array_34, depth + 1);
+                    }
 
-            done = self.add_incomplete_meld_2(array_34, depth);
-            if done {
-                if array_34[depth] > 0 {
-                    self.analyze_and_push(array_34, depth, &mut shantens);
-                } else {
-                    self.analyze_and_push(array_34, depth + 1, &mut shantens);
+                    self.remove_incomplete_meld_2(array_34, depth);
                 }
-
-                self.remove_incomplete_meld_2(array_34, depth);
             }
 
             self.add_isolated_tile(array_34, depth);
-            self.analyze_and_push(array_34, depth + 1, &mut shantens);
+            self.analyze(array_34, depth + 1);
             self.remove_isolated_tile(array_34, depth);
+        } else {
+            self.analyze(array_34, depth + 1);
         }
 
-        self.analyze_and_push(array_34, depth + 1, &mut shantens);
-
-//        let final_shanten = self.final_calculations(&mut has_pair_check, &mut too_many_groups);
-//        if !shantens.contains(&final_shanten) {
-//            shantens.push(final_shanten);
-//        }
-
-        *shantens.iter().min().unwrap()
+        self.min_found
     }
 
-    fn final_calculations(&mut self, has_pair_check: &mut i8, too_many_groups: &mut i8) -> i8 {
-        if self.pairs == 1 {
-            *has_pair_check = 0;
-        } else if self.pairs == 0 {
-            *has_pair_check = 1;
-        } else {
-            *has_pair_check = self.pairs - 1;
+    fn final_calculations(&mut self) -> i8 {
+        let mut over = 0;
+        if self.complete_melds + self.incomplete_melds + self.pairs > 5 {
+            over = 5 - self.complete_melds + self.incomplete_melds + self.pairs;
         }
 
-        if self.complete_melds + self.incomplete_melds > 4 {
-            *too_many_groups += self.complete_melds + self.incomplete_melds - 4;
-        }
-
-        if self.complete_melds == 4 && self.incomplete_melds == 0 && self.isolated_tiles >= 1 && self.pairs == 0 {
-            // the isolated tile is an incomplete pair meld
-            self.incomplete_melds += 1;
-        }
-
-        if self.hand_count == 14 && self.complete_melds == 4 && self.incomplete_melds == 1 {
-            // 5 melds with 14 tiles -> -1 shanten?
-            *has_pair_check -= 1;
-        }
-
-        if self.pairs == 2 && self.incomplete_melds == 0 && self.isolated_tiles == 0 {
-            // shanpon wait - one of them is an incomplete ankou meld
-            self.incomplete_melds += 1;
-        }
-
-        let s = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + self.isolated_tiles + *has_pair_check + *too_many_groups) as i8;
+        let s = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + over) as i8;
 
         if s < self.min_found {
-            println!("sh: {}, cm: {}, im: {}, pairs: {}, it: {}, hpc: {}, tmg: {}", s, self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles, has_pair_check, too_many_groups);
+//            println!("sh: {}, cm: {}, im: {}, pairs: {}, it: {}", s, self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles);
             self.min_found = s;
         }
 
         s
-    }
-
-    fn analyze_and_push(&mut self, array_34: &mut [u8; 34], depth: usize, shantens: &mut Vec<i8>) {
-        let s = self.analyze(array_34, depth);
-        if !shantens.contains(&s) {
-            shantens.push(s);
-        }
     }
 
     fn add_set(&mut self, array_34: &mut [u8; 34], depth: usize) {
@@ -532,13 +496,13 @@ mod tests {
         assert_eq!(shanten, 2);
     }
 
-//    #[test]
-//    fn with_14_tiles_ryanshanten_3() {
-//        let mut hand = Hand::from_text("1234s123p999m3456z", false).unwrap();
-//        let shanten = hand.shanten();
-//
-//        assert_eq!(shanten, 2);
-//    }
+    #[test]
+    fn with_14_tiles_ryanshanten_3() {
+        let mut hand = Hand::from_text("1234s123p999m3456z", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 2);
+    }
 
     #[test]
     fn with_14_tiles_tenpai() {
@@ -579,5 +543,13 @@ mod tests {
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn with_14_two_pairs_and_stuff() {
+        let mut hand = Hand::from_text("23m13478s45699p11z", false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 2);
     }
 }
