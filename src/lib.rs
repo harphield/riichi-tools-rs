@@ -80,21 +80,18 @@ pub async fn async_shanten_improving_tiles(hand_string: &str) -> String {
     return match Hand::from_text(hand_string, false) {
         Ok(mut hand) => {
             let imp_tiles = hand.find_shanten_improving_tiles();
-            let mut imp_hm = HashMap::new();
-
-            for (key, value) in imp_tiles.iter() {
-                for tile in value {
-                    imp_hm.insert(match key {
-                        Some(t) => t.to_string(),
-                        None => "x".to_string(),
-                    }, value);
-//                    imp_hm.insert(tile.to_string());
-                }
-            }
+//            let mut imp_hm = HashMap::new();
+//
+//            for (key, value) in imp_tiles.iter() {
+//                imp_hm.insert(match key {
+//                    Some(t) => t.to_string(),
+//                    None => "x".to_string(),
+//                }, value);
+//            }
 
             json!({
                 "success": {
-                    "imp_tiles": imp_hm
+                    "imp_tiles": imp_tiles
                 }
             }).to_string()
         },

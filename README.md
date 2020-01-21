@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.55
+v0.0.56
 
 [![Build Status](https://travis-ci.org/harphield/riichi-tools-rs.png?branch=master)](https://travis-ci.org/harphield/riichi-tools-rs)
 
