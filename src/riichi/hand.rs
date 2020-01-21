@@ -265,8 +265,8 @@ impl Hand {
     /// Returns tiles that can be used to improve this hand.
     /// For 13 tile hands, there is only one option.
     /// For 14 tile hands, we list options for all discards that don't lower our shanten.
-    pub fn find_shanten_improving_tiles(&mut self) -> HashMap<Option<Tile>, Vec<Tile>> {
-        let mut imp_tiles = HashMap::new();
+    pub fn find_shanten_improving_tiles(&mut self) -> Vec<(Option<Tile>, Vec<Tile>, u8)> {
+        let mut imp_tiles = vec!();
 
         let current_shanten = self.shanten();
 
@@ -279,9 +279,9 @@ impl Hand {
         let hand_count = self.count_tiles();
 
         if hand_count == 13 {
-            let tiles = self.get_shanten_improving_tiles_13(current_shanten);
+            let result = self.get_shanten_improving_tiles_13(current_shanten);
 
-            imp_tiles.insert(None, tiles);
+            imp_tiles.push((None, result.0, result.1));
         } else if hand_count == 14 {
             // first we choose a tile to discard, then we look at our tiles
             let original_shanten = self.shanten();
@@ -298,7 +298,8 @@ impl Hand {
 
                         if new_shanten <= original_shanten {
                             // only cares about tiles that don't raise our shanten
-                            imp_tiles.insert(Some(t.clone()), self.get_shanten_improving_tiles_13(current_shanten));
+                            let result = self.get_shanten_improving_tiles_13(current_shanten);
+                            imp_tiles.push((Some(t.clone()), result.0, result.1));
                         }
 
                         self.add_tile(*t);
@@ -310,10 +311,12 @@ impl Hand {
 
         self.reset_shanten();
 
+        imp_tiles.sort_by(|a, b| b.2.cmp(&a.2));
+
         imp_tiles
     }
 
-    fn get_shanten_improving_tiles_13(&mut self, current_shanten: i8) -> Vec<Tile> {
+    fn get_shanten_improving_tiles_13(&mut self, current_shanten: i8) -> (Vec<Tile>, u8) {
         let mut try_tiles: Vec<u8> = vec!();
         let mut tiles: Vec<Tile> = vec!();
 
@@ -356,6 +359,9 @@ impl Hand {
             }
         }
 
+        let mut accept_count: u8 = 0;
+        let array_34 = self.get_34_array();
+
         // we draw a tile and count shanten - if it improves, we add it to the tiles
         for i in try_tiles.iter() {
             let drawn_tile = Tile::from_id(*i).unwrap();
@@ -367,12 +373,13 @@ impl Hand {
 
             if new_shanten < current_shanten {
                 tiles.push(Tile::from_id(*i).unwrap());
+                accept_count += 4 - array_34[*i as usize - 1];
             }
 
             self.remove_tile(&Tile::from_id(*i).unwrap());
         }
 
-        tiles
+        (tiles, accept_count)
     }
 }
 
@@ -444,36 +451,37 @@ mod tests {
 
         let tiles = hand.find_shanten_improving_tiles();
 
-        assert_eq!(tiles.get(&None).unwrap().len(), 6);
+        assert_eq!(tiles.get(0).unwrap().1.len(), 6);
     }
 
     #[test]
     fn find_improving_tiles_2_shanten_14() {
         let mut hand = Hand::from_text("237m13478s45699p1z", false).unwrap();
 
-        let map = hand.find_shanten_improving_tiles();
+        let result = hand.find_shanten_improving_tiles();
 
-        assert_eq!(map.len(), 4);
+        assert_eq!(result.len(), 4);
 
-        for (o_tile, tiles) in map.iter() {
-            match o_tile {
+        for row in result.iter() {
+            match row.0 {
                 Some(tile) => {
                     if tile.to_string() == "7m" {
-                        println!("tajl: {}", tile.to_string());
-                        println!("{:#?}", tiles);
-                        assert_eq!(tiles.len(), 6);
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+//                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "1s" {
-                        println!("tajl: {}", tile.to_string());
-                        println!("{:#?}", tiles);
-                        assert_eq!(tiles.len(), 6);
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+//                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "1z" {
-                        println!("tajl: {}", tile.to_string());
-                        println!("{:#?}", tiles);
-                        assert_eq!(tiles.len(), 6);
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+//                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "4s" {
-                        println!("tajl: {}", tile.to_string());
-                        println!("{:#?}", tiles);
-                        assert_eq!(tiles.len(), 5);
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+//                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 5);
+                        assert_eq!(row.2, 20);
                     } else {
                         panic!("Test failed: wrong tiles found");
                     }
@@ -494,11 +502,11 @@ mod tests {
     #[test]
     fn find_improving_tiles_13_3() {
         let mut hand = Hand::from_text("1234s123p999m456z", false).unwrap();
-        let map = hand.find_shanten_improving_tiles();
+        let result = hand.find_shanten_improving_tiles();
 
-        println!("{:#?}", map);
+        println!("{:#?}", result);
 
-        assert_eq!(map.len(), 1);
+        assert_eq!(result.len(), 1);
     }
 
     #[test]
