@@ -337,6 +337,7 @@ impl Hand {
         // - next + 1
         // - previous tile
         // - previous - 1
+        // - all terminals and honors because kokushi
         for o_tile in self.tiles.iter() {
             match o_tile {
                 Some(t) => {
@@ -367,6 +368,13 @@ impl Hand {
                     }
                 },
                 None => ()
+            }
+        }
+
+        // terminals and honors check
+        for tile_id in [1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34].iter() {
+            if !try_tiles.contains(&tile_id) {
+                try_tiles.push(*tile_id);
             }
         }
 
@@ -508,6 +516,24 @@ mod tests {
         let map = hand.find_shanten_improving_tiles();
 
         assert_eq!(map.len(), 4);
+    }
+
+    #[test]
+    fn find_improving_tiles_14_complete() {
+        let mut hand = Hand::from_text("123456789p12344m", false).unwrap();
+        let map = hand.find_shanten_improving_tiles();
+
+        assert_eq!(map.len(), 0);
+    }
+
+    #[test]
+    fn find_improving_tiles_14_kokushi() {
+        let mut hand = Hand::from_text("129m19s19p1234566z", false).unwrap();
+        let map = hand.find_shanten_improving_tiles();
+
+        println!("{:#?}", map);
+
+        assert_eq!(map.len(), 1);
     }
 
     #[test]
