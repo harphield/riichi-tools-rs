@@ -7,6 +7,7 @@ use crate::riichi::shapes::ShapeType::Complete;
 /// A hand consists of shapes.
 /// A tenpai hand has (usually) only 1 incomplete shape.
 /// Exceptions are for example 23456 wait, where you can either have 234 (complete) & 56 (incomplete), or 23 (incomplete) and 456 (complete)
+/// Or, shanpon wait (1155 = 11 pair 55 incomplete, or 11 incomplete 55 pair)
 /// Or, 13-sided kokushi, or 9-sided nine gates
 pub struct Shape {
     shape_type: ShapeType,
@@ -28,6 +29,7 @@ pub enum CompleteShape {
     Single(Tile)
 }
 
+// TODO rethink these
 pub enum IncompleteShape {
     TwoDifferent([Tile; 2]),
     Shanpon([Tile; 2]),

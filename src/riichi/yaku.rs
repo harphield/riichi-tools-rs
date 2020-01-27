@@ -14,6 +14,8 @@ impl YakuFinder {
     pub fn find(&self, hand: &Hand) {
 
     }
+
+
 }
 
 impl Default for YakuFinder {
@@ -26,27 +28,38 @@ impl Default for YakuFinder {
 ////////////////
 
 pub trait Yaku {
-    fn is_in_hand(&self) -> bool;
+    fn is_in_hand(&self, hand: &mut Hand) -> bool;
     fn get_han(&self) -> u8;
 }
 
 ////////////////
 
-struct Pinfu<'a> {
-    hand: &'a Hand
+struct Pinfu {
+
 }
 
-impl Pinfu<'_> {
+impl Pinfu {
     pub fn new(hand: &Hand) -> Pinfu {
         Pinfu {
-            hand
+
         }
     }
 }
 
 impl Yaku for Pinfu {
-    fn is_in_hand(&self) -> bool {
-        // TODO check if there are no bonus fu in the hand
+    // 4x shuntsu, 1x valueless pair
+    fn is_in_hand(&self, hand: &mut Hand) -> bool {
+        let array_34 = hand.get_34_array();
+
+
+        for (i, count) in array_34.iter().enumerate() {
+            if i < 27 {
+
+            } else {
+
+            }
+        }
+
         false
     }
 
