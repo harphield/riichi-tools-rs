@@ -270,19 +270,24 @@ impl Hand {
 
         let current_shanten = self.shanten();
 
-        // tenpai / finished hand has no improving tiles
-        if current_shanten <= 0 {
-            return imp_tiles;
-        }
-
         // for 13 tile hands, the Option for the discard tile is None
         let hand_count = self.count_tiles();
 
         if hand_count == 13 {
+            // tenpai hand has no improving tiles
+            if current_shanten <= 0 {
+                return imp_tiles;
+            }
+
             let result = self.get_shanten_improving_tiles_13(current_shanten);
 
             imp_tiles.push((None, result.0, result.1));
         } else if hand_count == 14 {
+            // finished hand has no improving tiles
+            if current_shanten < 0 {
+                return imp_tiles;
+            }
+
             // first we choose a tile to discard, then we look at our tiles
             let original_shanten = self.shanten();
             let mut hand_tiles = vec!();
@@ -502,7 +507,7 @@ mod tests {
         let mut hand = Hand::from_text("123456789p12345m", false).unwrap();
         let map = hand.find_shanten_improving_tiles();
 
-        assert_eq!(map.len(), 0);
+        assert_eq!(map.len(), 4);
     }
 
     #[test]
