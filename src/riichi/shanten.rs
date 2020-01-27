@@ -9,7 +9,6 @@ pub struct ShantenFinder {
     incomplete_melds: i8,
     isolated_tiles: i8,
     hand_count: usize,
-    recursion_count: u32,
     min_found: i8,
 }
 
@@ -32,7 +31,6 @@ impl ShantenFinder {
         let kokushi_shanten = self.kokushi_shanten(&array_34);
         let chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
 
-        self.recursion_count = 0;
         shanten = self.analyze(&mut array_34, 0);
 
         let shantens = [kokushi_shanten, chiitoi_shanten, shanten];
@@ -89,8 +87,6 @@ impl ShantenFinder {
         if (self.hand_count == 13 && self.min_found <= 0) || (self.hand_count == 14 && self.min_found < 0) {
             return 99;
         }
-
-        self.recursion_count += 1;
 
         if depth >= 34 {
             return self.final_calculations();
@@ -344,7 +340,6 @@ impl Default for ShantenFinder {
             incomplete_melds: 0,
             isolated_tiles: 0,
             hand_count: 0,
-            recursion_count: 0,
             min_found: 99,
         }
     }
