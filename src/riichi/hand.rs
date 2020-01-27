@@ -289,9 +289,15 @@ impl Hand {
 
             hand_tiles = self.tiles.to_vec();
 
+            let mut tried = vec![];
             for o_tile in hand_tiles.iter() {
                 match o_tile {
                     Some(t) => {
+                        if tried.contains(&t.to_id()) {
+                            continue;
+                        }
+
+                        tried.push(t.to_id());
                         self.remove_tile(t);
                         self.reset_shanten();
                         let new_shanten = self.shanten();
@@ -507,6 +513,16 @@ mod tests {
         println!("{:#?}", result);
 
         assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn find_improving_tiles_14_repeating() {
+        let mut hand = Hand::from_text("12356m12333s4499p", false).unwrap();
+        let result = hand.find_shanten_improving_tiles();
+
+        println!("{:#?}", result);
+
+        assert_eq!(result.len(), 7);
     }
 
     #[test]
