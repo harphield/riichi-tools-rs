@@ -270,28 +270,39 @@ impl Hand {
 
         let current_shanten = self.shanten();
 
-        // tenpai / finished hand has no improving tiles
-        if current_shanten <= 0 {
-            return imp_tiles;
-        }
-
         // for 13 tile hands, the Option for the discard tile is None
         let hand_count = self.count_tiles();
 
         if hand_count == 13 {
+            // tenpai hand has no improving tiles
+            if current_shanten <= 0 {
+                return imp_tiles;
+            }
+
             let result = self.get_shanten_improving_tiles_13(current_shanten);
 
             imp_tiles.push((None, result.0, result.1));
         } else if hand_count == 14 {
+            // finished hand has no improving tiles
+            if current_shanten < 0 {
+                return imp_tiles;
+            }
+
             // first we choose a tile to discard, then we look at our tiles
             let original_shanten = self.shanten();
             let mut hand_tiles = vec!();
 
             hand_tiles = self.tiles.to_vec();
 
+            let mut tried = vec![];
             for o_tile in hand_tiles.iter() {
                 match o_tile {
                     Some(t) => {
+                        if tried.contains(&t.to_id()) {
+                            continue;
+                        }
+
+                        tried.push(t.to_id());
                         self.remove_tile(t);
                         self.reset_shanten();
                         let new_shanten = self.shanten();
@@ -326,6 +337,7 @@ impl Hand {
         // - next + 1
         // - previous tile
         // - previous - 1
+        // - all terminals and honors because kokushi
         for o_tile in self.tiles.iter() {
             match o_tile {
                 Some(t) => {
@@ -356,6 +368,13 @@ impl Hand {
                     }
                 },
                 None => ()
+            }
+        }
+
+        // terminals and honors check
+        for tile_id in [1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34].iter() {
+            if !try_tiles.contains(&tile_id) {
+                try_tiles.push(*tile_id);
             }
         }
 
@@ -496,7 +515,25 @@ mod tests {
         let mut hand = Hand::from_text("123456789p12345m", false).unwrap();
         let map = hand.find_shanten_improving_tiles();
 
+        assert_eq!(map.len(), 4);
+    }
+
+    #[test]
+    fn find_improving_tiles_14_complete() {
+        let mut hand = Hand::from_text("123456789p12344m", false).unwrap();
+        let map = hand.find_shanten_improving_tiles();
+
         assert_eq!(map.len(), 0);
+    }
+
+    #[test]
+    fn find_improving_tiles_14_kokushi() {
+        let mut hand = Hand::from_text("129m19s19p1234566z", false).unwrap();
+        let map = hand.find_shanten_improving_tiles();
+
+        println!("{:#?}", map);
+
+        assert_eq!(map.len(), 1);
     }
 
     #[test]
@@ -507,6 +544,16 @@ mod tests {
         println!("{:#?}", result);
 
         assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn find_improving_tiles_14_repeating() {
+        let mut hand = Hand::from_text("12356m12333s4499p", false).unwrap();
+        let result = hand.find_shanten_improving_tiles();
+
+        println!("{:#?}", result);
+
+        assert_eq!(result.len(), 7);
     }
 
     #[test]

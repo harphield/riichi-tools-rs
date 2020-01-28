@@ -40,7 +40,7 @@ impl ShantenFinder {
 
     /// Gets the hand's shanten to kokushi musou.
     fn kokushi_shanten(&self, array_34: &[u8; 34]) -> i8 {
-        let mut shanten: i8 = 0;
+        let mut shanten: i8 = 13;
         let mut pair_found = false;
         let mut needed_count = 0;
 
@@ -48,23 +48,19 @@ impl ShantenFinder {
             if [1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28 {
                 // we only need 1 of each here + pair
                 if *count > 1 {
-                    if pair_found {
-                        shanten += (count - 1) as i8; // I'm only keeping one of them, the others need to be discarded
-                    } else {
-                        shanten += (count - 2) as i8; // I'm keeping two of these as a pair
+                    if !pair_found {
+                        shanten -= 2; // I'm keeping two of these as a pair
                         pair_found = true;
+                    } else {
+                        shanten -= 1;
                     }
+                } else if *count > 0 {
+                    shanten -= 1;
                 }
-
-                if *count > 0 {
-                    needed_count += 1;
-                }
-            } else {
-                shanten += (*count as i8);
             }
         }
 
-        shanten += 13 - needed_count;
+//        shanten += 13 - needed_count;
 
         shanten
     }
@@ -349,11 +345,36 @@ mod tests {
     use super::*;
 
     #[test]
-    fn kokushi_tenpai() {
+    fn kokushi_tenpai_13_waits() {
         let mut hand = Hand::from_text("19m19s19p1234567z", false).unwrap();
         let array34 = hand.get_34_array();
 
-        let shanten_finder = ShantenFinder::new();
+        let mut shanten_finder = ShantenFinder::new();
+        shanten_finder.hand_count = 13;
+        let shanten = shanten_finder.kokushi_shanten(&array34);
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn kokushi_complete() {
+        let mut hand = Hand::from_text("19m19s19p11234567z", false).unwrap();
+        let array34 = hand.get_34_array();
+
+        let mut shanten_finder = ShantenFinder::new();
+        shanten_finder.hand_count = 14;
+        let shanten = shanten_finder.kokushi_shanten(&array34);
+
+        assert_eq!(shanten, -1);
+    }
+
+    #[test]
+    fn kokushi_tenpai_1_wait() {
+        let mut hand = Hand::from_text("19m19s19p1234566z", false).unwrap();
+        let array34 = hand.get_34_array();
+
+        let mut shanten_finder = ShantenFinder::new();
+        shanten_finder.hand_count = 13;
         let shanten = shanten_finder.kokushi_shanten(&array34);
 
         assert_eq!(shanten, 0);
@@ -361,10 +382,11 @@ mod tests {
 
     #[test]
     fn kokushi_iishanten() {
-        let mut hand = Hand::from_text("19m19s19p1234566z", false).unwrap();
+        let mut hand = Hand::from_text("129m19s19p123456z", false).unwrap();
         let array34 = hand.get_34_array();
 
-        let shanten_finder = ShantenFinder::new();
+        let mut shanten_finder = ShantenFinder::new();
+        shanten_finder.hand_count = 13;
         let shanten = shanten_finder.kokushi_shanten(&array34);
 
         assert_eq!(shanten, 1);
