@@ -274,11 +274,6 @@ impl Hand {
         let hand_count = self.count_tiles();
 
         if hand_count == 13 {
-            // tenpai hand has no improving tiles
-            if current_shanten <= 0 {
-                return imp_tiles;
-            }
-
             let result = self.get_shanten_improving_tiles_13(current_shanten);
 
             imp_tiles.push((None, result.0, result.1));
@@ -470,6 +465,8 @@ mod tests {
 
         let tiles = hand.find_shanten_improving_tiles();
 
+        println!("{:#?}", tiles);
+
         assert_eq!(tiles.get(0).unwrap().1.len(), 6);
     }
 
@@ -508,6 +505,16 @@ mod tests {
                 None => ()
             }
         }
+    }
+
+    #[test]
+    fn find_improving_tiles_13_tenpai() {
+        let mut hand = Hand::from_text("888p333s12345m77z", false).unwrap();
+        let map = hand.find_shanten_improving_tiles();
+
+        println!("{:#?}", map);
+
+        assert_eq!(map.len(), 1);
     }
 
     #[test]
