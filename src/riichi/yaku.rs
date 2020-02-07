@@ -47,20 +47,20 @@ impl Pinfu {
 }
 
 impl Yaku for Pinfu {
-    // 4x shuntsu, 1x valueless pair
+    /// 4x shuntsu, 1x valueless pair
     fn is_in_hand(&self, hand: &mut Hand) -> bool {
         let array_34 = hand.get_34_array();
-
+        let mut has_pair = false;
 
         for (i, count) in array_34.iter().enumerate() {
-            if i < 27 {
-
-            } else {
-
+            // can't have any value honors
+            // TODO table state with prevalent & seat wind
+            if i >= 27 {
+                return false;
             }
         }
 
-        false
+        true
     }
 
     fn get_han(&self) -> u8 {
