@@ -274,8 +274,9 @@ impl Hand {
         let hand_count = self.count_tiles();
 
         if hand_count == 13 {
-            let result = self.get_shanten_improving_tiles_13(current_shanten);
+            let mut result = self.get_shanten_improving_tiles_13(current_shanten);
 
+            result.0.sort();
             imp_tiles.push((None, result.0, result.1));
         } else if hand_count == 14 {
             // finished hand has no improving tiles
@@ -304,7 +305,8 @@ impl Hand {
 
                         if new_shanten <= original_shanten {
                             // only cares about tiles that don't raise our shanten
-                            let result = self.get_shanten_improving_tiles_13(current_shanten);
+                            let mut result = self.get_shanten_improving_tiles_13(current_shanten);
+                            result.0.sort();
                             imp_tiles.push((Some(t.clone()), result.0, result.1));
                         }
 
