@@ -9,16 +9,19 @@ use crate::riichi::shapes::ShapeType::Complete;
 /// Exceptions are for example 23456 wait, where you can either have 234 (complete) & 56 (incomplete), or 23 (incomplete) and 456 (complete)
 /// Or, shanpon wait (1155 = 11 pair 55 incomplete, or 11 incomplete 55 pair)
 /// Or, 13-sided kokushi, or 9-sided nine gates
+#[derive(Debug, Clone, Copy)]
 pub struct Shape {
     shape_type: ShapeType,
     tile_count: u8,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum ShapeType {
     Complete(CompleteShape),
     Incomplete(IncompleteShape)
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum CompleteShape {
     // meld
     Shuntsu([Tile; 3]),
@@ -30,6 +33,7 @@ pub enum CompleteShape {
 }
 
 // TODO rethink these
+#[derive(Debug, Clone, Copy)]
 pub enum IncompleteShape {
     TwoDifferent([Tile; 2]),
     Shanpon([Tile; 2]),
@@ -44,9 +48,29 @@ impl Shape {
         }
     }
 
+    pub fn to_string(&self) -> String {
+        return match &self.shape_type {
+            ShapeType::Complete(cs) => {
+                match cs {
+                    CompleteShape::Shuntsu(tiles) | CompleteShape::Koutsu(tiles)
+                        => String::from(format!("{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string())),
+                    CompleteShape::Toitsu(tiles) => String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string())),
+                    CompleteShape::Single(tile) => tile.to_string()
+                }
+            },
+            ShapeType::Incomplete(is) => {
+                match is {
+                    IncompleteShape::TwoDifferent(tiles) | IncompleteShape::Shanpon(tiles)
+                        => String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string())),
+                    IncompleteShape::Tanki(tile) => tile.to_string()
+                }
+            }
+        }
+    }
+
     /// Creates a shape from the given tiles.
     /// TODO incomplete shapes
-    pub fn from_tiles(tiles: Vec<Tile>, only_complete: bool) -> Result<Shape, RiichiError> {
+    pub fn from_tiles(tiles: &Vec<Tile>, only_complete: bool) -> Result<Shape, RiichiError> {
         let shape_type: ShapeType;
         let tile_count: u8 = tiles.iter().count() as u8;
 
@@ -102,6 +126,12 @@ impl Shape {
                     ]));
                     return Result::Ok(Shape::new(shape_type, tile_count));
                 }
+            }
+        } else if tile_count == 1 {
+            let tile_1 = tiles.get(0).unwrap();
+            if only_complete {
+                shape_type = ShapeType::Complete(CompleteShape::Single(*tile_1));
+                return Result::Ok(Shape::new(shape_type, tile_count));
             }
         }
 
