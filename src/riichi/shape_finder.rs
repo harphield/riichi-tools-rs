@@ -16,20 +16,22 @@ impl ShapeFinder {
         }
     }
 
-    pub fn find(&mut self, hand: &mut Hand) {
+    pub fn find(&mut self, hand: &mut Hand) -> Vec<Vec<Shape>> {
         if hand.count_tiles() < 14 {
-            return;
+            return vec![];
         }
 
         let mut array_34 = hand.get_34_array();
 
         self.search(&mut array_34, 0);
+
+        self.variants.to_owned()
     }
 
     fn search(&mut self, array_34: &mut [u8; 34], depth: usize) {
         if depth > 33 {
             // check validity
-            if self.is_current_variant_valid() {
+            if self.is_current_variant_valid() && self.current_variant_is_not_included_yet() {
                 let mut repr = String::from("");
                 for s in self.current_variant.iter() {
                     repr.push_str(&s.to_string()[..]);
@@ -80,6 +82,30 @@ impl ShapeFinder {
                     self.search(array_34, depth + 1);
                 }
                 self.remove_shape(vec![current_tile], array_34);
+            }
+
+            // shuntsu
+            match current_tile.next(false) {
+                Some(t) => {
+                    if array_34[(t.to_id() - 1) as usize] > 0 {
+                        match t.next(false) {
+                            Some(t2) => {
+                                if array_34[(t2.to_id() - 1) as usize] > 0 {
+                                    // found it!
+                                    self.add_shape(vec![current_tile, t, t2], array_34);
+                                    if array_34[depth] > 0 {
+                                        self.search(array_34, depth);
+                                    } else {
+                                        self.search(array_34, depth + 1);
+                                    }
+                                    self.remove_shape(vec![current_tile, t, t2], array_34);
+                                }
+                            },
+                            None => ()
+                        }
+                    }
+                },
+                None => ()
             }
         } else {
             self.search(array_34, depth + 1);
@@ -173,6 +199,44 @@ impl ShapeFinder {
 
         true
     }
+
+    fn current_variant_is_not_included_yet(&self) -> bool {
+        if self.variants.is_empty() {
+            return true;
+        }
+
+        let mut current_repr = String::from("");
+        let mut current_strings = vec!();
+        for s in self.current_variant.iter() {
+            current_strings.push(s.to_string());
+        }
+
+        current_strings.sort();
+
+        for s in current_strings.iter() {
+            current_repr.push_str(&s.to_string()[..]);
+            current_repr.push_str(" ");
+        }
+
+        for v in &self.variants {
+            let mut v_repr = String::from("");
+            let mut v_strings = vec!();
+            for s in v.iter() {
+                v_strings.push(s.to_string());
+            }
+
+            for s in v_strings.iter() {
+                v_repr.push_str(&s.to_string()[..]);
+                v_repr.push_str(" ");
+            }
+
+            if current_repr == v_repr {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 impl Default for ShapeFinder {
@@ -207,6 +271,50 @@ mod tests {
         println!("{:#?}", sf.variants);
 
         assert_eq!(sf.variants.len(), 1);
+    }
+
+    #[test]
+    fn find_ankous() {
+        let mut hand = Hand::from_text("111m222p333s111z33z", false).unwrap();
+        let mut sf = ShapeFinder::new();
+        sf.find(&mut hand);
+
+        println!("{:#?}", sf.variants);
+
+        assert_eq!(sf.variants.len(), 1);
+    }
+
+    #[test]
+    fn find_pinfu() {
+        let mut hand = Hand::from_text("123m456p123789s55z", false).unwrap();
+        let mut sf = ShapeFinder::new();
+        sf.find(&mut hand);
+
+        println!("{:#?}", sf.variants);
+
+        assert_eq!(sf.variants.len(), 1);
+    }
+
+    #[test]
+    fn find_chuuren() {
+        let mut hand = Hand::from_text("1112345678999m1m", false).unwrap();
+        let mut sf = ShapeFinder::new();
+        sf.find(&mut hand);
+
+        println!("{:#?}", sf.variants);
+
+        assert_eq!(sf.variants.len(), 1);
+    }
+
+    #[test]
+    fn find_ryanpeikou() {
+        let mut hand = Hand::from_text("223344m223344p2s2s", false).unwrap();
+        let mut sf = ShapeFinder::new();
+        sf.find(&mut hand);
+
+//        println!("{:#?}", sf.variants);
+
+        assert_eq!(sf.variants.len(), 2);
     }
 
 }

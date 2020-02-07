@@ -7,6 +7,8 @@ use super::shanten::ShantenFinder;
 use crate::riichi::riichi_error::RiichiError;
 use std::collections::HashMap;
 use crate::riichi::shapes::Shape;
+use crate::riichi::shape_finder::ShapeFinder;
+use crate::riichi::yaku::YakuFinder;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -396,6 +398,11 @@ impl Hand {
         }
 
         (tiles, accept_count)
+    }
+
+    pub fn yaku(&mut self) {
+        let yf = YakuFinder::new();
+        yf.find(self);
     }
 }
 

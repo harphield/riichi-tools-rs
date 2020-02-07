@@ -1,4 +1,5 @@
 use crate::riichi::hand::Hand;
+use crate::riichi::shape_finder::ShapeFinder;
 
 pub struct YakuFinder {
 
@@ -11,11 +12,10 @@ impl YakuFinder {
         }
     }
 
-    pub fn find(&self, hand: &Hand) {
-
+    pub fn find(&self, hand: &mut Hand) {
+        let mut sf = ShapeFinder::new();
+        let variants = sf.find(hand);
     }
-
-
 }
 
 impl Default for YakuFinder {

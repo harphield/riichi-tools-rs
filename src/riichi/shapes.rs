@@ -196,7 +196,7 @@ impl Shape {
             return false;
         }
 
-        let diff = (first_tile_id - second_tile_id) as i8;
+        let diff = first_tile_id as i8 - second_tile_id as i8;
 
         // too far away
         if diff.abs() > 2 {
