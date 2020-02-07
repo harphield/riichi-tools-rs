@@ -48,6 +48,10 @@ impl Shape {
         }
     }
 
+    pub fn get_shape_type(&self) -> &ShapeType {
+        return &self.shape_type;
+    }
+
     pub fn to_string(&self) -> String {
         return match &self.shape_type {
             ShapeType::Complete(cs) => {
