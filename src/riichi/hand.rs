@@ -103,7 +103,6 @@ impl Hand {
                     Ok(mut tile) => {
                         if tiles.is_empty() {
                             // the last tile you write in your hand representation is your drawn tile
-                            // TODO this is wrong: should only set for the 14th tile
                             // TODO check for kans!
                             tile.is_draw = true;
                         }
@@ -398,6 +397,21 @@ impl Hand {
         }
 
         (tiles, accept_count)
+    }
+
+    pub fn get_drawn_tile(&self) -> &Tile {
+        for p_tile in self.tiles.iter() {
+            match p_tile {
+                Some(tile) => {
+                    if tile.is_draw {
+                        return tile;
+                    }
+                },
+                None => ()
+            }
+        }
+
+        panic!("No drawn tile?");
     }
 
     pub fn yaku(&mut self) {
