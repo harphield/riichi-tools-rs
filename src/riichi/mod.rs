@@ -1,3 +1,4 @@
+pub mod table;
 pub mod hand;
 pub mod south_4_simulator;
 mod tile;

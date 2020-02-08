@@ -18,7 +18,16 @@ pub enum YakuType {
     Rinshan,
     Chankan,
     Tanyao,
-    Yakuhai,
+    EastRound,
+    EastSeat,
+    SouthRound,
+    SouthSeat,
+    WestRound,
+    WestSeat,
+    NorthSeat,
+    WhiteDragons,
+    GreenDragons,
+    RedDragons,
     // 2 han
     DoubleRiichi,
     Chanta,
@@ -100,15 +109,7 @@ impl Default for YakuFinder {
 
 ////////////////
 
-pub trait Yaku {
-    fn get_name(&self) -> &str;
-    fn get_han(&self) -> u8;
-    fn is_in_hand(&self, hand: &mut Hand, variant: &Vec<Shape>) -> bool;
-}
-
-////////////////
-
-impl Yaku for YakuType {
+impl YakuType {
     fn get_name(&self) -> &str {
         match self {
             YakuType::MenzenTsumo =>    "Menzen tsumo",
@@ -121,7 +122,16 @@ impl Yaku for YakuType {
             YakuType::Rinshan =>        "Rinshan kaihou",
             YakuType::Chankan =>        "Chankan",
             YakuType::Tanyao =>         "Tanyao",
-            YakuType::Yakuhai =>        "Yakuhai",
+            YakuType::EastRound =>      "East round winds",
+            YakuType::EastSeat =>       "East seat winds",
+            YakuType::SouthRound =>     "South round winds",
+            YakuType::SouthSeat =>      "South seat winds",
+            YakuType::WestRound =>      "West round winds",
+            YakuType::WestSeat =>       "West seat winds",
+            YakuType::NorthSeat =>      "North seat winds",
+            YakuType::WhiteDragons =>   "White dragons",
+            YakuType::GreenDragons =>   "Green dragons",
+            YakuType::RedDragons =>     "Red dragons",
             YakuType::DoubleRiichi =>   "Double riichi",
             YakuType::Chanta =>         "Chantaiyao",
             YakuType::SanshokuDoujun => "Sanshoku doujun",
@@ -165,7 +175,16 @@ impl Yaku for YakuType {
             YakuType::Rinshan =>        1,
             YakuType::Chankan =>        1,
             YakuType::Tanyao =>         1,
-            YakuType::Yakuhai =>        1,
+            YakuType::EastRound =>      1,
+            YakuType::EastSeat =>       1,
+            YakuType::SouthRound =>     1,
+            YakuType::SouthSeat =>      1,
+            YakuType::WestRound =>      1,
+            YakuType::WestSeat =>       1,
+            YakuType::NorthSeat =>      1,
+            YakuType::WhiteDragons =>   1,
+            YakuType::GreenDragons =>   1,
+            YakuType::RedDragons =>     1,
             YakuType::DoubleRiichi =>   2,
             YakuType::Chanta =>         {
                 // TODO closed / open difference
@@ -241,7 +260,20 @@ impl Yaku for YakuType {
 
                 return true;
             },
-            YakuType::Yakuhai => {},
+            YakuType::EastRound => {
+                // TODO check round wind
+            }
+            YakuType::EastSeat => {
+                // TODO check my seat wind
+            }
+            YakuType::SouthRound => {}
+            YakuType::SouthSeat => {}
+            YakuType::WestRound => {}
+            YakuType::WestSeat => {}
+            YakuType::NorthSeat => {}
+            YakuType::WhiteDragons => return self.find_yakuhai(variant, 33),
+            YakuType::GreenDragons => return self.find_yakuhai(variant, 32),
+            YakuType::RedDragons => return self.find_yakuhai(variant, 34),
             YakuType::DoubleRiichi => {},
             YakuType::Chanta => {},
             YakuType::SanshokuDoujun => {},
@@ -285,10 +317,32 @@ impl Yaku for YakuType {
             YakuType::Chuuren => {},
             YakuType::Suukantsu => {},
             YakuType::Tenhou => {},
-            YakuType::Chiihou => {},
+            YakuType::Chiihou => {}
         }
 
         false
+    }
+
+    fn find_yakuhai(&self, variant: &Vec<Shape>, tile_id: u8) -> bool {
+        for shape in variant.iter() {
+            match shape.get_shape_type() {
+                ShapeType::Complete(cs) => {
+                    match cs {
+                        CompleteShape::Shuntsu(_) => {},
+                        CompleteShape::Koutsu(tiles) => {
+                            if tiles[0].to_id() == tile_id {
+                                return true;
+                            }
+                        },
+                        CompleteShape::Toitsu(_) => {},
+                        CompleteShape::Single(_) => {},
+                    }
+                },
+                ShapeType::Incomplete(_) => (),
+            }
+        }
+
+        return false;
     }
 }
 
@@ -298,6 +352,18 @@ mod tests {
     #[test]
     fn find_tanyao() {
         let mut hand = Hand::from_text("234567m234567s88p", false).unwrap();
+        hand.yaku();
+    }
+
+    #[test]
+    fn find_tanyao_chiitoi() {
+        let mut hand = Hand::from_text("224466m4477s3388p", false).unwrap();
+        hand.yaku();
+    }
+
+    #[test]
+    fn find_white_dragons() {
+        let mut hand = Hand::from_text("123m234s67888p666z", false).unwrap();
         hand.yaku();
     }
 }
