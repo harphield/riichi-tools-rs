@@ -1,10 +1,10 @@
 use crate::riichi::hand::Hand;
 use crate::riichi::shape_finder::ShapeFinder;
-use crate::riichi::shapes::Shape;
+use crate::riichi::shapes::{Shape, ShapeType, CompleteShape};
 use enum_iterator::IntoEnumIterator;
 use std::collections::HashMap;
 
-#[derive(IntoEnumIterator)]
+#[derive(IntoEnumIterator, Debug)]
 pub enum YakuType {
     // 1 han closed
     MenzenTsumo,
@@ -66,6 +66,11 @@ impl YakuFinder {
     }
 
     pub fn find(&self, hand: &mut Hand) {
+        // only complete hands
+        if hand.shanten() != -1 {
+            return;
+        }
+
         let mut sf = ShapeFinder::new();
         let variants = sf.find(hand);
         let mut variant_yaku: HashMap<usize, Vec<YakuType>> = HashMap::new();
@@ -80,6 +85,8 @@ impl YakuFinder {
 
             variant_yaku.insert(i, yakus);
         }
+
+        println!("{:#?}", variant_yaku);
     }
 }
 
@@ -243,7 +250,23 @@ impl Yaku for YakuType {
             YakuType::Sanankou => {},
             YakuType::SanshokuDoukou => {},
             YakuType::Sankantsu => {},
-            YakuType::Chiitoitsu => {},
+            YakuType::Chiitoitsu => {
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(_) => return false,
+                                CompleteShape::Koutsu(_) => return false,
+                                CompleteShape::Toitsu(_) => (),
+                                CompleteShape::Single(_) => return false,
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return true;
+            },
             YakuType::Honroutou => {},
             YakuType::Shousangen => {},
             YakuType::Honitsu => {},
@@ -266,5 +289,15 @@ impl Yaku for YakuType {
         }
 
         false
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn find_tanyao() {
+        let mut hand = Hand::from_text("234567m234567s88p", false).unwrap();
+        hand.yaku();
     }
 }
