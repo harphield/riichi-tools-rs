@@ -71,7 +71,7 @@ impl Table {
             my_seat_wind: 0,
             wind_round: 0,
             total_round: 0,
-            tiles_remaining: 0,
+            tiles_remaining: 128, // TODO how much is at the start?
             dora_indicators: vec![],
             riichi_sticks_in_pot: 0,
             tsumibo: 0
@@ -110,8 +110,24 @@ impl Table {
         self.my_tsumo
     }
 
+    pub fn did_i_riichi(&self) -> bool {
+        self.my_riichi
+    }
+
     pub fn get_my_winning_tile(&self) -> Tile {
         self.my_hand.get_drawn_tile().clone()
+    }
+
+    pub fn get_tiles_remaining(&self) -> u8 {
+        self.tiles_remaining
+    }
+
+    pub fn get_my_seat_wind(&self) -> u8 {
+        self.my_seat_wind
+    }
+
+    pub fn get_prevalent_wind(&self) -> u8 {
+        self.prevalent_wind
     }
 
     pub fn yaku(&mut self) {

@@ -326,13 +326,51 @@ impl YakuType {
     /// 2x the same shuntsu shape
     fn is_in_hand(&self, table: &mut Table, variant: &Vec<Shape>) -> bool {
         match self {
-            YakuType::MenzenTsumo => {},
-            YakuType::Riichi => {},
+            YakuType::MenzenTsumo => {
+                // TODO open hand
+                return table.did_i_tsumo()
+            },
+            YakuType::Riichi => {
+                return table.did_i_riichi()
+            },
             YakuType::Ippatsu => {},
-            YakuType::Pinfu => {},
+            YakuType::Pinfu => {
+                let mut pairs: u8 = 0;
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Koutsu(_) | CompleteShape::Single(_) => return false,
+                                CompleteShape::Toitsu(tiles) => {
+                                    pairs += 1;
+                                    if pairs > 1 {
+                                        return false;
+                                    }
+
+                                    match tiles[0].tile_type {
+                                        TileType::Wind(value) => {
+                                            if value == table.get_prevalent_wind() || value == table.get_my_seat_wind() {
+                                                return false;
+                                            }
+                                        },
+                                        TileType::Dragon(_) => return false,
+                                        _ => ()
+                                    }
+                                },
+                                _ => ()
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+            },
             YakuType::Iipeikou => {},
-            YakuType::Haitei => {},
-            YakuType::Houtei => {},
+            YakuType::Haitei => {
+                return table.did_i_tsumo() && table.get_tiles_remaining() == 0
+            },
+            YakuType::Houtei => {
+                return !table.did_i_tsumo() && table.get_tiles_remaining() == 0
+            },
             YakuType::Rinshan => {},
             YakuType::Chankan => {},
             YakuType::Tanyao => {
