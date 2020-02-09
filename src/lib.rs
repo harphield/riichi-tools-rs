@@ -5,10 +5,11 @@ extern crate serde_json;
 
 use wasm_bindgen::prelude::*;
 use riichi::hand::Hand;
+use riichi::riichi_error::RiichiError;
+use riichi::table::Table;
 use riichi::south_4_simulator::South4Simulator;
-use serde_json::json;
+use serde_json::{json, Error, Map, Value};
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 use wasm_bindgen_futures::future_to_promise;
 use std::collections::HashMap;
 
@@ -17,7 +18,7 @@ extern {
     pub fn alert(s: &str);
 }
 
-pub async fn async_hand_shanten(hand_string: &str) -> String {
+async fn async_hand_shanten(hand_string: &str) -> String {
     return match Hand::from_text(hand_string, false) {
         Ok(mut hand) => {
             let shanten = hand.shanten();
@@ -47,7 +48,7 @@ pub fn run_get_hand_shanten(hand_string: String) -> js_sys::Promise {
 }
 
 /// Checks the validity of the hand and returns tiles that it found
-pub async fn async_hand_tiles(hand_string: &str) -> String {
+async fn async_hand_tiles(hand_string: &str) -> String {
     return match Hand::from_text(hand_string, true) {
         Ok(mut hand) => {
             let valid = hand.validate();
@@ -76,7 +77,7 @@ pub fn run_get_hand_tiles(hand_string: String) -> js_sys::Promise {
     })
 }
 
-pub async fn async_shanten_improving_tiles(hand_string: &str) -> String {
+async fn async_shanten_improving_tiles(hand_string: &str) -> String {
     return match Hand::from_text(hand_string, false) {
         Ok(mut hand) => {
             let imp_tiles = hand.find_shanten_improving_tiles();
@@ -102,6 +103,77 @@ pub fn run_shanten_improving_tiles(hand_string: String) -> js_sys::Promise {
     future_to_promise(async move {
         Ok(JsValue::from_str(&async_shanten_improving_tiles(&hand_string[..]).await))
     })
+}
+
+#[wasm_bindgen(js_name = call)]
+pub fn run_call(method: String, params: String) -> js_sys::Promise {
+    future_to_promise(async move {
+        Ok(JsValue::from_str(&async_call(&method[..], &params[..]).await))
+    })
+}
+
+fn init_table_state(value: Option<&Value>) -> Result<Table, RiichiError> {
+    match value {
+        Some(v) => {
+            match v {
+                Value::Object(map) => {
+                    match Table::from_map(map) {
+                        Ok(t) => Ok(t),
+                        Err(error) => Err(error),
+                    }
+                },
+                _ => Err(RiichiError::new(188, "Wrong table state type found"))
+            }
+        },
+        None => Err(RiichiError::new(187, "No table state found"))
+    }
+}
+
+/// Call a method with params
+async fn async_call(method: &str, params: &str) -> String {
+    let json_result: Result<Value, Error> = serde_json::from_str(params);
+
+    match json_result {
+        Ok(value) => {
+            match value {
+                Value::Object(map) => {
+                    let table_result = init_table_state(map.get("table"));
+
+                    match method {
+                        "get_hand_yaku" => {
+                            match table_result {
+                                Ok(table) => {
+
+                                },
+                                Err(error) => return json!({
+                                    "error": {
+                                        "code": error.code,
+                                        "message": error.message
+                                    }
+                                }).to_string(),
+                            }
+                        },
+                        _ => ()
+                    }
+                },
+                _ => {
+                    return json!({
+                        "error": {
+                            "code": 189,
+                            "message": "Incorrect JSON params"
+                        }
+                    }).to_string()
+                }
+            }
+        },
+        Err(error) => {
+            return json!({
+                "error": error.to_string()
+            }).to_string()
+        },
+    }
+
+    String::from("")
 }
 
 #[wasm_bindgen]

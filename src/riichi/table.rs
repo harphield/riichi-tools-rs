@@ -3,9 +3,10 @@ use crate::riichi::tile::Tile;
 use crate::riichi::shapes::Shape;
 use wasm_bindgen::__rt::std::collections::HashMap;
 use serde_json::{Map, Value};
+use crate::riichi::riichi_error::RiichiError;
 
 /// Representation of the game state
-struct Table {
+pub struct Table {
     my_hand: Hand,
     my_riichi: bool,
     // player to the right
@@ -35,7 +36,7 @@ struct Table {
 }
 
 impl Table {
-    pub fn from_map(params: &Map<String, Value>) -> Table {
+    pub fn from_map(params: &Map<String, Value>) -> Result<Table, RiichiError> {
         let mut t = Table {
             my_hand: Default::default(),
             my_riichi: false,
@@ -61,7 +62,11 @@ impl Table {
             if index.eq(&String::from("my_hand")) {
                 match value {
                     Value::String(s) => {
-                        t.my_hand = Hand::from_text(s, false).unwrap();
+                        match Hand::from_text(s, false) {
+                            Ok(hand) => t.my_hand = hand,
+                            Err(error) => return Err(error)
+                        }
+
                     },
                     _ => ()
                 }
@@ -75,7 +80,7 @@ impl Table {
             }
         }
 
-        t
+        Ok(t)
     }
 }
 

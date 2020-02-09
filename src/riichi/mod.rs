@@ -5,6 +5,6 @@ mod tile;
 mod shapes;
 mod shape_finder;
 mod shanten;
-mod riichi_error;
+pub mod riichi_error;
 mod scores;
-mod yaku;
+pub mod yaku;
