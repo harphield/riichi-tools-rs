@@ -3,8 +3,11 @@ use crate::riichi::shape_finder::ShapeFinder;
 use crate::riichi::shapes::{Shape, ShapeType, CompleteShape};
 use enum_iterator::IntoEnumIterator;
 use std::collections::HashMap;
+use crate::riichi::scores::Score;
+use crate::riichi::table::Table;
+use crate::riichi::tile::TileType;
 
-#[derive(IntoEnumIterator, Debug)]
+#[derive(IntoEnumIterator, Debug, Clone)]
 pub enum YakuType {
     // 1 han closed
     MenzenTsumo,
@@ -74,25 +77,108 @@ impl YakuFinder {
         }
     }
 
-    pub fn find(&self, hand: &mut Hand) {
+    pub fn find(&self, mut table: &mut Table) {
         // only complete hands
-        if hand.shanten() != -1 {
+        if table.my_hand.shanten() != -1 {
             return;
         }
 
         let mut sf = ShapeFinder::new();
-        let variants = sf.find(hand);
-        let mut variant_yaku: HashMap<usize, Vec<YakuType>> = HashMap::new();
+        let variants = sf.find(&mut table.my_hand);
+        let mut variant_yaku: HashMap<usize, (Vec<YakuType>, Score)> = HashMap::new();
 
         for (i, variant) in variants.iter().enumerate() {
             let mut yakus: Vec<YakuType> = vec!();
+            let mut han: u8 = 0;
+            let mut fu: u8 = 0;
             for yaku_type in YakuType::into_enum_iter() {
-                if yaku_type.is_in_hand(hand, variant) {
-                    yakus.push(yaku_type);
+                if yaku_type.is_in_hand(&mut table, variant) {
+                    match yaku_type {
+                        YakuType::Pinfu => {
+                            if table.did_i_tsumo() {
+                                fu = 20;
+                            } else {
+                                fu = 30;
+                            }
+                        },
+                        YakuType::Chiitoitsu => {
+                            fu = 25;
+                        },
+                        _ => ()
+                    }
+                    yakus.push(yaku_type.clone());
+                    han += yaku_type.get_han();
                 }
             }
 
-            variant_yaku.insert(i, yakus);
+            if han >= 5 {
+                fu = 0;
+            } else if fu == 0 {
+                // if we did not set fu based on yaku, we search shapes for fu
+                if table.did_i_tsumo() {
+                    fu = 20;
+                } else {
+                    fu = 30;
+                }
+
+                // set this for tanki, shanpon, kanchan and penchan waits
+                let mut has_value_wait = false;
+
+                let winning_tile = table.get_my_winning_tile();
+
+                for shape in variant {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(tiles) => {
+                                    if tiles[1].eq(&winning_tile) || // kanchan
+                                       tiles[0].prev_id(false, 1) == 0 && tiles[2].eq(&winning_tile) ||
+                                       tiles[2].next_id(false, 1) == 0 && tiles[0].eq(&winning_tile) { // penchans
+                                        has_value_wait = true;
+                                    }
+                                },
+                                CompleteShape::Koutsu(tiles) => {
+                                    // TODO open vs closed ofc
+                                    // TODO kans
+                                    match tiles[0].tile_type {
+                                        TileType::Number(value, _) => {
+                                            if value == 1 || value == 9 {
+                                                fu += 8
+                                            } else {
+                                                fu += 4;
+                                            }
+                                        },
+                                        TileType::Wind(_) | TileType::Dragon(_) => {
+                                            fu += 8;
+                                        },
+                                    }
+
+                                    if tiles[0].eq(&winning_tile) {
+                                        has_value_wait = true;
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Number(_, _) => {},
+                                        TileType::Wind(value) => {
+
+                                        },
+                                        TileType::Dragon(_) => {},
+                                    }
+
+                                    if tiles[0].eq(&winning_tile) {
+                                        has_value_wait = true;
+                                    }
+                                },
+                                CompleteShape::Single(tile) => {},
+                            }
+                        },
+                        ShapeType::Incomplete(_) => {},
+                    }
+                }
+            }
+
+            variant_yaku.insert(i, (yakus, Score::new(han, fu, table.am_i_oya(), table.did_i_tsumo())));
         }
 
         println!("{:#?}", variant_yaku);
@@ -238,7 +324,7 @@ impl YakuType {
     }
 
     /// 2x the same shuntsu shape
-    fn is_in_hand(&self, hand: &mut Hand, variant: &Vec<Shape>) -> bool {
+    fn is_in_hand(&self, table: &mut Table, variant: &Vec<Shape>) -> bool {
         match self {
             YakuType::MenzenTsumo => {},
             YakuType::Riichi => {},
@@ -250,7 +336,7 @@ impl YakuType {
             YakuType::Rinshan => {},
             YakuType::Chankan => {},
             YakuType::Tanyao => {
-                let array_34 = hand.get_34_array();
+                let array_34 = table.my_hand.get_34_array();
                 // can't contain any terminals or honors
                 for (i, count) in array_34.iter().enumerate() {
                     if ([1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28) && *count > 0 {
@@ -323,6 +409,15 @@ impl YakuType {
         false
     }
 
+    pub fn is_yakuman(&self) -> bool {
+        match self {
+            YakuType::Kokushi | YakuType::Suuankou | YakuType::Daisangen | YakuType::Shousuushii |
+            YakuType::Daisuushii | YakuType::Tsuuiisou | YakuType::Chinroutou | YakuType::Ryuuiisou |
+            YakuType::Chuuren | YakuType::Suukantsu | YakuType::Tenhou | YakuType::Chiihou => true,
+            _ => false
+        }
+    }
+
     fn find_yakuhai(&self, variant: &Vec<Shape>, tile_id: u8) -> bool {
         for shape in variant.iter() {
             match shape.get_shape_type() {
@@ -348,22 +443,28 @@ impl YakuType {
 
 mod tests {
     use super::*;
+    use serde_json::{Map, Value};
 
     #[test]
     fn find_tanyao() {
-        let mut hand = Hand::from_text("234567m234567s88p", false).unwrap();
-        hand.yaku();
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("234567m234567s88p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        table.yaku();
+//        let mut hand = Hand::from_text("234567m234567s88p", false).unwrap();
+//        hand.yaku();
     }
 
     #[test]
     fn find_tanyao_chiitoi() {
         let mut hand = Hand::from_text("224466m4477s3388p", false).unwrap();
-        hand.yaku();
+//        hand.yaku();
     }
 
     #[test]
     fn find_white_dragons() {
         let mut hand = Hand::from_text("123m234s67888p666z", false).unwrap();
-        hand.yaku();
+//        hand.yaku();
     }
 }

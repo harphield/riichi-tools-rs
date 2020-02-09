@@ -206,7 +206,7 @@ impl Score {
             } else if self.tsumo {
                 points = ((((base_points as f32 / 100f32).ceil() * 100f32) * 2f32) + (((base_points * 2) as f32 / 100f32).ceil() * 100f32)) as u32;
             } else {
-                points = (((base_points * 4) as f32 / 100f32).ceil() * 100f32) as u32;;
+                points = (((base_points * 4) as f32 / 100f32).ceil() * 100f32) as u32;
             }
         }
 
@@ -232,7 +232,7 @@ impl Score {
             if self.oya {
                 return (((2 * base_points) as f32 / 100f32).ceil() * 100f32) as u32;
             }
-            return (((base_points) as f32 / 100f32).ceil() * 100f32) as u32;;
+            return (((base_points) as f32 / 100f32).ceil() * 100f32) as u32;
         }
 
         if self.oya {
