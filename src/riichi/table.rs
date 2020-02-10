@@ -3,7 +3,8 @@ use crate::riichi::tile::Tile;
 use crate::riichi::shapes::Shape;
 use serde_json::{Map, Value};
 use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::yaku::YakuFinder;
+use crate::riichi::yaku::{YakuFinder, Yaku};
+use crate::riichi::scores::Score;
 
 /// Representation of the game state
 pub struct Table {
@@ -95,6 +96,13 @@ impl Table {
                     },
                     _ => ()
                 }
+            } else if index.eq(&String::from("my_tsumo")) {
+                match value {
+                    Value::Bool(b) => {
+                        t.my_tsumo = *b;
+                    },
+                    _ => ()
+                }
             }
         }
 
@@ -129,9 +137,9 @@ impl Table {
         self.prevalent_wind
     }
 
-    pub fn yaku(&mut self) {
+    pub fn yaku(&mut self) -> Option<(Vec<Yaku>, Score)> {
         let yf = YakuFinder::new();
-        yf.find(self);
+        yf.find(self)
     }
 }
 

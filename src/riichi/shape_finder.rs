@@ -113,14 +113,14 @@ impl ShapeFinder {
     }
 
     fn add_shape(&mut self, tiles: Vec<Tile>, array_34: &mut [u8; 34]) {
-        self.current_variant.push(Shape::from_tiles(&tiles, true).unwrap());
+        self.current_variant.push(Shape::from_tiles(&tiles,false,true).unwrap());
         for t in tiles.iter() {
             array_34[(t.to_id() - 1) as usize] -= 1;
         }
     }
 
     fn remove_shape(&mut self, tiles: Vec<Tile>, array_34: &mut [u8; 34]) {
-        let shape = Shape::from_tiles(&tiles, true).unwrap();
+        let shape = Shape::from_tiles(&tiles,false,true).unwrap();
         let hash = shape.to_string();
 
         for (i, s) in self.current_variant.iter().enumerate() {

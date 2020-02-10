@@ -373,11 +373,30 @@ impl Yaku {
                     return false;
                 }
 
+                let winning_tile = table.get_my_winning_tile();
+
+                let mut has_ryanmen_wait = false;
+
                 let mut pairs: u8 = 0;
                 for shape in variant.iter() {
                     match shape.get_shape_type() {
                         ShapeType::Complete(cs) => {
                             match cs {
+                                CompleteShape::Shuntsu(tiles) => {
+                                    if tiles[0].prev_id(false, 1) == 0 {
+                                        if tiles[0].eq(&winning_tile) {
+                                            has_ryanmen_wait = true;
+                                        }
+                                    } else if tiles[2].next_id(false, 1) == 0 {
+                                        if tiles[2].eq(&winning_tile) {
+                                            has_ryanmen_wait = true;
+                                        }
+                                    } else {
+                                        if tiles[0].eq(&winning_tile) || tiles[2].eq(&winning_tile) {
+                                            has_ryanmen_wait = true;
+                                        }
+                                    }
+                                },
                                 CompleteShape::Koutsu(_) | CompleteShape::Single(_) => return false,
                                 CompleteShape::Toitsu(tiles) => {
                                     pairs += 1;
@@ -395,12 +414,13 @@ impl Yaku {
                                         _ => ()
                                     }
                                 },
-                                _ => ()
                             }
                         },
                         ShapeType::Incomplete(_) => return false,
                     }
                 }
+
+                return has_ryanmen_wait;
             },
             Yaku::Iipeikou => {
                 if !table.my_hand.is_closed() {
@@ -570,10 +590,178 @@ impl Yaku {
                     }
                 }
             },
-            Yaku::Ittsu => {},
-            Yaku::Toitoi => {},
-            Yaku::Sanankou => {},
-            Yaku::SanshokuDoukou => {},
+            Yaku::Ittsu => {
+                let mut parts: [u8; 3] = [
+                    0,
+                    0,
+                    0,
+                ];
+
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Number(value, color) => {
+                                            if value == 1 {
+                                                if color.to_char() == 'm' && parts[0] == 0 {
+                                                    parts[0] = 1;
+                                                } else if color.to_char() == 'p' && parts[1] == 0 {
+                                                    parts[1] = 1;
+                                                } else if color.to_char() == 's' && parts[2] == 0 {
+                                                    parts[2] = 1;
+                                                }
+                                            } else if value == 4 {
+                                                if color.to_char() == 'm' && parts[0] == 1 {
+                                                    parts[0] = 2;
+                                                } else if color.to_char() == 'p' && parts[1] == 1 {
+                                                    parts[1] = 2;
+                                                } else if color.to_char() == 's' && parts[2] == 1 {
+                                                    parts[2] = 2;
+                                                }
+                                            } else if value == 7 {
+                                                if color.to_char() == 'm' && parts[0] == 2 {
+                                                    parts[0] = 3;
+                                                } else if color.to_char() == 'p' && parts[1] == 2 {
+                                                    parts[1] = 3;
+                                                } else if color.to_char() == 's' && parts[2] == 2 {
+                                                    parts[2] = 3;
+                                                }
+                                            }
+                                        },
+                                        _ => ()
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                                _ => (),
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return parts[0] == 3 || parts[1] == 3 || parts[2] == 3;
+            },
+            Yaku::Toitoi => {
+                let winning_tile = table.get_my_winning_tile();
+
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(_) => return false,
+                                CompleteShape::Koutsu(_) => (),
+                                CompleteShape::Toitsu(tiles) => {
+                                    if table.my_hand.is_closed() && tiles[0].eq(&winning_tile) {
+                                        return false; // this is suuankou
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return true;
+            },
+            Yaku::Sanankou => {
+                let winning_tile = table.get_my_winning_tile();
+                let mut ankou: u8 = 0;
+                let mut has_tanki_wait = false;
+                let mut has_shuntsu_wait = false;
+                let mut has_shanpon_wait = false;
+
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Koutsu(tiles) => {
+                                    if !shape.is_open() {
+                                        ankou += 1;
+                                        if tiles[0].eq(&winning_tile) {
+                                            has_shanpon_wait = true;
+                                        }
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    if table.my_hand.is_closed() && tiles[0].eq(&winning_tile) {
+                                        has_tanki_wait = true;
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                                CompleteShape::Shuntsu(tiles) => {
+                                    if tiles[0].eq(&winning_tile) || tiles[1].eq(&winning_tile) || tiles[2].eq(&winning_tile) {
+                                        has_shuntsu_wait = true;
+                                    }
+                                }
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                if ankou < 3 {
+                    return false;
+                }
+
+                if !table.my_hand.is_closed() || ankou == 3 {
+                    // open hand
+                    if table.did_i_tsumo() || has_tanki_wait || has_shuntsu_wait {
+                        return true;
+                    }
+                } else if ankou == 4 {
+                    // else it's suuankou
+                    if !table.did_i_tsumo() && !has_tanki_wait {
+                        return true;
+                    }
+                }
+            },
+            Yaku::SanshokuDoukou => {
+                let mut combos: HashMap<String, [bool; 3]> = HashMap::new();
+
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Koutsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Number(value, suit) => {
+                                            let key = format!("{}", value);
+                                            let mut info;
+                                            if combos.contains_key(&key[..]) {
+                                                info = combos[&key];
+                                                combos.remove(&key);
+                                            } else {
+                                                info = [false, false, false];
+                                            }
+
+                                            if suit.to_char() == 'm' {
+                                                info[0] = true;
+                                            } else if suit.to_char() == 'p' {
+                                                info[1] = true;
+                                            } else if suit.to_char() == 's' {
+                                                info[2] = true;
+                                            }
+
+                                            if info[0] && info[1] && info[2] {
+                                                return true;
+                                            }
+
+                                            combos.insert(key, info);
+                                        },
+                                        _ => ()
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                                _ => ()
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+            },
             Yaku::Sankantsu => {},      // TODO
             Yaku::Chiitoitsu => {
                 for shape in variant.iter() {
@@ -598,6 +786,7 @@ impl Yaku {
             Yaku::Junchan => {},
             Yaku::Ryanpeikou => {},
             Yaku::Chinitsu => {},
+
             Yaku::Kazoe => {},
             Yaku::Kokushi => {},
             Yaku::Suuankou => {},
@@ -651,12 +840,25 @@ mod tests {
     use serde_json::{Map, Value};
 
     #[test]
-    fn find_tanyao() {
+    fn find_mentanpin() {
         let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("234567m234567s88p"));
+        map.insert("my_hand".to_string(), Value::from("23467m234567s88p5m"));
+        map.insert("my_tsumo".to_string(), Value::from(true));
 
         let mut table = Table::from_map(&map).unwrap();
-        table.yaku();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::MenzenTsumo => true,
+            _ => false,
+        });
+        assert!(match res.0.get(1).unwrap() {
+            Yaku::Pinfu => true,
+            _ => false,
+        });
+        assert!(match res.0.get(2).unwrap() {
+            Yaku::Tanyao => true,
+            _ => false,
+        });
     }
 
     #[test]
@@ -665,7 +867,15 @@ mod tests {
         map.insert("my_hand".to_string(), Value::from("224466m4477s3388p"));
 
         let mut table = Table::from_map(&map).unwrap();
-        table.yaku();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Tanyao => true,
+            _ => false,
+        });
+        assert!(match res.0.get(1).unwrap() {
+            Yaku::Chiitoitsu => true,
+            _ => false,
+        });
     }
 
     #[test]
@@ -674,15 +884,76 @@ mod tests {
         map.insert("my_hand".to_string(), Value::from("123m234s67888p666z"));
 
         let mut table = Table::from_map(&map).unwrap();
-        table.yaku();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::WhiteDragons => true,
+            _ => false,
+        });
     }
 
     #[test]
     fn find_sanshoku_doujun() {
         let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("234m234567s23488p"));
+        map.insert("my_hand".to_string(), Value::from("234m234567s23499p"));
 
         let mut table = Table::from_map(&map).unwrap();
-        table.yaku();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::SanshokuDoujun => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_ittsu() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("11m123456789s444p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Ittsu => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_toitoi_sanankou() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("111m22255p777s22z5p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Toitoi => true,
+            _ => false,
+        });
+        assert!(match res.0.get(1).unwrap() {
+            Yaku::Sanankou => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_toitoi_sanshoku() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("111m11155p111s22z5p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Toitoi => true,
+            _ => false,
+        });
+        assert!(match res.0.get(1).unwrap() {
+            Yaku::Sanankou => true,
+            _ => false,
+        });
+        assert!(match res.0.get(2).unwrap() {
+            Yaku::SanshokuDoukou => true,
+            _ => false,
+        });
     }
 }

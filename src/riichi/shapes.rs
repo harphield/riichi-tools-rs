@@ -13,6 +13,7 @@ use crate::riichi::shapes::ShapeType::Complete;
 pub struct Shape {
     shape_type: ShapeType,
     tile_count: u8,
+    is_open: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -41,15 +42,20 @@ pub enum IncompleteShape {
 }
 
 impl Shape {
-    pub fn new(shape_type: ShapeType, tile_count: u8) -> Shape {
+    pub fn new(shape_type: ShapeType, tile_count: u8, is_open: bool) -> Shape {
         Shape {
             shape_type,
-            tile_count
+            tile_count,
+            is_open,
         }
     }
 
     pub fn get_shape_type(&self) -> &ShapeType {
         return &self.shape_type;
+    }
+
+    pub fn is_open(&self) -> bool {
+        self.is_open
     }
 
     pub fn to_string(&self) -> String {
@@ -74,7 +80,7 @@ impl Shape {
 
     /// Creates a shape from the given tiles.
     /// TODO incomplete shapes
-    pub fn from_tiles(tiles: &Vec<Tile>, only_complete: bool) -> Result<Shape, RiichiError> {
+    pub fn from_tiles(tiles: &Vec<Tile>, is_open: bool, only_complete: bool) -> Result<Shape, RiichiError> {
         let shape_type: ShapeType;
         let tile_count: u8 = tiles.iter().count() as u8;
 
@@ -107,16 +113,16 @@ impl Shape {
                         shape_type = ShapeType::Complete(CompleteShape::Shuntsu([
                             *tile_1, *tile_2, *tile_3
                         ]));
-                        return Result::Ok(Shape::new(shape_type, tile_count));
+                        return Result::Ok(Shape::new(shape_type, tile_count, is_open));
                     } else {
-                        return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3);
+                        return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
                     }
                 }
                 Wind(value) => {
-                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3);
+                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
                 }
                 Dragon(value) => {
-                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3);
+                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
                 }
             }
         } else if tile_count == 2 {
@@ -128,14 +134,14 @@ impl Shape {
                     shape_type = ShapeType::Complete(CompleteShape::Toitsu([
                         *tile_1, *tile_2
                     ]));
-                    return Result::Ok(Shape::new(shape_type, tile_count));
+                    return Result::Ok(Shape::new(shape_type, tile_count, is_open));
                 }
             }
         } else if tile_count == 1 {
             let tile_1 = tiles.get(0).unwrap();
             if only_complete {
                 shape_type = ShapeType::Complete(CompleteShape::Single(*tile_1));
-                return Result::Ok(Shape::new(shape_type, tile_count));
+                return Result::Ok(Shape::new(shape_type, tile_count, is_open));
             }
         }
 
@@ -143,12 +149,12 @@ impl Shape {
 //        Result::Ok(Shape::new(shape_type, tile_count))
     }
 
-    fn _koutsu_shape_type(tile_1: &Tile, tile_2: &Tile, tile_3: &Tile) -> Result<Shape, RiichiError> {
+    fn _koutsu_shape_type(tile_1: &Tile, tile_2: &Tile, tile_3: &Tile, is_open: bool) -> Result<Shape, RiichiError> {
         if tile_1.eq(tile_2) && tile_2.eq(tile_3) {
             let shape_type = ShapeType::Complete(CompleteShape::Koutsu([
                 *tile_1, *tile_2, *tile_3
             ]));
-            return Result::Ok(Shape::new(shape_type, 3));
+            return Result::Ok(Shape::new(shape_type, 3, is_open));
         }
 
         return Err(RiichiError::new(122, "Bad shape"));
