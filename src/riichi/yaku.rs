@@ -77,6 +77,7 @@ impl YakuFinder {
         }
     }
 
+    /// Finds the best variant of the hand + its score
     pub fn find(&self, mut table: &mut Table) -> Option<(Vec<Yaku>, Score)> {
         // only complete hands
         if table.my_hand.shanten() != -1 {
@@ -780,7 +781,9 @@ impl Yaku {
 
                 return true;
             },
-            Yaku::Honroutou => {},
+            Yaku::Honroutou => {
+
+            },
             Yaku::Shousangen => {},
             Yaku::Honitsu => {},
             Yaku::Junchan => {},
