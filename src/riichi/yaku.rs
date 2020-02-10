@@ -5,7 +5,7 @@ use enum_iterator::IntoEnumIterator;
 use std::collections::HashMap;
 use crate::riichi::scores::Score;
 use crate::riichi::table::Table;
-use crate::riichi::tile::TileType;
+use crate::riichi::tile::{TileType, Tile};
 
 #[derive(IntoEnumIterator, Debug, Clone)]
 pub enum Yaku {
@@ -427,6 +427,8 @@ impl Yaku {
                 if !table.my_hand.is_closed() {
                     return false;
                 }
+
+                return self.find_peikou(variant) == 1;
             },
             Yaku::Haitei => {
                 return table.did_i_tsumo() && table.get_tiles_remaining() == 0
@@ -782,22 +784,245 @@ impl Yaku {
                 return true;
             },
             Yaku::Honroutou => {
+                let mut has_terminals = false;
+                let mut has_honors = false;
 
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(_) | CompleteShape::Single(_) => return false,
+                                CompleteShape::Koutsu(tiles) => {
+                                    if !tiles[0].is_terminal_or_honor() {
+                                        return false;
+                                    }
+
+                                    if tiles[0].is_terminal() {
+                                        has_terminals = true;
+                                    } else if tiles[0].is_honor() {
+                                        has_honors = true;
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    if !tiles[0].is_terminal_or_honor() {
+                                        return false;
+                                    }
+
+                                    if tiles[0].is_terminal() {
+                                        has_terminals = true;
+                                    } else if tiles[0].is_honor() {
+                                        has_honors = true;
+                                    }
+                                },
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return has_honors && has_terminals;
             },
-            Yaku::Shousangen => {},
-            Yaku::Honitsu => {},
-            Yaku::Junchan => {},
-            Yaku::Ryanpeikou => {},
-            Yaku::Chinitsu => {},
+            Yaku::Shousangen => {
+                let mut dragon_pons: u8 = 0;
+                let mut has_dragon_pair = false;
 
-            Yaku::Kazoe => {},
-            Yaku::Kokushi => {},
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Koutsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Dragon(_) => {
+                                            dragon_pons += 1;
+
+                                            if dragon_pons > 2 { // daisangen
+                                                return false;
+                                            }
+                                        },
+                                        _ => (),
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Dragon(_) => {
+                                            has_dragon_pair = true;
+                                        },
+                                        _ => (),
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                                _ => (),
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return dragon_pons == 2 && has_dragon_pair;
+            },
+            Yaku::Honitsu => {
+                let mut has_honors = false;
+                let mut suit = 'x';
+                for o_t in table.my_hand.get_tiles().iter() {
+                    match o_t {
+                        None => {},
+                        Some(tile) => {
+                            if tile.get_type_char() == 'z' {
+                                has_honors = true;
+                            } else if suit == 'x' {
+                                suit = tile.get_type_char();
+                            } else if suit != tile.get_type_char() {
+                                return false;
+                            }
+                        },
+                    }
+                }
+
+                return has_honors;
+            },
+            Yaku::Junchan => {
+                // Junchan has to have shuntsu, else it's chinroutou
+                let mut has_shuntsu = false;
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(tiles) => {
+                                    if !tiles[0].is_terminal() && !tiles[2].is_terminal() {
+                                        return false;
+                                    }
+
+                                    has_shuntsu = true;
+                                },
+                                CompleteShape::Koutsu(tiles) => {
+                                    if !tiles[0].is_terminal() {
+                                        return false;
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    if !tiles[0].is_terminal() {
+                                        return false;
+                                    }
+                                },
+                                CompleteShape::Single(_) => {
+                                    return false;
+                                },
+                            }
+                        },
+                        ShapeType::Incomplete(_) => {
+                            return false;
+                        },
+                    }
+                }
+
+                return has_shuntsu;
+            },
+            Yaku::Ryanpeikou => {
+                if !table.my_hand.is_closed() {
+                    return false;
+                }
+
+                return self.find_peikou(variant) == 2;
+            },
+            Yaku::Chinitsu => {
+                let mut suit = 'x';
+                for o_t in table.my_hand.get_tiles().iter() {
+                    match o_t {
+                        None => {},
+                        Some(tile) => {
+                            if tile.get_type_char() == 'z' {
+                                return false;
+                            } else if suit == 'x' {
+                                suit = tile.get_type_char();
+                            } else if suit != tile.get_type_char() {
+                                return false;
+                            }
+                        },
+                    }
+                }
+
+                return true;
+            },
+
+            Yaku::Kazoe => {},  // TODO
+            Yaku::Kokushi => {
+                let mut has_pair = false;
+                for (i, count) in table.my_hand.get_34_array().iter().enumerate() {
+                    if *count == 0 {
+                        continue;
+                    }
+
+                    if !([1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34].contains(&(i + 1))) {
+                        return false;
+                    }
+
+                    if *count > 2 {
+                        return false;
+                    }
+
+                    if *count == 2 {
+                        if has_pair {
+                            return false;
+                        } else {
+                            has_pair = true;
+                        }
+                    }
+                }
+
+                return has_pair;
+            },
             Yaku::Suuankou => {},
             Yaku::Daisangen => {},
             Yaku::Shousuushii => {},
             Yaku::Daisuushii => {},
-            Yaku::Tsuuiisou => {},
-            Yaku::Chinroutou => {},
+            Yaku::Tsuuiisou => {
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(_) | CompleteShape::Single(_) => return false,
+                                CompleteShape::Koutsu(tiles) => {
+                                    if !tiles[0].is_honor() {
+                                        return false;
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    if !tiles[0].is_honor() {
+                                        return false;
+                                    }
+                                },
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return true;
+            },
+            Yaku::Chinroutou => {
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(_) | CompleteShape::Single(_) => return false,
+                                CompleteShape::Koutsu(tiles) => {
+                                    if !tiles[0].is_terminal() {
+                                        return false;
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    if !tiles[0].is_terminal() {
+                                        return false;
+                                    }
+                                },
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return true;
+            },
             Yaku::Ryuuiisou => {},
             Yaku::Chuuren => {},
             Yaku::Suukantsu => {},
@@ -835,6 +1060,39 @@ impl Yaku {
         }
 
         return false;
+    }
+
+    fn find_peikou(&self, variant: &Vec<Shape>) -> u8 {
+        let mut map: HashMap<String, u8> = HashMap::new();
+        let mut count = 0;
+
+        for shape in variant.iter() {
+            match shape.get_shape_type() {
+                ShapeType::Complete(cs) => {
+                    match cs {
+                        CompleteShape::Shuntsu(tiles) => {
+                            let key = format!("{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string());
+                            if map.contains_key(&key) {
+                                let v = *map.get(&key).unwrap();
+                                map.remove(&key);
+                                map.insert(key, v + 1);
+
+                                if v == 1 {
+                                    count += 1;
+                                }
+                            } else {
+                                map.insert(key, 1);
+                            }
+                        },
+                        CompleteShape::Single(_) => return 0,
+                        _ => (),
+                    }
+                },
+                ShapeType::Incomplete(_) => return 0,
+            }
+        }
+
+        count
     }
 }
 
@@ -956,6 +1214,62 @@ mod tests {
         });
         assert!(match res.0.get(2).unwrap() {
             Yaku::SanshokuDoukou => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_iipeikou() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("112233789m45677p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Iipeikou => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_ryanpeikou() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("112233m45645688p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Ryanpeikou => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_chinitsu() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("12322244467899p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Chinitsu => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_kokushi() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("119m19p19s1234567z"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Kokushi => true,
             _ => false,
         });
     }

@@ -53,6 +53,10 @@ impl Hand {
         true
     }
 
+    pub fn get_tiles(&self) -> &Vec<Option<Tile>> {
+        &self.tiles
+    }
+
     /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
     /// TODO automatically remove open shapes, so it doesn't interfere with shanten calculation?
     pub fn get_34_array(&mut self) -> [u8; 34] {
