@@ -1,7 +1,6 @@
 use crate::riichi::hand::Hand;
 use crate::riichi::tile::Tile;
 use crate::riichi::shapes::Shape;
-use wasm_bindgen::__rt::std::collections::HashMap;
 use serde_json::{Map, Value};
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::yaku::YakuFinder;
