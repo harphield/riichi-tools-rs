@@ -1271,7 +1271,64 @@ impl Yaku {
                 if !table.get_my_hand().is_closed() {
                     return false;
                 }
-                // TODO
+
+                let mut suit: Option<char> = None;
+
+                // 1112345678999 + 1 more tile
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(tiles) => {
+                                    match suit {
+                                        None => {
+                                            suit = Some(tiles[0].get_type_char())
+                                        },
+                                        Some(s) => {
+                                            if s != tiles[0].get_type_char() {
+                                                return false;
+                                            }
+                                        },
+                                    }
+                                },
+                                CompleteShape::Koutsu(tiles) => {
+                                    match suit {
+                                        None => {
+                                            suit = Some(tiles[0].get_type_char())
+                                        },
+                                        Some(s) => {
+                                            if s != tiles[0].get_type_char() {
+                                                return false;
+                                            }
+                                        },
+                                    }
+
+                                    if tiles[0].is_terminal_or_honor() {
+                                        return false;
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    match suit {
+                                        None => {
+                                            suit = Some(tiles[0].get_type_char())
+                                        },
+                                        Some(s) => {
+                                            if s != tiles[0].get_type_char() {
+                                                return false;
+                                            }
+                                        },
+                                    }
+
+                                    if tiles[0].is_terminal_or_honor() {
+                                        return false;
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
             },
             Yaku::Suukantsu => {}, // TODO
             Yaku::Tenhou => {
@@ -1279,7 +1336,7 @@ impl Yaku {
                     return false;
                 }
 
-
+                // TODO
             },
             Yaku::Chiihou => {
                 if !table.get_my_hand().is_closed() {
