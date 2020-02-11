@@ -80,12 +80,14 @@ impl YakuFinder {
     /// Finds the best variant of the hand + its score
     pub fn find(&self, mut table: &mut Table) -> Option<(Vec<Yaku>, Score)> {
         // only complete hands
-        if table.my_hand.shanten() != -1 {
+        let mut hand: &mut Hand = table.get_my_hand();
+
+        if hand.shanten() != -1 {
             return None;
         }
 
         let mut sf = ShapeFinder::new();
-        let variants = sf.find(&mut table.my_hand);
+        let variants = sf.find(&mut hand);
         let mut best_variant: (Vec<Yaku>, Score) = (vec![], Score::new(0, 0, false, false));
 
         for (i, variant) in variants.iter().enumerate() {
@@ -279,7 +281,7 @@ impl Yaku {
         }
     }
 
-    fn get_han(&self, table: &Table) -> u8 {
+    fn get_han(&self, table: &mut Table) -> u8 {
         match self {
             Yaku::MenzenTsumo =>    1,
             Yaku::Riichi =>         1,
@@ -303,21 +305,21 @@ impl Yaku {
             Yaku::RedDragons =>     1,
             Yaku::DoubleRiichi =>   2,
             Yaku::Chanta =>         {
-                if table.my_hand.is_closed() {
+                if table.get_my_hand().is_closed() {
                     return 2;
                 }
 
                 1
             },
             Yaku::SanshokuDoujun => {
-                if table.my_hand.is_closed() {
+                if table.get_my_hand().is_closed() {
                     return 2;
                 }
 
                 1
             },
             Yaku::Ittsu =>          {
-                if table.my_hand.is_closed() {
+                if table.get_my_hand().is_closed() {
                     return 2;
                 }
 
@@ -331,28 +333,28 @@ impl Yaku {
             Yaku::Honroutou =>      2,
             Yaku::Shousangen =>     2,
             Yaku::Honitsu =>        {
-                if table.my_hand.is_closed() {
+                if table.get_my_hand().is_closed() {
                     return 3;
                 }
 
                 2
             },
             Yaku::Junchan =>        {
-                if table.my_hand.is_closed() {
+                if table.get_my_hand().is_closed() {
                     return 3;
                 }
 
                 2
             },
             Yaku::Ryanpeikou =>     {
-                if table.my_hand.is_closed() {
+                if table.get_my_hand().is_closed() {
                     return 3;
                 }
 
                 2
             },
             Yaku::Chinitsu =>       {
-                if table.my_hand.is_closed() {
+                if table.get_my_hand().is_closed() {
                     return 6;
                 }
 
@@ -378,20 +380,20 @@ impl Yaku {
     fn is_in_hand(&self, table: &mut Table, variant: &Vec<Shape>) -> bool {
         match self {
             Yaku::MenzenTsumo => {
-                return table.my_hand.is_closed() && table.did_i_tsumo()
+                return table.get_my_hand().is_closed() && table.did_i_tsumo()
             },
             Yaku::Riichi => {
-                return table.my_hand.is_closed() && table.did_i_riichi()
+                return table.get_my_hand().is_closed() && table.did_i_riichi()
             },
             Yaku::Ippatsu => {
-                if !table.my_hand.is_closed() || !table.did_i_riichi() {
+                if !table.get_my_hand().is_closed() || !table.did_i_riichi() {
                     return false;
                 }
 
                 // TODO
             },
             Yaku::Pinfu => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
 
@@ -428,8 +430,18 @@ impl Yaku {
 
                                     match tiles[0].tile_type {
                                         TileType::Wind(value) => {
-                                            if value == table.get_prevalent_wind() || value == table.get_my_seat_wind() {
-                                                return false;
+                                            match table.get_prevalent_wind() {
+                                                None => return false,
+                                                Some(prevalent) => {
+                                                    match table.get_my_seat_wind() {
+                                                        None => return false,
+                                                        Some(seat) => {
+                                                            if value == prevalent || value == seat {
+                                                                return false;
+                                                            }
+                                                        },
+                                                    }
+                                                },
                                             }
                                         },
                                         TileType::Dragon(_) => return false,
@@ -445,22 +457,32 @@ impl Yaku {
                 return has_ryanmen_wait;
             },
             Yaku::Iipeikou => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
 
                 return self.find_peikou(variant) == 1;
             },
             Yaku::Haitei => {
-                return table.did_i_tsumo() && table.get_tiles_remaining() == 0
+                return match table.get_tiles_remaining() {
+                    None => false,
+                    Some(remaining) => {
+                        table.did_i_tsumo() && remaining == 0
+                    },
+                }
             },
             Yaku::Houtei => {
-                return !table.did_i_tsumo() && table.get_tiles_remaining() == 0
+                return match table.get_tiles_remaining() {
+                    None => false,
+                    Some(remaining) => {
+                        !table.did_i_tsumo() && remaining == 0
+                    },
+                }
             },
             Yaku::Rinshan => {},    // TODO
             Yaku::Chankan => {},    // TODO
             Yaku::Tanyao => {
-                let array_34 = table.my_hand.get_34_array();
+                let array_34 = table.get_my_hand().get_34_array();
                 // can't contain any terminals or honors
                 for (i, count) in array_34.iter().enumerate() {
                     if ([1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28) && *count > 0 {
@@ -471,50 +493,85 @@ impl Yaku {
                 return true;
             },
             Yaku::EastRound => {
-                if table.get_prevalent_wind() != 1 {
-                    return false;
+                match table.get_prevalent_wind() {
+                    None => return false,
+                    Some(prevalent) => {
+                        if prevalent != 1 {
+                            return false;
+                        }
+                    },
                 }
 
                 self.find_yakuhai(variant, 28);
             }
             Yaku::EastSeat => {
-                if table.get_my_seat_wind() != 1 {
-                    return false;
+                match table.get_my_seat_wind() {
+                    None => return false,
+                    Some(seat) => {
+                        if seat != 1 {
+                            return false;
+                        }
+                    },
                 }
 
                 self.find_yakuhai(variant, 28);
             }
             Yaku::SouthRound => {
-                if table.get_prevalent_wind() != 2 {
-                    return false;
+                match table.get_prevalent_wind() {
+                    None => return false,
+                    Some(prevalent) => {
+                        if prevalent != 2 {
+                            return false;
+                        }
+                    },
                 }
 
                 self.find_yakuhai(variant, 29);
             }
             Yaku::SouthSeat => {
-                if table.get_my_seat_wind() != 2 {
-                    return false;
+                match table.get_my_seat_wind() {
+                    None => return false,
+                    Some(seat) => {
+                        if seat != 2 {
+                            return false;
+                        }
+                    },
                 }
 
                 self.find_yakuhai(variant, 29);
             }
             Yaku::WestRound => {
-                if table.get_prevalent_wind() != 3 {
-                    return false;
+                match table.get_prevalent_wind() {
+                    None => return false,
+                    Some(prevalent) => {
+                        if prevalent != 3 {
+                            return false;
+                        }
+                    },
                 }
 
                 self.find_yakuhai(variant, 30);
             }
             Yaku::WestSeat => {
-                if table.get_my_seat_wind() != 3 {
-                    return false;
+                match table.get_my_seat_wind() {
+                    None => return false,
+                    Some(seat) => {
+                        if seat != 3 {
+                            return false;
+                        }
+                    },
                 }
 
                 self.find_yakuhai(variant, 30);
             }
             Yaku::NorthSeat => {
-                if table.get_my_seat_wind() != 4 {
-                    return false;
+                match table.get_my_seat_wind() {
+                    None => return false,
+                    Some(seat) => {
+                        if seat != 4 {
+                            return false;
+                        }
+                    },
                 }
 
                 self.find_yakuhai(variant, 31);
@@ -677,7 +734,7 @@ impl Yaku {
                                 CompleteShape::Shuntsu(_) => return false,
                                 CompleteShape::Koutsu(_) => (),
                                 CompleteShape::Toitsu(tiles) => {
-                                    if table.my_hand.is_closed() && tiles[0].eq(&winning_tile) {
+                                    if table.get_my_hand().is_closed() && tiles[0].eq(&winning_tile) {
                                         return false; // this is suuankou
                                     }
                                 },
@@ -710,7 +767,7 @@ impl Yaku {
                                     }
                                 },
                                 CompleteShape::Toitsu(tiles) => {
-                                    if table.my_hand.is_closed() && tiles[0].eq(&winning_tile) {
+                                    if table.get_my_hand().is_closed() && tiles[0].eq(&winning_tile) {
                                         has_tanki_wait = true;
                                     }
                                 },
@@ -730,7 +787,7 @@ impl Yaku {
                     return false;
                 }
 
-                if !table.my_hand.is_closed() || ankou == 3 {
+                if !table.get_my_hand().is_closed() || ankou == 3 {
                     // open hand
                     if table.did_i_tsumo() || has_tanki_wait || has_shuntsu_wait {
                         return true;
@@ -884,7 +941,7 @@ impl Yaku {
             Yaku::Honitsu => {
                 let mut has_honors = false;
                 let mut suit = 'x';
-                for o_t in table.my_hand.get_tiles().iter() {
+                for o_t in table.get_my_hand().get_tiles().iter() {
                     match o_t {
                         None => {},
                         Some(tile) => {
@@ -939,7 +996,7 @@ impl Yaku {
                 return has_shuntsu;
             },
             Yaku::Ryanpeikou => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
 
@@ -947,7 +1004,7 @@ impl Yaku {
             },
             Yaku::Chinitsu => {
                 let mut suit = 'x';
-                for o_t in table.my_hand.get_tiles().iter() {
+                for o_t in table.get_my_hand().get_tiles().iter() {
                     match o_t {
                         None => {},
                         Some(tile) => {
@@ -967,12 +1024,12 @@ impl Yaku {
 
             Yaku::Kazoe => {},  // TODO
             Yaku::Kokushi => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
 
                 let mut has_pair = false;
-                for (i, count) in table.my_hand.get_34_array().iter().enumerate() {
+                for (i, count) in table.get_my_hand().get_34_array().iter().enumerate() {
                     if *count == 0 {
                         continue;
                     }
@@ -997,7 +1054,7 @@ impl Yaku {
                 return has_pair;
             },
             Yaku::Suuankou => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
 
@@ -1197,23 +1254,35 @@ impl Yaku {
             },
             Yaku::Ryuuiisou => {
                 // 2,3,4,6,8s, 6z
+                for o_t in table.get_my_hand().get_tiles() {
+                    match o_t {
+                        None => {},
+                        Some(tile) => {
+                            if !([20, 21, 22, 24, 26, 33].contains(&tile.to_id())) {
+                                return false;
+                            }
+                        },
+                    }
+                }
 
+                return true;
             },
             Yaku::Chuuren => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
                 // TODO
             },
-            Yaku::Suukantsu => {},
+            Yaku::Suukantsu => {}, // TODO
             Yaku::Tenhou => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
-                // TODO
+
+
             },
             Yaku::Chiihou => {
-                if !table.my_hand.is_closed() {
+                if !table.get_my_hand().is_closed() {
                     return false;
                 }
                 // TODO
@@ -1538,6 +1607,19 @@ mod tests {
         });
         assert!(match res.0.get(1).unwrap() {
             Yaku::Daisuushii => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_ryuuiisou() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("23433366688s666z"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Ryuuiisou => true,
             _ => false,
         });
     }

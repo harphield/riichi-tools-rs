@@ -8,73 +8,75 @@ use crate::riichi::scores::Score;
 
 /// Representation of the game state
 pub struct Table {
-    pub my_hand: Hand,
-    my_riichi: bool,
-    my_tsumo: bool,
-    my_points: i32,
+    my_hand: Option<Hand>,
+    my_discards: Option<Vec<Tile>>,
+    my_riichi: Option<bool>,
+    my_tsumo: Option<bool>,
+    my_points: Option<i32>,
     // player to the right
-    shimocha_discards: Vec<Tile>,
-    shimocha_open_tiles: Vec<Shape>,
-    shimocha_riichi: bool,
-    shimocha_tsumo: bool,
-    shimocha_points: i32,
+    shimocha_discards: Option<Vec<Tile>>,
+    shimocha_open_tiles: Option<Vec<Shape>>,
+    shimocha_riichi: Option<bool>,
+    shimocha_tsumo: Option<bool>,
+    shimocha_points: Option<i32>,
     // player to the left
-    kamicha_discards: Vec<Tile>,
-    kamicha_open_tiles: Vec<Shape>,
-    kamicha_riichi: bool,
-    kamicha_tsumo: bool,
-    kamicha_points: i32,
+    kamicha_discards: Option<Vec<Tile>>,
+    kamicha_open_tiles: Option<Vec<Shape>>,
+    kamicha_riichi: Option<bool>,
+    kamicha_tsumo: Option<bool>,
+    kamicha_points: Option<i32>,
     // opposite player
-    toimen_discards: Vec<Tile>,
-    toimen_open_tiles: Vec<Shape>,
-    toimen_riichi: bool,
-    toimen_tsumo: bool,
-    toimen_points: i32,
+    toimen_discards: Option<Vec<Tile>>,
+    toimen_open_tiles: Option<Vec<Shape>>,
+    toimen_riichi: Option<bool>,
+    toimen_tsumo: Option<bool>,
+    toimen_points: Option<i32>,
 
     // 1 = east, 2 = south, 3 = west, 4 = north
-    prevalent_wind: u8,
-    my_seat_wind: u8,
-    wind_round: u8,
-    total_round: u8,
-    tiles_remaining: u8,
+    prevalent_wind: Option<u8>,
+    my_seat_wind: Option<u8>,
+    wind_round: Option<u8>,
+    total_round: Option<u8>,
+    tiles_remaining: Option<u8>,
 
-    dora_indicators: Vec<Tile>,
+    dora_indicators: Option<Vec<Tile>>,
 
-    riichi_sticks_in_pot: u8,
-    tsumibo: u8,
+    riichi_sticks_in_pot: Option<u8>,
+    tsumibo: Option<u8>,
 
 }
 
 impl Table {
     pub fn from_map(params: &Map<String, Value>) -> Result<Table, RiichiError> {
         let mut t = Table {
-            my_hand: Default::default(),
-            my_riichi: false,
-            my_tsumo: false,
-            my_points: 0,
-            shimocha_discards: vec![],
-            shimocha_open_tiles: vec![],
-            shimocha_riichi: false,
-            shimocha_tsumo: false,
-            shimocha_points: 0,
-            kamicha_discards: vec![],
-            kamicha_open_tiles: vec![],
-            kamicha_riichi: false,
-            kamicha_tsumo: false,
-            kamicha_points: 0,
-            toimen_discards: vec![],
-            toimen_open_tiles: vec![],
-            toimen_riichi: false,
-            toimen_tsumo: false,
-            toimen_points: 0,
-            prevalent_wind: 0,
-            my_seat_wind: 0,
-            wind_round: 0,
-            total_round: 0,
-            tiles_remaining: 128, // TODO how much is at the start?
-            dora_indicators: vec![],
-            riichi_sticks_in_pot: 0,
-            tsumibo: 0
+            my_hand: None,
+            my_discards: None,
+            my_riichi: None,
+            my_tsumo: None,
+            my_points: None,
+            shimocha_discards: None,
+            shimocha_open_tiles: None,
+            shimocha_riichi: None,
+            shimocha_tsumo: None,
+            shimocha_points: None,
+            kamicha_discards: None,
+            kamicha_open_tiles: None,
+            kamicha_riichi: None,
+            kamicha_tsumo: None,
+            kamicha_points: None,
+            toimen_discards: None,
+            toimen_open_tiles: None,
+            toimen_riichi: None,
+            toimen_tsumo: None,
+            toimen_points: None,
+            prevalent_wind: None,
+            my_seat_wind: None,
+            wind_round: None,
+            total_round: None,
+            tiles_remaining: None,
+            dora_indicators: None,
+            riichi_sticks_in_pot: None,
+            tsumibo: None
         };
 
         for (index, value) in params {
@@ -82,7 +84,7 @@ impl Table {
                 match value {
                     Value::String(s) => {
                         match Hand::from_text(s, false) {
-                            Ok(hand) => t.my_hand = hand,
+                            Ok(hand) => t.my_hand = Some(hand),
                             Err(error) => return Err(error)
                         }
 
@@ -92,14 +94,14 @@ impl Table {
             } else if index.eq(&String::from("my_riichi")) {
                 match value {
                     Value::Bool(b) => {
-                        t.my_riichi = *b;
+                        t.my_riichi = Some(*b);
                     },
                     _ => ()
                 }
             } else if index.eq(&String::from("my_tsumo")) {
                 match value {
                     Value::Bool(b) => {
-                        t.my_tsumo = *b;
+                        t.my_tsumo = Some(*b);
                     },
                     _ => ()
                 }
@@ -110,30 +112,58 @@ impl Table {
     }
 
     pub fn am_i_oya(&self) -> bool {
-        self.prevalent_wind > 0 && self.prevalent_wind == self.my_seat_wind
+        return match self.prevalent_wind {
+            None => false,
+            Some(prevalent) => {
+                match self.my_seat_wind {
+                    None => false,
+                    Some(seat) => {
+                        prevalent > 0 && prevalent == seat
+                    },
+                }
+            },
+        }
     }
 
     pub fn did_i_tsumo(&self) -> bool {
-        self.my_tsumo
+        match self.my_tsumo {
+            None => false,
+            Some(value) => value,
+        }
     }
 
     pub fn did_i_riichi(&self) -> bool {
-        self.my_riichi
+        match self.my_riichi {
+            None => false,
+            Some(value) => value,
+        }
+    }
+
+    pub fn get_my_hand(&mut self) -> &mut Hand {
+        match &mut self.my_hand {
+            None => panic!("No hand!"),
+            Some(hand) => hand,
+        }
     }
 
     pub fn get_my_winning_tile(&self) -> Tile {
-        self.my_hand.get_drawn_tile().clone()
+        match &self.my_hand {
+            None => panic!("No drawn tile in hand!"),
+            Some(hand) => {
+                hand.get_drawn_tile().clone()
+            },
+        }
     }
 
-    pub fn get_tiles_remaining(&self) -> u8 {
+    pub fn get_tiles_remaining(&self) -> Option<u8> {
         self.tiles_remaining
     }
 
-    pub fn get_my_seat_wind(&self) -> u8 {
+    pub fn get_my_seat_wind(&self) -> Option<u8> {
         self.my_seat_wind
     }
 
-    pub fn get_prevalent_wind(&self) -> u8 {
+    pub fn get_prevalent_wind(&self) -> Option<u8> {
         self.prevalent_wind
     }
 
