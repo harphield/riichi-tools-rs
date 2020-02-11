@@ -108,14 +108,28 @@ impl Shape {
 
             match tile_1.tile_type {
                 Number(value, color) => {
-                    if tile_2.eq(&tile_1.next(false).unwrap()) &&
-                        tile_3.eq(&tile_2.next(false).unwrap()) {
-                        shape_type = ShapeType::Complete(CompleteShape::Shuntsu([
-                            *tile_1, *tile_2, *tile_3
-                        ]));
-                        return Result::Ok(Shape::new(shape_type, tile_count, is_open));
-                    } else {
-                        return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                    match tile_1.next(false) {
+                        None => {
+                            return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                        },
+                        Some(next_1) => {
+                            match tile_2.next(false) {
+                                None => {
+                                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                                },
+                                Some(next_2) => {
+                                    if tile_2.eq(&next_1) &&
+                                        tile_3.eq(&next_2) {
+                                        shape_type = ShapeType::Complete(CompleteShape::Shuntsu([
+                                            *tile_1, *tile_2, *tile_3
+                                        ]));
+                                        return Result::Ok(Shape::new(shape_type, tile_count, is_open));
+                                    } else {
+                                        return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                                    }
+                                },
+                            }
+                        },
                     }
                 }
                 Wind(value) => {
@@ -210,5 +224,31 @@ impl Shape {
         }
 
         true
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_ones() {
+        let tile = Tile::from_text("1s").unwrap();
+        let shape = Shape::from_tiles(&vec![tile, tile, tile], false, true);
+
+        assert!(match shape {
+            Ok(_) => true,
+            Err(_) => false,
+        });
+    }
+
+    #[test]
+    fn from_nines() {
+        let tile = Tile::from_text("9s").unwrap();
+        let shape = Shape::from_tiles(&vec![tile, tile, tile], false, true);
+
+        assert!(match shape {
+            Ok(_) => true,
+            Err(_) => false,
+        });
     }
 }

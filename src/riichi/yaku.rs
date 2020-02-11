@@ -1272,63 +1272,36 @@ impl Yaku {
                     return false;
                 }
 
-                let mut suit: Option<char> = None;
+                // 1112345678999 + 1 tile
 
-                // 1112345678999 + 1 more tile
-                for shape in variant.iter() {
-                    match shape.get_shape_type() {
-                        ShapeType::Complete(cs) => {
-                            match cs {
-                                CompleteShape::Shuntsu(tiles) => {
-                                    match suit {
-                                        None => {
-                                            suit = Some(tiles[0].get_type_char())
-                                        },
-                                        Some(s) => {
-                                            if s != tiles[0].get_type_char() {
-                                                return false;
-                                            }
-                                        },
-                                    }
-                                },
-                                CompleteShape::Koutsu(tiles) => {
-                                    match suit {
-                                        None => {
-                                            suit = Some(tiles[0].get_type_char())
-                                        },
-                                        Some(s) => {
-                                            if s != tiles[0].get_type_char() {
-                                                return false;
-                                            }
-                                        },
-                                    }
+                let array_34 = table.get_my_hand().get_34_array();
+                let mut offset = 0;
 
-                                    if tiles[0].is_terminal_or_honor() {
-                                        return false;
-                                    }
-                                },
-                                CompleteShape::Toitsu(tiles) => {
-                                    match suit {
-                                        None => {
-                                            suit = Some(tiles[0].get_type_char())
-                                        },
-                                        Some(s) => {
-                                            if s != tiles[0].get_type_char() {
-                                                return false;
-                                            }
-                                        },
-                                    }
-
-                                    if tiles[0].is_terminal_or_honor() {
-                                        return false;
-                                    }
-                                },
-                                CompleteShape::Single(_) => return false,
-                            }
-                        },
-                        ShapeType::Incomplete(_) => return false,
-                    }
+                if array_34[0] >= 3 {
+                    offset = 0;
+                } else if array_34[9] >= 3 {
+                    offset = 9;
+                } else if array_34[18] >= 3 {
+                    offset = 18;
+                } else {
+                    return false;
                 }
+
+                if array_34[8 + offset] < 3 {
+                    return false;
+                }
+
+                if array_34[1 + offset] == 0 || array_34[1 + offset] > 2 ||
+                    array_34[2 + offset] == 0 || array_34[2 + offset] > 2 ||
+                    array_34[3 + offset] == 0 || array_34[3 + offset] > 2 ||
+                    array_34[4 + offset] == 0 || array_34[4 + offset] > 2 ||
+                    array_34[5 + offset] == 0 || array_34[5 + offset] > 2 ||
+                    array_34[6 + offset] == 0 || array_34[6 + offset] > 2 ||
+                    array_34[7 + offset] == 0 || array_34[7 + offset] > 2 {
+                    return false;
+                }
+
+                return true;
             },
             Yaku::Suukantsu => {}, // TODO
             Yaku::Tenhou => {
@@ -1677,6 +1650,19 @@ mod tests {
         let res = table.yaku().unwrap();
         assert!(match res.0.get(0).unwrap() {
             Yaku::Ryuuiisou => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_chuuren() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("11123455678999p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Chuuren => true,
             _ => false,
         });
     }
