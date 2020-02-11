@@ -92,23 +92,44 @@ impl YakuFinder {
             let mut yakus: Vec<Yaku> = vec!();
             let mut han: u8 = 0;
             let mut fu: u8 = 0;
+
+            // first find potential yakumans
             for yaku_type in Yaku::into_enum_iter() {
+                if !yaku_type.is_yakuman() {
+                    continue;
+                }
+
                 if yaku_type.is_in_hand(&mut table, variant) {
-                    match yaku_type {
-                        Yaku::Pinfu => {
-                            if table.did_i_tsumo() {
-                                fu = 20;
-                            } else {
-                                fu = 30;
-                            }
-                        },
-                        Yaku::Chiitoitsu => {
-                            fu = 25;
-                        },
-                        _ => ()
-                    }
                     yakus.push(yaku_type.clone());
-                    han += yaku_type.get_han(table);
+                }
+            }
+
+            if !yakus.is_empty() {
+                han = 13;
+            } else {
+                for yaku_type in Yaku::into_enum_iter() {
+                    if yaku_type.is_yakuman() {
+                        continue;
+                    }
+
+                    if yaku_type.is_in_hand(&mut table, variant) {
+                        match yaku_type {
+                            Yaku::Pinfu => {
+                                if table.did_i_tsumo() {
+                                    fu = 20;
+                                } else {
+                                    fu = 30;
+                                }
+                            },
+                            Yaku::Chiitoitsu => {
+                                fu = 25;
+                            },
+                            _ => ()
+                        }
+
+                        yakus.push(yaku_type.clone());
+                        han += yaku_type.get_han(table);
+                    }
                 }
             }
 
@@ -946,6 +967,10 @@ impl Yaku {
 
             Yaku::Kazoe => {},  // TODO
             Yaku::Kokushi => {
+                if !table.my_hand.is_closed() {
+                    return false;
+                }
+
                 let mut has_pair = false;
                 for (i, count) in table.my_hand.get_34_array().iter().enumerate() {
                     if *count == 0 {
@@ -971,10 +996,157 @@ impl Yaku {
 
                 return has_pair;
             },
-            Yaku::Suuankou => {},
-            Yaku::Daisangen => {},
-            Yaku::Shousuushii => {},
-            Yaku::Daisuushii => {},
+            Yaku::Suuankou => {
+                if !table.my_hand.is_closed() {
+                    return false;
+                }
+
+                let winning_tile = table.get_my_winning_tile();
+                let mut has_tanki_wait = false;
+                let mut pair_found = false;
+
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Koutsu(tiles) => (),
+                                CompleteShape::Toitsu(tiles) => {
+                                    if pair_found {
+                                        return false;
+                                    } else {
+                                        pair_found = true;
+                                    }
+
+                                    if tiles[0].eq(&winning_tile) {
+                                        has_tanki_wait = true;
+                                    }
+                                },
+                                CompleteShape::Single(_) | CompleteShape::Shuntsu(_) => return false,
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return table.did_i_tsumo() || has_tanki_wait;
+            },
+            Yaku::Daisangen => {
+                let mut dragon_pons: u8 = 0;
+
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Koutsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Dragon(_) => {
+                                            dragon_pons += 1;
+                                        },
+                                        _ => (),
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Dragon(_) => {
+                                            return false;
+                                        },
+                                        _ => (),
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                                _ => (),
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return dragon_pons == 3;
+            },
+            Yaku::Shousuushii => {
+                let mut has_wind_pair = false;
+                let mut other: u8 = 0;
+                let mut toitsu_count: u8 = 0;
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Shuntsu(_) => {
+                                    other += 1;
+                                },
+                                CompleteShape::Koutsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Wind(value) => {},
+                                        _ => {
+                                            other += 1;
+                                        },
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    toitsu_count += 1;
+
+                                    if toitsu_count > 1 {
+                                        return false;
+                                    }
+
+                                    match tiles[0].tile_type {
+                                        TileType::Wind(_) => {
+                                            if has_wind_pair {
+                                                return false;
+                                            }
+
+                                            has_wind_pair = true;
+                                        },
+                                        _ => (),
+                                    }
+                                },
+                                CompleteShape::Single(_) => return false,
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return other < 2 && has_wind_pair;
+            },
+            Yaku::Daisuushii => {
+                let mut other: u8 = 0;
+                let mut toitsu_count: u8 = 0;
+                for shape in variant.iter() {
+                    match shape.get_shape_type() {
+                        ShapeType::Complete(cs) => {
+                            match cs {
+                                CompleteShape::Koutsu(tiles) => {
+                                    match tiles[0].tile_type {
+                                        TileType::Wind(value) => {},
+                                        _ => {
+                                            other += 1;
+                                        },
+                                    }
+                                },
+                                CompleteShape::Toitsu(tiles) => {
+                                    toitsu_count += 1;
+
+                                    if toitsu_count > 1 {
+                                        return false;
+                                    }
+
+                                    match tiles[0].tile_type {
+                                        TileType::Wind(_) => {
+                                            return false;
+                                        },
+                                        _ => (),
+                                    }
+                                },
+                                _ => return false,
+                            }
+                        },
+                        ShapeType::Incomplete(_) => return false,
+                    }
+                }
+
+                return other == 0;
+            },
             Yaku::Tsuuiisou => {
                 for shape in variant.iter() {
                     match shape.get_shape_type() {
@@ -1023,11 +1195,29 @@ impl Yaku {
 
                 return true;
             },
-            Yaku::Ryuuiisou => {},
-            Yaku::Chuuren => {},
+            Yaku::Ryuuiisou => {
+                // 2,3,4,6,8s, 6z
+
+            },
+            Yaku::Chuuren => {
+                if !table.my_hand.is_closed() {
+                    return false;
+                }
+                // TODO
+            },
             Yaku::Suukantsu => {},
-            Yaku::Tenhou => {},
-            Yaku::Chiihou => {}
+            Yaku::Tenhou => {
+                if !table.my_hand.is_closed() {
+                    return false;
+                }
+                // TODO
+            },
+            Yaku::Chiihou => {
+                if !table.my_hand.is_closed() {
+                    return false;
+                }
+                // TODO
+            }
         }
 
         false
@@ -1197,6 +1387,20 @@ mod tests {
     }
 
     #[test]
+    fn find_suuankou() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("111m222555p777s22z"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Suuankou => true,
+            _ => false,
+        });
+    }
+
+    #[test]
     fn find_toitoi_sanshoku() {
         let mut map = Map::new();
         // wins on a shanpon wait
@@ -1270,6 +1474,70 @@ mod tests {
         let res = table.yaku().unwrap();
         assert!(match res.0.get(0).unwrap() {
             Yaku::Kokushi => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_shousangen() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("234m789s55566677z"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::WhiteDragons => true,
+            _ => false,
+        });
+        assert!(match res.0.get(1).unwrap() {
+            Yaku::GreenDragons => true,
+            _ => false,
+        });
+        assert!(match res.0.get(2).unwrap() {
+            Yaku::Shousangen => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_daisangen() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("234m88s555666777z"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Daisangen => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_shousuushii() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("11222333444z789p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Shousuushii => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_daisuushii() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("111222333444z77p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Suuankou => true,
+            _ => false,
+        });
+        assert!(match res.0.get(1).unwrap() {
+            Yaku::Daisuushii => true,
             _ => false,
         });
     }
