@@ -142,8 +142,8 @@ async fn async_call(method: &str, params: &str) -> String {
                     match method {
                         "get_hand_yaku" => {
                             match table_result {
-                                Ok(table) => {
-
+                                Ok(mut table) => {
+                                    table.yaku();
                                 },
                                 Err(error) => return json!({
                                     "error": {
@@ -153,7 +153,14 @@ async fn async_call(method: &str, params: &str) -> String {
                                 }).to_string(),
                             }
                         },
-                        _ => ()
+                        _ => {
+                            return json!({
+                                "error": {
+                                    "code": 404,
+                                    "message": "No method found"
+                                }
+                            }).to_string()
+                        }
                     }
                 },
                 _ => {

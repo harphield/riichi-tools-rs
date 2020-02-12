@@ -43,7 +43,6 @@ pub struct Table {
 
     riichi_sticks_in_pot: Option<u8>,
     tsumibo: Option<u8>,
-
 }
 
 impl Table {
@@ -175,9 +174,4 @@ impl Table {
 
 mod tests {
     use super::*;
-
-    #[test]
-    fn set_my_hand() {
-
-    }
 }
