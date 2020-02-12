@@ -7,6 +7,9 @@ use super::shanten::ShantenFinder;
 use crate::riichi::riichi_error::RiichiError;
 use std::collections::HashMap;
 use crate::riichi::shapes::Shape;
+use crate::riichi::shape_finder::ShapeFinder;
+use crate::riichi::yaku::{YakuFinder, Yaku};
+use crate::riichi::scores::Score;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -48,6 +51,10 @@ impl Hand {
         }
 
         true
+    }
+
+    pub fn get_tiles(&self) -> &Vec<Option<Tile>> {
+        &self.tiles
     }
 
     /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
@@ -101,7 +108,6 @@ impl Hand {
                     Ok(mut tile) => {
                         if tiles.is_empty() {
                             // the last tile you write in your hand representation is your drawn tile
-                            // TODO this is wrong: should only set for the 14th tile
                             // TODO check for kans!
                             tile.is_draw = true;
                         }
@@ -131,6 +137,7 @@ impl Hand {
         self.tiles.sort();
     }
 
+    /// Removes a tile from this hand
     pub fn remove_tile(&mut self, tile: &Tile) {
         let mut found: usize = 999;
         for (i, hand_tile) in self.tiles.iter().enumerate() {
@@ -147,9 +154,11 @@ impl Hand {
 
         if found != 999 {
             self.tiles.remove(found);
+            self.reset_shanten();
         }
     }
 
+    /// Removes a tile by ID
     pub fn remove_tile_by_id(&mut self, tile_id: u8) {
         let tile = Tile::from_id(tile_id).unwrap();
         self.remove_tile(&tile);
@@ -176,6 +185,21 @@ impl Hand {
         hand_size -= (kan_tiles / 4);
 
         hand_size
+    }
+
+    pub fn is_closed(&self) -> bool {
+        for o_t in self.tiles.iter() {
+            match o_t {
+                None => {},
+                Some(tile) => {
+                    if tile.is_open {
+                        return false;
+                    }
+                },
+            }
+        }
+
+        true
     }
 
     pub fn to_string(&self) -> String {
@@ -396,6 +420,21 @@ impl Hand {
         }
 
         (tiles, accept_count)
+    }
+
+    pub fn get_drawn_tile(&self) -> &Tile {
+        for p_tile in self.tiles.iter() {
+            match p_tile {
+                Some(tile) => {
+                    if tile.is_draw {
+                        return tile;
+                    }
+                },
+                None => ()
+            }
+        }
+
+        panic!("No drawn tile?");
     }
 }
 

@@ -313,15 +313,15 @@ impl Tile {
     pub fn next(&self, dora: bool) -> Option<Tile> {
         let new_color;
 
-        match &self.tile_type {
+        return match &self.tile_type {
             TileType::Number(number, color) => {
                 new_color = color.clone();
                 if *number < 9 {
-                    return Some(Tile::new(TileType::Number(number + 1, new_color)));
+                    Some(Tile::new(TileType::Number(number + 1, new_color)))
                 } else if dora {
-                    return Some(Tile::new(TileType::Number(1, new_color)));
+                    Some(Tile::new(TileType::Number(1, new_color)))
                 } else {
-                    return None;
+                    None
                 }
             },
             TileType::Wind(number) => {
@@ -330,9 +330,9 @@ impl Tile {
                 }
 
                 if *number < 4 {
-                    return Some(Tile::new(TileType::Wind(number + 1)));
+                    Some(Tile::new(TileType::Wind(number + 1)))
                 } else {
-                    return Some(Tile::new(TileType::Wind(1)));
+                    Some(Tile::new(TileType::Wind(1)))
                 }
             },
             TileType::Dragon(number) => {
@@ -341,9 +341,9 @@ impl Tile {
                 }
 
                 if *number < 7 {
-                    return Some(Tile::new(TileType::Dragon(number + 1)));
+                    Some(Tile::new(TileType::Dragon(number + 1)))
                 } else {
-                    return Some(Tile::new(TileType::Dragon(5)));
+                    Some(Tile::new(TileType::Dragon(5)))
                 }
             }
         }
@@ -352,6 +352,24 @@ impl Tile {
     // pub fn prev(&self, dora: bool) -> Option(Tile) {
 
     // }
+
+    pub fn is_terminal(&self) -> bool {
+        match &self.tile_type {
+            TileType::Number(number, color) => *number == 1 || *number == 9,
+            TileType::Wind(_) | TileType::Dragon(_) => false
+        }
+    }
+
+    pub fn is_honor(&self) -> bool {
+        match &self.tile_type {
+            TileType::Number(_, _) => false,
+            TileType::Wind(_) | TileType::Dragon(_) => true
+        }
+    }
+
+    pub fn is_terminal_or_honor(&self) -> bool {
+        self.is_terminal() || self.is_honor()
+    }
 
     pub fn to_string(&self) -> String {
         match &self.tile_type {
