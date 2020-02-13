@@ -158,15 +158,23 @@ async fn async_call(method: &str, params: &str) -> String {
                                                 yaku_names.push((y.get_name(), y.get_han(&mut table)));
                                             }
 
+                                            let mut points: String = format!("{}", yaku.1.total_points());
+                                            if table.did_i_tsumo() {
+                                                if table.am_i_oya() {
+                                                    points = format!("{} all", yaku.1.points_from_ko());
+                                                } else {
+                                                    points = format!("{}/{}", yaku.1.points_from_oya(), yaku.1.points_from_ko());
+                                                }
+                                            }
+
                                             json!({
                                                 "success": {
                                                     "yaku": yaku_names,
                                                     "score": {
                                                         "han": yaku.1.han,
-                                                        "fu": yaku.1.han,
+                                                        "fu": yaku.1.fu,
                                                         "total_points": yaku.1.total_points(),
-                                                        "points_from_oya": yaku.1.points_from_oya(),
-                                                        "points_from_ko": yaku.1.points_from_ko(),
+                                                        "points_info": points,
                                                     },
                                                 }
                                             }).to_string()
