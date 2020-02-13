@@ -163,7 +163,7 @@ async fn async_call(method: &str, params: &str) -> String {
                                                 if table.am_i_oya() {
                                                     points = format!("{} all", yaku.1.points_from_ko());
                                                 } else {
-                                                    points = format!("{}/{}", yaku.1.points_from_oya(), yaku.1.points_from_ko());
+                                                    points = format!("{}/{}", yaku.1.points_from_ko(), yaku.1.points_from_oya());
                                                 }
                                             }
 

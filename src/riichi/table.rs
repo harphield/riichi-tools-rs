@@ -133,15 +133,10 @@ impl Table {
     }
 
     pub fn am_i_oya(&self) -> bool {
-        return match self.prevalent_wind {
+        match self.my_seat_wind {
             None => false,
-            Some(prevalent) => {
-                match self.my_seat_wind {
-                    None => false,
-                    Some(seat) => {
-                        prevalent > 0 && prevalent == seat
-                    },
-                }
+            Some(seat) => {
+                seat == 1
             },
         }
     }

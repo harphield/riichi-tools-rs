@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.59
+v0.0.60
 
 [![Build Status](https://travis-ci.org/harphield/riichi-tools-rs.png?branch=master)](https://travis-ci.org/harphield/riichi-tools-rs)
 
@@ -20,6 +20,7 @@ Showcase / frontend of this library can be found at https://riichi.harphield.com
     - Hand value + yaku for complete hand (14 tiles) [DONE]
     - Hand value + yaku for tenpai hand with possible outcomes
     - All of the above also for hands with calls
+    - Rule variants (Tenhou vs WRC vs MahjongSoul etc.)
 - Table analysis
     - Safe tiles
     - Wait probability percentages
