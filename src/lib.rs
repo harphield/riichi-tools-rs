@@ -25,7 +25,6 @@ async fn async_hand_shanten(hand_string: &str) -> String {
             json!({
                 "success": {
                     "shanten": shanten,
-                    "async": true,
                 }
             }).to_string()
         },
@@ -33,7 +32,7 @@ async fn async_hand_shanten(hand_string: &str) -> String {
             json!({
                 "error": {
                     "code": error.code,
-                    "message": error.message
+                    "message": error.message,
                 }
             }).to_string()
         }
@@ -55,7 +54,7 @@ async fn async_hand_tiles(hand_string: &str) -> String {
             json!({
                 "hand": {
                     "valid": valid,
-                    "tiles": hand.to_array_of_strings()
+                    "tiles": hand.to_array_of_strings(),
                 }
             }).to_string()
         },
@@ -63,7 +62,7 @@ async fn async_hand_tiles(hand_string: &str) -> String {
             json!({
                 "error": {
                     "code": error.code,
-                    "message": error.message
+                    "message": error.message,
                 }
             }).to_string()
         }
@@ -83,7 +82,7 @@ async fn async_shanten_improving_tiles(hand_string: &str) -> String {
             let imp_tiles = hand.find_shanten_improving_tiles();
             json!({
                 "success": {
-                    "imp_tiles": imp_tiles
+                    "imp_tiles": imp_tiles,
                 }
             }).to_string()
         },
@@ -91,7 +90,7 @@ async fn async_shanten_improving_tiles(hand_string: &str) -> String {
             json!({
                 "error": {
                     "code": error.code,
-                    "message": error.message
+                    "message": error.message,
                 }
             }).to_string()
         }
@@ -133,7 +132,7 @@ fn init_table_state(value: Option<&Value>) -> Result<Table, RiichiError> {
 async fn async_call(method: &str, params: &str) -> String {
     let json_result: Result<Value, Error> = serde_json::from_str(params);
 
-    match json_result {
+    return match json_result {
         Ok(value) => {
             match value {
                 Value::Object(map) => {
@@ -143,9 +142,38 @@ async fn async_call(method: &str, params: &str) -> String {
                         "get_hand_yaku" => {
                             match table_result {
                                 Ok(mut table) => {
-                                    table.yaku();
+                                    let o_yaku = table.yaku();
+                                    match o_yaku {
+                                        None => {
+                                            json!({
+                                                "error": {
+                                                    "code": 404,
+                                                    "message": "No yaku found"
+                                                }
+                                            }).to_string()
+                                        },
+                                        Some(yaku) => {
+                                            let mut yaku_names = vec![];
+                                            for y in yaku.0.iter() {
+                                                yaku_names.push(y.get_name());
+                                            }
+
+                                            json!({
+                                                "success": {
+                                                    "yaku": yaku_names,
+                                                    "score": {
+                                                        "han": yaku.1.han,
+                                                        "fu": yaku.1.han,
+                                                        "total_points": yaku.1.total_points(),
+                                                        "points_from_oya": yaku.1.points_from_oya(),
+                                                        "points_from_ko": yaku.1.points_from_ko(),
+                                                    }
+                                                }
+                                            }).to_string()
+                                        },
+                                    }
                                 },
-                                Err(error) => return json!({
+                                Err(error) => json!({
                                     "error": {
                                         "code": error.code,
                                         "message": error.message
@@ -154,7 +182,7 @@ async fn async_call(method: &str, params: &str) -> String {
                             }
                         },
                         _ => {
-                            return json!({
+                            json!({
                                 "error": {
                                     "code": 404,
                                     "message": "No method found"
@@ -164,7 +192,7 @@ async fn async_call(method: &str, params: &str) -> String {
                     }
                 },
                 _ => {
-                    return json!({
+                    json!({
                         "error": {
                             "code": 189,
                             "message": "Incorrect JSON params"
@@ -174,13 +202,11 @@ async fn async_call(method: &str, params: &str) -> String {
             }
         },
         Err(error) => {
-            return json!({
+            json!({
                 "error": error.to_string()
             }).to_string()
         },
     }
-
-    String::from("")
 }
 
 #[wasm_bindgen]

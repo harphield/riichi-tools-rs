@@ -228,7 +228,7 @@ impl Default for YakuFinder {
 ////////////////
 
 impl Yaku {
-    fn get_name(&self) -> &str {
+    pub fn get_name(&self) -> &str {
         match self {
             Yaku::MenzenTsumo =>    "Menzen tsumo",
             Yaku::Riichi =>         "Riichi",
