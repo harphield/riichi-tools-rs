@@ -137,7 +137,7 @@ impl YakuFinder {
 
             if han >= 5 {
                 fu = 0;
-            } else if fu == 0 {
+            } else if han > 0 && fu == 0 {
                 // if we did not set fu based on yaku, we search shapes for fu
                 if table.did_i_tsumo() {
                     fu = 20;
@@ -281,7 +281,7 @@ impl Yaku {
         }
     }
 
-    fn get_han(&self, table: &mut Table) -> u8 {
+    pub fn get_han(&self, table: &mut Table) -> u8 {
         match self {
             Yaku::MenzenTsumo =>    1,
             Yaku::Riichi =>         1,
@@ -502,7 +502,7 @@ impl Yaku {
                     },
                 }
 
-                self.find_yakuhai(variant, 28);
+                return self.find_yakuhai(variant, 28);
             }
             Yaku::EastSeat => {
                 match table.get_my_seat_wind() {
@@ -514,7 +514,7 @@ impl Yaku {
                     },
                 }
 
-                self.find_yakuhai(variant, 28);
+                return self.find_yakuhai(variant, 28);
             }
             Yaku::SouthRound => {
                 match table.get_prevalent_wind() {
@@ -526,7 +526,7 @@ impl Yaku {
                     },
                 }
 
-                self.find_yakuhai(variant, 29);
+                return self.find_yakuhai(variant, 29);
             }
             Yaku::SouthSeat => {
                 match table.get_my_seat_wind() {
@@ -538,7 +538,7 @@ impl Yaku {
                     },
                 }
 
-                self.find_yakuhai(variant, 29);
+                return self.find_yakuhai(variant, 29);
             }
             Yaku::WestRound => {
                 match table.get_prevalent_wind() {
@@ -550,7 +550,7 @@ impl Yaku {
                     },
                 }
 
-                self.find_yakuhai(variant, 30);
+                return self.find_yakuhai(variant, 30);
             }
             Yaku::WestSeat => {
                 match table.get_my_seat_wind() {
@@ -562,7 +562,7 @@ impl Yaku {
                     },
                 }
 
-                self.find_yakuhai(variant, 30);
+                return self.find_yakuhai(variant, 30);
             }
             Yaku::NorthSeat => {
                 match table.get_my_seat_wind() {
@@ -574,7 +574,7 @@ impl Yaku {
                     },
                 }
 
-                self.find_yakuhai(variant, 31);
+                return self.find_yakuhai(variant, 31);
             }
             Yaku::WhiteDragons => return self.find_yakuhai(variant, 33),
             Yaku::GreenDragons => return self.find_yakuhai(variant, 32),
@@ -1407,6 +1407,20 @@ mod tests {
         });
         assert!(match res.0.get(2).unwrap() {
             Yaku::Tanyao => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_yakuhai_south() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("222z123789m444s33p"));
+        map.insert("my_seat_wind".to_string(), Value::from(2));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::SouthSeat => true,
             _ => false,
         });
     }

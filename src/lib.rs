@@ -155,7 +155,7 @@ async fn async_call(method: &str, params: &str) -> String {
                                         Some(yaku) => {
                                             let mut yaku_names = vec![];
                                             for y in yaku.0.iter() {
-                                                yaku_names.push(y.get_name());
+                                                yaku_names.push((y.get_name(), y.get_han(&mut table)));
                                             }
 
                                             json!({
@@ -167,7 +167,7 @@ async fn async_call(method: &str, params: &str) -> String {
                                                         "total_points": yaku.1.total_points(),
                                                         "points_from_oya": yaku.1.points_from_oya(),
                                                         "points_from_ko": yaku.1.points_from_ko(),
-                                                    }
+                                                    },
                                                 }
                                             }).to_string()
                                         },

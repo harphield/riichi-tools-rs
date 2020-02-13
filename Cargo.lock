@@ -276,7 +276,7 @@ dependencies = [
 
 [[package]]
 name = "riichi-tools-rs"
-version = "0.0.58"
+version = "0.0.59"
 dependencies = [
  "console_error_panic_hook 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum-iterator 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",

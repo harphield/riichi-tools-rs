@@ -104,6 +104,28 @@ impl Table {
                     },
                     _ => ()
                 }
+            } else if index.eq(&String::from("prevalent_wind")) {
+                match value {
+                    Value::Number(v) => {
+                        t.prevalent_wind = Some(v.as_u64().unwrap() as u8);
+                    },
+                    Value::String(v) => {
+                        let number: u8 = v.parse().unwrap();
+                        t.prevalent_wind = Some(number);
+                    }
+                    _ => ()
+                }
+            } else if index.eq(&String::from("my_seat_wind")) {
+                match value {
+                    Value::Number(v) => {
+                        t.my_seat_wind = Some(v.as_u64().unwrap() as u8);
+                    },
+                    Value::String(v) => {
+                        let number: u8 = v.parse().unwrap();
+                        t.my_seat_wind = Some(number);
+                    }
+                    _ => ()
+                }
             }
         }
 
@@ -151,6 +173,13 @@ impl Table {
             Some(hand) => {
                 hand.get_drawn_tile().clone()
             },
+        }
+    }
+
+    pub fn get_my_riichi(&self) -> bool {
+        match self.my_riichi {
+            None => false,
+            Some(value) => value,
         }
     }
 
