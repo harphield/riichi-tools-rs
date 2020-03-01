@@ -24,13 +24,26 @@ pub enum ShapeType {
 
 #[derive(Debug, Clone, Copy)]
 pub enum CompleteShape {
+    Closed(ClosedShape),
+    Open(OpenShape),
+}
+
+pub enum ClosedShape {
     // meld
     Shuntsu([Tile; 3]),
     // triplet
     Koutsu([Tile; 3]),
+    // kan
+    Kantsu([Tile; 4]),
     // pair
     Toitsu([Tile; 2]),
-    Single(Tile)
+    Single(Tile),
+}
+
+pub enum OpenShape {
+    Chi([Tile; 3]),
+    Pon([Tile; 3]),
+    Kan([Tile; 4]),
 }
 
 // TODO rethink these
@@ -62,10 +75,23 @@ impl Shape {
         return match &self.shape_type {
             ShapeType::Complete(cs) => {
                 match cs {
-                    CompleteShape::Shuntsu(tiles) | CompleteShape::Koutsu(tiles)
-                        => String::from(format!("{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string())),
-                    CompleteShape::Toitsu(tiles) => String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string())),
-                    CompleteShape::Single(tile) => tile.to_string()
+                    CompleteShape::Closed(closed) => {
+                        match closed {
+                            ClosedShape::Shuntsu(tiles) | ClosedShape::Koutsu(tiles)
+                                => String::from(format!("{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string())),
+                            ClosedShape::Kantsu(tiles) => String::from(format!("{}{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string(), tiles[3].to_string())),
+                            ClosedShape::Toitsu(tiles) => String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string())),
+                            ClosedShape::Single(tile) => tile.to_string(),
+                        }
+                    },
+                    CompleteShape::Open(open) => {
+                        match open {
+                            OpenShape::Chi(tiles) | OpenShape::Pon(tiles)
+                                => String::from(format!("{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string())),
+                            OpenShape::Kan(tiles)
+                                => String::from(format!("{}{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string(), tiles[3].to_string())),
+                        }
+                    }
                 }
             },
             ShapeType::Incomplete(is) => {

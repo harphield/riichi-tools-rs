@@ -1,5 +1,5 @@
 use crate::riichi::hand::Hand;
-use crate::riichi::shapes::Shape;
+use crate::riichi::shapes::{Shape, ClosedShape};
 use crate::riichi::shapes::ShapeType;
 use crate::riichi::shapes::CompleteShape;
 use crate::riichi::tile::Tile;
@@ -152,38 +152,52 @@ impl ShapeFinder {
             match shape.get_shape_type() {
                 ShapeType::Complete(ct) => {
                     match ct {
-                        CompleteShape::Single(tile) => {
-                            // we can only have single tiles in kokushi, so no melds and no more than 1 pair
-                            if has_koutsu || has_shuntsu || toitsu_count > 1 {
-                                return false;
-                            }
+                        CompleteShape::Closed(closed) => {
+                            match closed {
+                                ClosedShape::Single(tile) => {
+                                    // we can only have single tiles in kokushi, so no melds and no more than 1 pair
+                                    if has_koutsu || has_shuntsu || toitsu_count > 1 {
+                                        return false;
+                                    }
 
-                            has_single = true;
+                                    has_single = true;
+                                },
+                                ClosedShape::Toitsu(tiles) => {
+                                    // we can have more than 1 pair only in chiitoitsu, so no melds and singles there
+                                    if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single) {
+                                        return false;
+                                    }
+
+                                    toitsu_count += 1;
+                                },
+                                ClosedShape::Koutsu(tiles) => {
+                                    // we can't have singles or more than 1 pair with melds
+                                    if toitsu_count > 1 || has_single {
+                                        return false;
+                                    }
+
+                                    has_koutsu = true;
+                                },
+                                ClosedShape::Kantsu(tiles) => {
+                                    // we can't have singles or more than 1 pair with melds
+                                    if toitsu_count > 1 || has_single {
+                                        return false;
+                                    }
+
+                                    // kan = koutsu anyway
+                                    has_koutsu = true;
+                                },
+                                ClosedShape::Shuntsu(tiles) => {
+                                    // we can't have singles or more than 1 pair with melds
+                                    if toitsu_count > 1 || has_single {
+                                        return false;
+                                    }
+
+                                    has_shuntsu = true;
+                                }
+                            }
                         },
-                        CompleteShape::Toitsu(tiles) => {
-                            // we can have more than 1 pair only in chiitoitsu, so no melds and singles there
-                            if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single) {
-                                return false;
-                            }
-
-                            toitsu_count += 1;
-                        },
-                        CompleteShape::Koutsu(tiles) => {
-                            // we can't have singles or more than 1 pair with melds
-                            if toitsu_count > 1 || has_single {
-                                return false;
-                            }
-
-                            has_koutsu = true;
-                        },
-                        CompleteShape::Shuntsu(tiles) => {
-                            // we can't have singles or more than 1 pair with melds
-                            if toitsu_count > 1 || has_single {
-                                return false;
-                            }
-
-                            has_shuntsu = true;
-                        }
+                        _ => (),
                     }
                 },
                 ShapeType::Incomplete(it) => {
