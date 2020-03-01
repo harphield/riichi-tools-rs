@@ -1166,8 +1166,6 @@ impl Yaku {
                     }
                 }
 
-                println!("{}", dragon_pons);
-
                 return dragon_pons == 2 && has_dragon_pair;
             },
             Yaku::Honitsu => {
@@ -1969,6 +1967,19 @@ mod tests {
         let res = table.yaku().unwrap();
         assert!(match res.0.get(0).unwrap() {
             Yaku::SanshokuDoujun => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_sanshoku_doukou() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("222m222567s22299p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(1).unwrap() {
+            Yaku::SanshokuDoukou => true,
             _ => false,
         });
     }
