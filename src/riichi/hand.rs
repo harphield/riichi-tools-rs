@@ -6,7 +6,7 @@ use super::tile::TileColor;
 use super::shanten::ShantenFinder;
 use crate::riichi::riichi_error::RiichiError;
 use std::collections::HashMap;
-use crate::riichi::shapes::Shape;
+use crate::riichi::shapes::{Shape, OpenShape};
 use crate::riichi::shape_finder::ShapeFinder;
 use crate::riichi::yaku::{YakuFinder, Yaku};
 use crate::riichi::scores::Score;
@@ -16,6 +16,7 @@ pub struct Hand {
     /// it can also have kan, which are groups of 4 tiles that behave as 3 tiles
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
+    open_shapes: Vec<OpenShape>,
     array_34: Option<[u8; 34]>,
     shapes: Option<Vec<Shape>>,
     shanten: i8,
@@ -32,7 +33,7 @@ impl Hand {
     /// Checks the hand for invalid things (wrong number of tiles, > 4 same tiles...)
     pub fn validate(&mut self) -> bool {
         let mut tile_count = 0;
-        let array34 = self.get_34_array();
+        let array34 = self.get_34_array(false);
 
         for count in array34.iter() {
             tile_count += *count;
@@ -58,15 +59,16 @@ impl Hand {
     }
 
     /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
-    /// TODO automatically remove open shapes, so it doesn't interfere with shanten calculation?
-    pub fn get_34_array(&mut self) -> [u8; 34] {
+    pub fn get_34_array(&mut self, remove_open_tiles: bool) -> [u8; 34] {
         match self.array_34 {
             Some(array_34) => return array_34,
             None => {
                 let mut array_34 = [0; 34];
                 for tile in self.tiles.iter() {
                     if let Option::Some(t) = tile {
-                        array_34[(t.to_id() - 1) as usize] += 1;
+                        if !remove_open_tiles || !t.is_open {
+                            array_34[(t.to_id() - 1) as usize] += 1;
+                        }
                     }
                 }
                 self.array_34 = Some(array_34);
@@ -93,6 +95,8 @@ impl Hand {
 
         let mut color: char = 'x';
         let mut rep: String;
+        let mut found_draw: bool = false;
+
         for ch in iter {
             if ch.is_alphabetic() {
                 // type
@@ -106,10 +110,10 @@ impl Hand {
                 rep.push(color);
                 match Tile::from_text(&rep[..]) {
                     Ok(mut tile) => {
-                        if tiles.is_empty() {
+                        if !found_draw && !tile.is_open && !tile.is_kan {
                             // the last tile you write in your hand representation is your drawn tile
-                            // TODO check for kans!
                             tile.is_draw = true;
+                            found_draw = true;
                         }
                         tiles.push(Option::Some(tile));
                     },
@@ -188,18 +192,7 @@ impl Hand {
     }
 
     pub fn is_closed(&self) -> bool {
-        for o_t in self.tiles.iter() {
-            match o_t {
-                None => {},
-                Some(tile) => {
-                    if tile.is_open {
-                        return false;
-                    }
-                },
-            }
-        }
-
-        true
+        self.open_shapes.is_empty()
     }
 
     pub fn to_string(&self) -> String {
@@ -227,7 +220,7 @@ impl Hand {
         out
     }
 
-    pub fn to_array_of_strings(&self) -> Vec<String> {
+    pub fn to_vec_of_strings(&self) -> Vec<String> {
         let mut tile_vec = vec!();
         let mut color = 'x';
         let mut last_tile: Option<String> = Option::None;
@@ -400,7 +393,7 @@ impl Hand {
         }
 
         let mut accept_count: u8 = 0;
-        let array_34 = self.get_34_array();
+        let array_34 = self.get_34_array(true);
 
         // we draw a tile and count shanten - if it improves, we add it to the tiles
         for i in try_tiles.iter() {
@@ -441,7 +434,8 @@ impl Hand {
 impl Default for Hand {
     fn default() -> Hand {
         Hand {
-            tiles: vec!(),
+            tiles: vec![],
+            open_shapes: vec![],
             array_34: None,
             shapes: None,
             shanten: 99,
@@ -461,6 +455,15 @@ mod tests {
 
     #[test]
     fn from_text_hand() {
+        let rep = "123m123p12345s22z";
+        let hand = Hand::from_text(rep, false).unwrap();
+
+        let rep2 = hand.to_string();
+        assert_eq!(rep2, rep);
+    }
+
+    #[test]
+    fn from_text_hand_add_open_shapes() {
         let rep = "123m123p12345s22z";
         let hand = Hand::from_text(rep, false).unwrap();
 

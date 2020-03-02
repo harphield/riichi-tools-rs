@@ -543,7 +543,7 @@ impl Yaku {
             Yaku::Rinshan => {},    // TODO
             Yaku::Chankan => {},    // TODO
             Yaku::Tanyao => {
-                let array_34 = table.get_my_hand().get_34_array();
+                let array_34 = table.get_my_hand().get_34_array(false);
                 // can't contain any terminals or honors
                 for (i, count) in array_34.iter().enumerate() {
                     if ([1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28) && *count > 0 {
@@ -1287,7 +1287,7 @@ impl Yaku {
                 }
 
                 let mut has_pair = false;
-                for (i, count) in table.get_my_hand().get_34_array().iter().enumerate() {
+                for (i, count) in table.get_my_hand().get_34_array(true).iter().enumerate() {
                     if *count == 0 {
                         continue;
                     }
@@ -1686,7 +1686,7 @@ impl Yaku {
 
                 // 1112345678999 + 1 tile
 
-                let array_34 = table.get_my_hand().get_34_array();
+                let array_34 = table.get_my_hand().get_34_array(true);
                 let mut offset = 0;
 
                 if array_34[0] >= 3 {

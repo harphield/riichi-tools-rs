@@ -21,7 +21,9 @@ impl ShapeFinder {
             return vec![];
         }
 
-        let mut array_34 = hand.get_34_array();
+        let mut array_34 = hand.get_34_array(true);
+
+        // TODO add open shapes
 
         self.search(&mut array_34, 0);
 

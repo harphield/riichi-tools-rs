@@ -54,7 +54,7 @@ async fn async_hand_tiles(hand_string: &str) -> String {
             json!({
                 "hand": {
                     "valid": valid,
-                    "tiles": hand.to_array_of_strings(),
+                    "tiles": hand.to_vec_of_strings(),
                 }
             }).to_string()
         },
