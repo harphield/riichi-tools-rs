@@ -185,6 +185,7 @@ impl Hand {
                             Some(mut hand_tile) => {
                                 if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
                                     hand_tile.is_open = true;
+                                    hand_tile.is_chi = true;
                                     self.tiles[i] = Some(hand_tile);
                                     found = true;
                                     break;
@@ -198,55 +199,52 @@ impl Hand {
                     }
                 }
             },
-            // OpenShape::Pon(tiles) => {
-            //     let mut found = 0;
-            //     for (i, t) in self.tiles.iter().enumerate() {
-            //         match t {
-            //             None => {},
-            //             Some(mut hand_tile) => {
-            //                 if hand_tile.eq(&tiles[0]) && !hand_tile.is_open && !hand_tile.is_kan {
-            //                     hand_tile.is_open = true;
-            //                     hand_tile.is_pon = true;
-            //                     self.tiles[i] = Some(hand_tile);
-            //                     found += 1;
-            //
-            //                     if found == 3 {
-            //                         break;
-            //                     }
-            //                 }
-            //             },
-            //         }
-            //     }
-            //
-            //     if found != 3 {
-            //         panic!("Invalid tiles in open shape");
-            //     }
-            // },
-            // OpenShape::Kan(tiles) => {
-            //     let mut found = 0;
-            //     for (i, t) in self.tiles.iter().enumerate() {
-            //         match t {
-            //             None => {},
-            //             Some(mut hand_tile) => {
-            //                 if hand_tile.eq(&tiles[0]) && !hand_tile.is_open && !hand_tile.is_kan {
-            //                     hand_tile.is_open = true;
-            //                     hand_tile.is_kan = true;
-            //                     self.tiles[i] = Some(hand_tile);
-            //                     found += 1;
-            //
-            //                     if found == 4 {
-            //                         break;
-            //                     }
-            //                 }
-            //             },
-            //         }
-            //     }
-            //
-            //     if found != 4 {
-            //         panic!("Invalid tiles in open shape");
-            //     }
-            // },
-            _ => {}
+            OpenShape::Pon(tiles) => {
+                for tile in tiles.iter() {
+                    let mut found = false;
+                    for (i, t) in self.tiles.iter().enumerate() {
+                        match t {
+                            None => {},
+                            Some(mut hand_tile) => {
+                                if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
+                                    hand_tile.is_open = true;
+                                    hand_tile.is_pon = true;
+                                    self.tiles[i] = Some(hand_tile);
+                                    found = true;
+                                    break;
+                                }
+                            },
+                        }
+                    }
+
+                    if !found {
+                        panic!("Invalid tiles in open shape");
+                    }
+                }
+            },
+            OpenShape::Kan(tiles) => {
+                for tile in tiles.iter() {
+                    let mut found = false;
+                    for (i, t) in self.tiles.iter().enumerate() {
+                        match t {
+                            None => {},
+                            Some(mut hand_tile) => {
+                                if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
+                                    hand_tile.is_open = true;
+                                    hand_tile.is_kan = true;
+                                    self.tiles[i] = Some(hand_tile);
+                                    found = true;
+                                    break;
+                                }
+                            },
+                        }
+                    }
+
+                    if !found {
+                        panic!("Invalid tiles in open shape");
+                    }
+                }
+            },
         }
 
         self.open_shapes.push(shape);
@@ -547,11 +545,38 @@ mod tests {
     }
 
     #[test]
-    fn from_text_hand_add_open_shapes() {
+    fn from_text_hand_add_chi() {
         let rep = "123m123p12345s22z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
         hand.add_open_shape(OpenShape::Chi([Tile::from_text("1m").unwrap(), Tile::from_text("2m").unwrap(), Tile::from_text("3m").unwrap()]));
+
+        let mut open_tiles_count = 0u8;
+        for rt in hand.get_tiles().iter() {
+            match rt {
+                None => {},
+                Some(tile) => {
+                    if tile.is_open {
+                        open_tiles_count += 1;
+                    }
+                },
+            }
+        }
+
+        let rep2 = hand.to_string();
+        assert_eq!(rep2, rep);
+
+        assert_eq!(open_tiles_count, 3);
+
+        assert_eq!(hand.get_open_shapes().len(), 1);
+    }
+
+    #[test]
+    fn from_text_hand_add_pon() {
+        let rep = "444m123p12345s22z";
+        let mut hand = Hand::from_text(rep, false).unwrap();
+
+        hand.add_open_shape(OpenShape::Pon([Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap()]));
 
         let mut open_tiles_count = 0u8;
         for rt in hand.get_tiles().iter() {
