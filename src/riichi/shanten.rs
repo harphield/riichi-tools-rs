@@ -348,6 +348,7 @@ impl Default for ShantenFinder {
 
 mod tests {
     use super::*;
+    use crate::riichi::shapes::OpenShape;
 
     #[test]
     fn kokushi_tenpai_13_waits() {
@@ -573,5 +574,17 @@ mod tests {
         let shanten = hand.shanten();
 
         assert_eq!(shanten, 2);
+    }
+
+    #[test]
+    fn with_14_open_hand_chi_tenpai() {
+        let rep = "123m123p12345s222z";
+        let mut hand = Hand::from_text(rep, false).unwrap();
+
+        hand.add_open_shape(OpenShape::Chi([Tile::from_text("1m").unwrap(), Tile::from_text("2m").unwrap(), Tile::from_text("3m").unwrap()]));
+
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
     }
 }

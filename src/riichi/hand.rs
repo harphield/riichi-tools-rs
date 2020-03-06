@@ -174,7 +174,6 @@ impl Hand {
 
     pub fn add_open_shape(&mut self, shape: OpenShape) {
         // TODO change the drawn tile to a different one if we removed all of them
-        // TODO pons & kans have some borrow errors, fix!
         match shape {
             OpenShape::Chi(tiles) => {
                 for tile in tiles.iter() {
