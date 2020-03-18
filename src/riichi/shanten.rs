@@ -47,7 +47,6 @@ impl ShantenFinder {
     fn kokushi_shanten(&self, array_34: &[u8; 34]) -> i8 {
         let mut shanten: i8 = 13;
         let mut pair_found = false;
-        let mut needed_count = 0;
 
         for (i, count) in array_34.iter().enumerate() {
             if [1, 9, 10, 18, 19, 27].contains(&(i + 1)) || (i + 1) >= 28 {
@@ -64,8 +63,6 @@ impl ShantenFinder {
                 }
             }
         }
-
-//        shanten += 13 - needed_count;
 
         shanten
     }
@@ -178,7 +175,6 @@ impl ShantenFinder {
         let s = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + over) as i8;
 
         if s < self.min_found {
-//            println!("sh: {}, cm: {}, im: {}, pairs: {}, it: {}", s, self.complete_melds, self.incomplete_melds, self.pairs, self.isolated_tiles);
             self.min_found = s;
         }
 

@@ -134,16 +134,16 @@ impl Shape {
             let tile_2 = tiles.get(1).unwrap();
             let tile_3 = tiles.get(2).unwrap();
 
-            match tile_1.tile_type {
+            return match tile_1.tile_type {
                 Number(value, color) => {
                     match tile_1.next(false) {
                         None => {
-                            return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                            Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                         },
                         Some(next_1) => {
                             match tile_2.next(false) {
                                 None => {
-                                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                                    Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                                 },
                                 Some(next_2) => {
                                     if tile_2.eq(&next_1) &&
@@ -158,9 +158,9 @@ impl Shape {
                                             ])));
                                         }
 
-                                        return Result::Ok(Shape::new(shape_type, tile_count, is_open));
+                                        Result::Ok(Shape::new(shape_type, tile_count, is_open))
                                     } else {
-                                        return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                                        Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                                     }
                                 },
                             }
@@ -168,10 +168,10 @@ impl Shape {
                     }
                 }
                 Wind(value) => {
-                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                    Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                 }
                 Dragon(value) => {
-                    return Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open);
+                    Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                 }
             }
         } else if tile_count == 2 && !is_open {
