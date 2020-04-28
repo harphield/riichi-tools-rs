@@ -10,6 +10,7 @@ use crate::riichi::shapes::{Shape, OpenShape};
 use crate::riichi::shape_finder::ShapeFinder;
 use crate::riichi::yaku::{YakuFinder, Yaku};
 use crate::riichi::scores::Score;
+use rand::Rng;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -88,6 +89,110 @@ impl Hand {
         } else {
             Hand::new(vec!(Option::Some(Tile::new(TileType::Number(1, TileColor::Manzu)))))
         }
+    }
+
+    /// Generate a 14 tile hand that is complete
+    pub fn random_complete_hand(closed: bool) -> Hand {
+        // we are looking to generate 4 shapes + 1 pair, so 5 shapes
+        // ignoring kokushi and chiitoitsu for now
+
+        let mut rng = rand::thread_rng();
+        let mut pair_found = false;
+        let mut used_tiles: [u8; 34] = [0; 34];
+
+        for i in 0..5 {
+            if i == 4 && !pair_found {
+                // last shape must be a pair now
+                Hand::generate_toitsu(&mut used_tiles);
+                break;
+            }
+
+            // open or closed shape?
+            let mut open_or_closed: u8;
+            if !closed {
+                open_or_closed = rng.gen_range(0, 2);
+            } else {
+                open_or_closed = 1;
+            }
+
+            if open_or_closed == 0 {
+                // TODO open
+                let open_shape_type = rng.gen_range(0, 3);
+                match open_shape_type {
+                    // Chi
+                    0 => {
+
+                    },
+                    // Pon
+                    1 => {
+
+                    },
+                    // Kan
+                    2 => {
+
+                    }
+                    _ => {}
+                }
+            } else {
+                // closed
+                let mut max = 4;
+                if pair_found {
+                    // only 1 pair needed
+                    max = 3;
+                }
+
+                let closed_shape_type = rng.gen_range(0, max);
+                match closed_shape_type {
+                    // Shuntsu
+                    0 => {
+
+                    },
+                    // Koutsu
+                    1 => {
+
+                    },
+                    // Kantsu
+                    2 => {
+
+                    },
+                    // Toitsu
+                    3 => {
+                        Hand::generate_toitsu(&mut used_tiles);
+                        pair_found = true;
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let mut final_tiles = vec![];
+
+        for (tile, count) in used_tiles.iter().enumerate() {
+            if *count > 0u8 {
+                for i in 0..*count {
+                    final_tiles.push(Some(Tile::from_id((tile + 1) as u8).unwrap()));
+                }
+            }
+        }
+
+        Hand::new(final_tiles)
+    }
+
+    fn generate_toitsu(used_tiles: &mut [u8; 34]) {
+        let mut rng = rand::thread_rng();
+        let mut tile_id: u8 = 0;
+        loop {
+            let random_tile_id = rng.gen_range(0, 34);
+            if used_tiles[random_tile_id] < 3 {
+                tile_id = (random_tile_id + 1) as u8;
+            }
+
+            if tile_id > 0 {
+                break;
+            }
+        }
+
+        used_tiles[(tile_id - 1) as usize] += 2;
     }
 
     /// Parses a hand from its text representation.
