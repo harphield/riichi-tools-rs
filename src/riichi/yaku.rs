@@ -637,8 +637,8 @@ impl Yaku {
 
                 return self.find_yakuhai(variant, 31);
             }
-            Yaku::WhiteDragons => return self.find_yakuhai(variant, 33),
-            Yaku::GreenDragons => return self.find_yakuhai(variant, 32),
+            Yaku::WhiteDragons => return self.find_yakuhai(variant, 32),
+            Yaku::GreenDragons => return self.find_yakuhai(variant, 33),
             Yaku::RedDragons => return self.find_yakuhai(variant, 34),
             Yaku::DoubleRiichi => {},   // TODO
             Yaku::Chanta => {
@@ -1948,7 +1948,7 @@ mod tests {
     #[test]
     fn find_white_dragons() {
         let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("123m234s67888p666z"));
+        map.insert("my_hand".to_string(), Value::from("123m234s67888p555z"));
 
         let mut table = Table::from_map(&map).unwrap();
         let res = table.yaku().unwrap();
