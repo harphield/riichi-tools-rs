@@ -139,6 +139,14 @@ async fn async_call(method: &str, params: &str) -> String {
                     let table_result = init_table_state(map.get("table"));
 
                     match method {
+                        "get_random_complete_hand" => {
+                            let hand = Hand::random_complete_hand(true);
+                            json!({
+                                "hand": {
+                                    "tiles": hand.to_vec_of_strings(),
+                                }
+                            }).to_string()
+                        },
                         "get_hand_yaku" => {
                             match table_result {
                                 Ok(mut table) => {

@@ -99,11 +99,12 @@ impl Hand {
         let mut rng = rand::thread_rng();
         let mut pair_found = false;
         let mut used_tiles: [u8; 34] = [0; 34];
+        let mut tiles: Vec<Tile> = vec![];
 
         for i in 0..5 {
             if i == 4 && !pair_found {
                 // last shape must be a pair now
-                Hand::generate_toitsu(&mut used_tiles);
+                Hand::generate_toitsu(&mut used_tiles, &mut tiles);
                 break;
             }
 
@@ -150,14 +151,22 @@ impl Hand {
                         loop {
                             tile_id = rng.gen_range(0, 27); // we don't need honors
 
+                            if used_tiles[tile_id as usize] == 4 {
+                                continue;
+                            }
+
                             let tile = Tile::from_id((tile_id + 1) as u8).unwrap();
                             if tile.next(false).is_none() {
                                 // 9, we go backwards (789)
-                                if used_tiles[tile_id - 1] < 4 && used_tiles[tile_id - 2] < 4 {
+                                if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id - 2) as usize] < 4 {
                                     // ok
-                                    used_tiles[tile_id] += 1;
-                                    used_tiles[tile_id - 1] += 1;
-                                    used_tiles[tile_id - 2] += 1;
+                                    used_tiles[tile_id as usize] += 1;
+                                    used_tiles[(tile_id - 1) as usize] += 1;
+                                    used_tiles[(tile_id - 2) as usize] += 1;
+
+                                    tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                    tiles.push(Tile::from_id(tile_id).unwrap());
+                                    tiles.push(Tile::from_id(tile_id - 1).unwrap());
 
                                     break;
                                 }
@@ -165,26 +174,94 @@ impl Hand {
                                 // 8, we do 678 or 789
                                 if rng.gen_bool(0.5) {
                                     // 678
+                                    if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id - 2) as usize] < 4 {
+                                        // ok
+                                        used_tiles[tile_id as usize] += 1;
+                                        used_tiles[(tile_id - 1) as usize] += 1;
+                                        used_tiles[(tile_id - 2) as usize] += 1;
 
+                                        tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                        tiles.push(Tile::from_id(tile_id).unwrap());
+                                        tiles.push(Tile::from_id(tile_id - 1).unwrap());
+
+                                        break;
+                                    }
                                 } else {
                                     // 789
+                                    if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id + 1) as usize] < 4 {
+                                        // ok
+                                        used_tiles[tile_id as usize] += 1;
+                                        used_tiles[(tile_id - 1) as usize] += 1;
+                                        used_tiles[(tile_id + 1) as usize] += 1;
+
+                                        tiles.push(Tile::from_id(tile_id).unwrap());
+                                        tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                        tiles.push(Tile::from_id(tile_id + 2).unwrap());
+
+                                        break;
+                                    }
                                 }
                             } else {
                                 // others do next next
+                                if used_tiles[(tile_id + 1) as usize] < 4 && used_tiles[(tile_id + 2) as usize] < 4 {
+                                    // ok
+                                    used_tiles[tile_id as usize] += 1;
+                                    used_tiles[(tile_id + 1) as usize] += 1;
+                                    used_tiles[(tile_id + 2) as usize] += 1;
+
+                                    tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                    tiles.push(Tile::from_id(tile_id + 2).unwrap());
+                                    tiles.push(Tile::from_id(tile_id + 3).unwrap());
+
+                                    break;
+                                }
                             }
                         }
                     },
                     // Koutsu
                     1 => {
+                        let mut tile_id: u8 = 0;
 
+                        loop {
+                            tile_id = rng.gen_range(0, 34);
+
+                            if used_tiles[tile_id as usize] > 1 {
+                                continue;
+                            }
+
+                            used_tiles[tile_id as usize] += 3;
+                            tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                            tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                            tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                            break;
+                        }
                     },
                     // Kantsu
                     2 => {
+                        let mut tile_id: u8 = 0;
 
+                        loop {
+                            tile_id = rng.gen_range(0, 34);
+
+                            if used_tiles[tile_id as usize] > 0 {
+                                continue;
+                            }
+
+                            used_tiles[tile_id as usize] += 4;
+
+                            let mut tile = Tile::from_id(tile_id + 1).unwrap();
+                            tile.is_kan = true;
+
+                            tiles.push(tile);
+                            tiles.push(tile);
+                            tiles.push(tile);
+                            tiles.push(tile);
+                            break;
+                        }
                     },
                     // Toitsu
                     3 => {
-                        Hand::generate_toitsu(&mut used_tiles);
+                        Hand::generate_toitsu(&mut used_tiles, &mut tiles);
                         pair_found = true;
                     }
                     _ => {}
@@ -194,32 +271,26 @@ impl Hand {
 
         let mut final_tiles = vec![];
 
-        for (tile, count) in used_tiles.iter().enumerate() {
-            if *count > 0u8 {
-                for i in 0..*count {
-                    final_tiles.push(Some(Tile::from_id((tile + 1) as u8).unwrap()));
-                }
-            }
+        for tile in tiles.iter() {
+            final_tiles.push(Some(*tile));
         }
 
         Hand::new(final_tiles)
     }
 
-    fn generate_toitsu(used_tiles: &mut [u8; 34]) {
+    fn generate_toitsu(used_tiles: &mut [u8; 34], tiles: &mut Vec<Tile>) {
         let mut rng = rand::thread_rng();
         let mut tile_id: u8 = 0;
         loop {
-            let random_tile_id = rng.gen_range(0, 34);
-            if used_tiles[random_tile_id] < 3 {
-                tile_id = (random_tile_id + 1) as u8;
-            }
-
-            if tile_id > 0 {
+            tile_id = rng.gen_range(0, 34);
+            if used_tiles[tile_id as usize] < 3 {
                 break;
             }
         }
 
-        used_tiles[(tile_id - 1) as usize] += 2;
+        used_tiles[tile_id as usize] += 2;
+        tiles.push(Tile::from_id(tile_id + 1).unwrap());
+        tiles.push(Tile::from_id(tile_id + 1).unwrap());
     }
 
     /// Parses a hand from its text representation.
@@ -897,5 +968,16 @@ mod tests {
 
         assert_eq!(hand.count_tiles(), 13);
         assert_eq!(hand.to_string(), "237m45699p13478s")
+    }
+
+    #[test]
+    fn random_complete_hand() {
+        let mut hand = Hand::random_complete_hand(true);
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
     }
 }
