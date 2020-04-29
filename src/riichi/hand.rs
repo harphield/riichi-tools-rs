@@ -11,6 +11,7 @@ use crate::riichi::shape_finder::ShapeFinder;
 use crate::riichi::yaku::{YakuFinder, Yaku};
 use crate::riichi::scores::Score;
 use rand::Rng;
+use rand::seq::SliceRandom;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -24,7 +25,9 @@ pub struct Hand {
 }
 
 impl Hand {
-    pub fn new(tiles: Vec<Option<Tile>>) -> Hand {
+    pub fn new(mut tiles: Vec<Option<Tile>>) -> Hand {
+        tiles.sort();
+
         Hand {
             tiles,
             ..Default::default()
@@ -92,7 +95,7 @@ impl Hand {
     }
 
     /// Generate a 14 tile hand that is complete
-    pub fn random_complete_hand(closed: bool) -> Hand {
+    pub fn random_complete_hand(closed: bool, kans: bool) -> Hand {
         // we are looking to generate 4 shapes + 1 pair, so 5 shapes
         // ignoring kokushi and chiitoitsu for now
 
@@ -142,7 +145,16 @@ impl Hand {
                     max = 3;
                 }
 
-                let closed_shape_type = rng.gen_range(0, max);
+                let mut closed_shape_type = 0;
+                loop {
+                    closed_shape_type = rng.gen_range(0, max);
+                    if closed_shape_type == 2 && !kans {
+                        continue;
+                    }
+
+                    break;
+                }
+
                 match closed_shape_type {
                     // Shuntsu
                     0 => {
@@ -270,8 +282,15 @@ impl Hand {
         }
 
         let mut final_tiles = vec![];
+        let mut found_draw = false;
 
-        for tile in tiles.iter() {
+        tiles.shuffle(&mut rng);
+
+        for tile in tiles.iter_mut() {
+            if !found_draw && !tile.is_open && !tile.is_kan {
+                tile.is_draw = true;
+                found_draw = true;
+            }
             final_tiles.push(Some(*tile));
         }
 
@@ -482,6 +501,7 @@ impl Hand {
     pub fn to_string(&self) -> String {
         let mut out = String::new();
         let mut color = 'x';
+        let mut last_tile: Option<String> = Option::None;
 
         for tile in self.tiles.iter() {
             match &tile {
@@ -493,13 +513,24 @@ impl Hand {
                         color = some_tile.get_type_char();
                     }
 
-                    out.push_str(&some_tile.get_value().to_string()[..]);
+                    if some_tile.is_draw {
+                        last_tile = Option::Some(some_tile.to_string());
+                    } else {
+                        out.push_str(&some_tile.get_value().to_string()[..]);
+                    }
                 }
                 Option::None => ()
             }
         }
 
         out.push_str(&color.to_string()[..]);
+
+        match last_tile {
+            Option::Some(tile_repr) => {
+                out.push_str(&tile_repr[..])
+            },
+            Option::None => ()
+        }
 
         out
     }
@@ -739,7 +770,7 @@ mod tests {
 
     #[test]
     fn from_text_hand() {
-        let rep = "123m123p12345s22z";
+        let rep = "123m123p12345s2z2z";
         let hand = Hand::from_text(rep, false).unwrap();
 
         let rep2 = hand.to_string();
@@ -748,7 +779,7 @@ mod tests {
 
     #[test]
     fn from_text_hand_add_chi() {
-        let rep = "123m123p12345s22z";
+        let rep = "123m123p12345s2z2z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
         hand.add_open_shape(OpenShape::Chi([Tile::from_text("1m").unwrap(), Tile::from_text("2m").unwrap(), Tile::from_text("3m").unwrap()]));
@@ -775,7 +806,7 @@ mod tests {
 
     #[test]
     fn from_text_hand_add_pon() {
-        let rep = "444m123p12345s22z";
+        let rep = "444m123p12345s2z2z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
         hand.add_open_shape(OpenShape::Pon([Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap()]));
@@ -957,7 +988,7 @@ mod tests {
         hand.remove_tile(&tile);
 
         assert_eq!(hand.count_tiles(), 13);
-        assert_eq!(hand.to_string(), "237m45699p13478s")
+        assert_eq!(hand.to_string(), "237m4569p13478s9p")
     }
 
     #[test]
@@ -967,17 +998,18 @@ mod tests {
         hand.remove_tile_by_id(tile_id);
 
         assert_eq!(hand.count_tiles(), 13);
-        assert_eq!(hand.to_string(), "237m45699p13478s")
+        assert_eq!(hand.to_string(), "237m4569p13478s9p")
     }
 
     #[test]
     fn random_complete_hand() {
-        let mut hand = Hand::random_complete_hand(true);
+        let mut hand = Hand::random_complete_hand(true, false);
 
         println!("{}", hand.to_string());
         println!("{}", hand.count_tiles());
 
         assert!(hand.validate());
         assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), -1);
     }
 }

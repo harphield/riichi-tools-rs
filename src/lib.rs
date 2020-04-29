@@ -140,9 +140,10 @@ async fn async_call(method: &str, params: &str) -> String {
 
                     match method {
                         "get_random_complete_hand" => {
-                            let hand = Hand::random_complete_hand(true);
+                            let hand = Hand::random_complete_hand(true, false);
                             json!({
                                 "hand": {
+                                    "tiles_string": hand.to_string(),
                                     "tiles": hand.to_vec_of_strings(),
                                 }
                             }).to_string()
