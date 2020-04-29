@@ -108,14 +108,14 @@ impl Hand {
             }
 
             // open or closed shape?
-            let mut open_or_closed: u8;
+            let mut open_or_closed: bool;
             if !closed {
-                open_or_closed = rng.gen_range(0, 2);
+                open_or_closed = rng.gen_bool(0.5);
             } else {
-                open_or_closed = 1;
+                open_or_closed = false;
             }
 
-            if open_or_closed == 0 {
+            if open_or_closed == true {
                 // TODO open
                 let open_shape_type = rng.gen_range(0, 3);
                 match open_shape_type {
@@ -145,7 +145,34 @@ impl Hand {
                 match closed_shape_type {
                     // Shuntsu
                     0 => {
+                        let mut tile_id: u8 = 0;
 
+                        loop {
+                            tile_id = rng.gen_range(0, 27); // we don't need honors
+
+                            let tile = Tile::from_id((tile_id + 1) as u8).unwrap();
+                            if tile.next(false).is_none() {
+                                // 9, we go backwards (789)
+                                if used_tiles[tile_id - 1] < 4 && used_tiles[tile_id - 2] < 4 {
+                                    // ok
+                                    used_tiles[tile_id] += 1;
+                                    used_tiles[tile_id - 1] += 1;
+                                    used_tiles[tile_id - 2] += 1;
+
+                                    break;
+                                }
+                            } else if tile.next(false).unwrap().next(false).is_none() {
+                                // 8, we do 678 or 789
+                                if rng.gen_bool(0.5) {
+                                    // 678
+
+                                } else {
+                                    // 789
+                                }
+                            } else {
+                                // others do next next
+                            }
+                        }
                     },
                     // Koutsu
                     1 => {
