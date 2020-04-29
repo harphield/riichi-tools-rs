@@ -54,7 +54,7 @@ async fn async_hand_tiles(hand_string: &str) -> String {
             json!({
                 "hand": {
                     "valid": valid,
-                    "tiles": hand.to_array_of_strings(),
+                    "tiles": hand.to_vec_of_strings(),
                 }
             }).to_string()
         },
@@ -139,6 +139,15 @@ async fn async_call(method: &str, params: &str) -> String {
                     let table_result = init_table_state(map.get("table"));
 
                     match method {
+                        "get_random_complete_hand" => {
+                            let hand = Hand::random_complete_hand(true, false);
+                            json!({
+                                "hand": {
+                                    "tiles_string": hand.to_string(),
+                                    "tiles": hand.to_vec_of_strings(),
+                                }
+                            }).to_string()
+                        },
                         "get_hand_yaku" => {
                             match table_result {
                                 Ok(mut table) => {

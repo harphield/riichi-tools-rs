@@ -349,9 +349,21 @@ impl Tile {
         }
     }
 
-    // pub fn prev(&self, dora: bool) -> Option(Tile) {
+    pub fn prev(&self) -> Option<Tile> {
+        let new_color;
 
-    // }
+        return match &self.tile_type {
+            TileType::Number(number, color) => {
+                new_color = color.clone();
+                if *number > 1 {
+                    Some(Tile::new(TileType::Number(number - 1, new_color)))
+                } else {
+                    None
+                }
+            },
+            _ => None
+        }
+    }
 
     pub fn is_terminal(&self) -> bool {
         match &self.tile_type {

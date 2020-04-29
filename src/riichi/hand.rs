@@ -6,23 +6,28 @@ use super::tile::TileColor;
 use super::shanten::ShantenFinder;
 use crate::riichi::riichi_error::RiichiError;
 use std::collections::HashMap;
-use crate::riichi::shapes::Shape;
+use crate::riichi::shapes::{Shape, OpenShape};
 use crate::riichi::shape_finder::ShapeFinder;
 use crate::riichi::yaku::{YakuFinder, Yaku};
 use crate::riichi::scores::Score;
+use rand::Rng;
+use rand::seq::SliceRandom;
 
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
     /// it can also have kan, which are groups of 4 tiles that behave as 3 tiles
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
+    open_shapes: Vec<OpenShape>,
     array_34: Option<[u8; 34]>,
     shapes: Option<Vec<Shape>>,
     shanten: i8,
 }
 
 impl Hand {
-    pub fn new(tiles: Vec<Option<Tile>>) -> Hand {
+    pub fn new(mut tiles: Vec<Option<Tile>>) -> Hand {
+        tiles.sort();
+
         Hand {
             tiles,
             ..Default::default()
@@ -32,7 +37,7 @@ impl Hand {
     /// Checks the hand for invalid things (wrong number of tiles, > 4 same tiles...)
     pub fn validate(&mut self) -> bool {
         let mut tile_count = 0;
-        let array34 = self.get_34_array();
+        let array34 = self.get_34_array(false);
 
         for count in array34.iter() {
             tile_count += *count;
@@ -57,16 +62,21 @@ impl Hand {
         &self.tiles
     }
 
+    pub fn get_open_shapes(&self) -> &Vec<OpenShape> {
+        &self.open_shapes
+    }
+
     /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
-    /// TODO automatically remove open shapes, so it doesn't interfere with shanten calculation?
-    pub fn get_34_array(&mut self) -> [u8; 34] {
+    pub fn get_34_array(&mut self, remove_open_tiles: bool) -> [u8; 34] {
         match self.array_34 {
             Some(array_34) => return array_34,
             None => {
                 let mut array_34 = [0; 34];
                 for tile in self.tiles.iter() {
                     if let Option::Some(t) = tile {
-                        array_34[(t.to_id() - 1) as usize] += 1;
+                        if !remove_open_tiles || !t.is_open {
+                            array_34[(t.to_id() - 1) as usize] += 1;
+                        }
                     }
                 }
                 self.array_34 = Some(array_34);
@@ -84,6 +94,224 @@ impl Hand {
         }
     }
 
+    /// Generate a 14 tile hand that is complete
+    pub fn random_complete_hand(closed: bool, kans: bool) -> Hand {
+        // we are looking to generate 4 shapes + 1 pair, so 5 shapes
+        // ignoring kokushi and chiitoitsu for now
+
+        let mut rng = rand::thread_rng();
+        let mut pair_found = false;
+        let mut used_tiles: [u8; 34] = [0; 34];
+        let mut tiles: Vec<Tile> = vec![];
+
+        for i in 0..5 {
+            if i == 4 && !pair_found {
+                // last shape must be a pair now
+                Hand::generate_toitsu(&mut used_tiles, &mut tiles);
+                break;
+            }
+
+            // open or closed shape?
+            let mut open_or_closed: bool;
+            if !closed {
+                open_or_closed = rng.gen_bool(0.5);
+            } else {
+                open_or_closed = false;
+            }
+
+            if open_or_closed == true {
+                // TODO open
+                let open_shape_type = rng.gen_range(0, 3);
+                match open_shape_type {
+                    // Chi
+                    0 => {
+
+                    },
+                    // Pon
+                    1 => {
+
+                    },
+                    // Kan
+                    2 => {
+
+                    }
+                    _ => {}
+                }
+            } else {
+                // closed
+                let mut max = 4;
+                if pair_found {
+                    // only 1 pair needed
+                    max = 3;
+                }
+
+                let mut closed_shape_type = 0;
+                loop {
+                    closed_shape_type = rng.gen_range(0, max);
+                    if closed_shape_type == 2 && !kans {
+                        continue;
+                    }
+
+                    break;
+                }
+
+                match closed_shape_type {
+                    // Shuntsu
+                    0 => {
+                        let mut tile_id: u8 = 0;
+
+                        loop {
+                            tile_id = rng.gen_range(0, 27); // we don't need honors
+
+                            if used_tiles[tile_id as usize] == 4 {
+                                continue;
+                            }
+
+                            let tile = Tile::from_id((tile_id + 1) as u8).unwrap();
+                            if tile.next(false).is_none() {
+                                // 9, we go backwards (789)
+                                if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id - 2) as usize] < 4 {
+                                    // ok
+                                    used_tiles[tile_id as usize] += 1;
+                                    used_tiles[(tile_id - 1) as usize] += 1;
+                                    used_tiles[(tile_id - 2) as usize] += 1;
+
+                                    tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                    tiles.push(Tile::from_id(tile_id).unwrap());
+                                    tiles.push(Tile::from_id(tile_id - 1).unwrap());
+
+                                    break;
+                                }
+                            } else if tile.next(false).unwrap().next(false).is_none() {
+                                // 8, we do 678 or 789
+                                if rng.gen_bool(0.5) {
+                                    // 678
+                                    if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id - 2) as usize] < 4 {
+                                        // ok
+                                        used_tiles[tile_id as usize] += 1;
+                                        used_tiles[(tile_id - 1) as usize] += 1;
+                                        used_tiles[(tile_id - 2) as usize] += 1;
+
+                                        tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                        tiles.push(Tile::from_id(tile_id).unwrap());
+                                        tiles.push(Tile::from_id(tile_id - 1).unwrap());
+
+                                        break;
+                                    }
+                                } else {
+                                    // 789
+                                    if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id + 1) as usize] < 4 {
+                                        // ok
+                                        used_tiles[tile_id as usize] += 1;
+                                        used_tiles[(tile_id - 1) as usize] += 1;
+                                        used_tiles[(tile_id + 1) as usize] += 1;
+
+                                        tiles.push(Tile::from_id(tile_id).unwrap());
+                                        tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                        tiles.push(Tile::from_id(tile_id + 2).unwrap());
+
+                                        break;
+                                    }
+                                }
+                            } else {
+                                // others do next next
+                                if used_tiles[(tile_id + 1) as usize] < 4 && used_tiles[(tile_id + 2) as usize] < 4 {
+                                    // ok
+                                    used_tiles[tile_id as usize] += 1;
+                                    used_tiles[(tile_id + 1) as usize] += 1;
+                                    used_tiles[(tile_id + 2) as usize] += 1;
+
+                                    tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                                    tiles.push(Tile::from_id(tile_id + 2).unwrap());
+                                    tiles.push(Tile::from_id(tile_id + 3).unwrap());
+
+                                    break;
+                                }
+                            }
+                        }
+                    },
+                    // Koutsu
+                    1 => {
+                        let mut tile_id: u8 = 0;
+
+                        loop {
+                            tile_id = rng.gen_range(0, 34);
+
+                            if used_tiles[tile_id as usize] > 1 {
+                                continue;
+                            }
+
+                            used_tiles[tile_id as usize] += 3;
+                            tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                            tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                            tiles.push(Tile::from_id(tile_id + 1).unwrap());
+                            break;
+                        }
+                    },
+                    // Kantsu
+                    2 => {
+                        let mut tile_id: u8 = 0;
+
+                        loop {
+                            tile_id = rng.gen_range(0, 34);
+
+                            if used_tiles[tile_id as usize] > 0 {
+                                continue;
+                            }
+
+                            used_tiles[tile_id as usize] += 4;
+
+                            let mut tile = Tile::from_id(tile_id + 1).unwrap();
+                            tile.is_kan = true;
+
+                            tiles.push(tile);
+                            tiles.push(tile);
+                            tiles.push(tile);
+                            tiles.push(tile);
+                            break;
+                        }
+                    },
+                    // Toitsu
+                    3 => {
+                        Hand::generate_toitsu(&mut used_tiles, &mut tiles);
+                        pair_found = true;
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let mut final_tiles = vec![];
+        let mut found_draw = false;
+
+        tiles.shuffle(&mut rng);
+
+        for tile in tiles.iter_mut() {
+            if !found_draw && !tile.is_open && !tile.is_kan {
+                tile.is_draw = true;
+                found_draw = true;
+            }
+            final_tiles.push(Some(*tile));
+        }
+
+        Hand::new(final_tiles)
+    }
+
+    fn generate_toitsu(used_tiles: &mut [u8; 34], tiles: &mut Vec<Tile>) {
+        let mut rng = rand::thread_rng();
+        let mut tile_id: u8 = 0;
+        loop {
+            tile_id = rng.gen_range(0, 34);
+            if used_tiles[tile_id as usize] < 3 {
+                break;
+            }
+        }
+
+        used_tiles[tile_id as usize] += 2;
+        tiles.push(Tile::from_id(tile_id + 1).unwrap());
+        tiles.push(Tile::from_id(tile_id + 1).unwrap());
+    }
+
     /// Parses a hand from its text representation.
     /// force_return: will return even a partial hand
     pub fn from_text(representation: &str, force_return: bool) -> Result<Hand, RiichiError> {
@@ -93,6 +321,8 @@ impl Hand {
 
         let mut color: char = 'x';
         let mut rep: String;
+        let mut found_draw: bool = false;
+
         for ch in iter {
             if ch.is_alphabetic() {
                 // type
@@ -106,10 +336,10 @@ impl Hand {
                 rep.push(color);
                 match Tile::from_text(&rep[..]) {
                     Ok(mut tile) => {
-                        if tiles.is_empty() {
+                        if !found_draw && !tile.is_open && !tile.is_kan {
                             // the last tile you write in your hand representation is your drawn tile
-                            // TODO check for kans!
                             tile.is_draw = true;
+                            found_draw = true;
                         }
                         tiles.push(Option::Some(tile));
                     },
@@ -164,6 +394,83 @@ impl Hand {
         self.remove_tile(&tile);
     }
 
+    pub fn add_open_shape(&mut self, shape: OpenShape) {
+        // TODO change the drawn tile to a different one if we removed all of them
+        match shape {
+            OpenShape::Chi(tiles) => {
+                for tile in tiles.iter() {
+                    let mut found = false;
+                    for (i, t) in self.tiles.iter().enumerate() {
+                        match t {
+                            None => {},
+                            Some(mut hand_tile) => {
+                                if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
+                                    hand_tile.is_open = true;
+                                    hand_tile.is_chi = true;
+                                    self.tiles[i] = Some(hand_tile);
+                                    found = true;
+                                    break;
+                                }
+                            },
+                        }
+                    }
+
+                    if !found {
+                        panic!("Invalid tiles in open shape");
+                    }
+                }
+            },
+            OpenShape::Pon(tiles) => {
+                for tile in tiles.iter() {
+                    let mut found = false;
+                    for (i, t) in self.tiles.iter().enumerate() {
+                        match t {
+                            None => {},
+                            Some(mut hand_tile) => {
+                                if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
+                                    hand_tile.is_open = true;
+                                    hand_tile.is_pon = true;
+                                    self.tiles[i] = Some(hand_tile);
+                                    found = true;
+                                    break;
+                                }
+                            },
+                        }
+                    }
+
+                    if !found {
+                        panic!("Invalid tiles in open shape");
+                    }
+                }
+            },
+            OpenShape::Kan(tiles) => {
+                for tile in tiles.iter() {
+                    let mut found = false;
+                    for (i, t) in self.tiles.iter().enumerate() {
+                        match t {
+                            None => {},
+                            Some(mut hand_tile) => {
+                                if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
+                                    hand_tile.is_open = true;
+                                    hand_tile.is_kan = true;
+                                    self.tiles[i] = Some(hand_tile);
+                                    found = true;
+                                    break;
+                                }
+                            },
+                        }
+                    }
+
+                    if !found {
+                        panic!("Invalid tiles in open shape");
+                    }
+                }
+            },
+        }
+
+        self.open_shapes.push(shape);
+    }
+
     /// Returns the size of a hand - usually 13 or 14 tiles, depending on the situation.
     pub fn count_tiles(&self) -> usize {
         let mut hand_size = 0;
@@ -188,23 +495,13 @@ impl Hand {
     }
 
     pub fn is_closed(&self) -> bool {
-        for o_t in self.tiles.iter() {
-            match o_t {
-                None => {},
-                Some(tile) => {
-                    if tile.is_open {
-                        return false;
-                    }
-                },
-            }
-        }
-
-        true
+        self.open_shapes.is_empty()
     }
 
     pub fn to_string(&self) -> String {
         let mut out = String::new();
         let mut color = 'x';
+        let mut last_tile: Option<String> = Option::None;
 
         for tile in self.tiles.iter() {
             match &tile {
@@ -216,7 +513,11 @@ impl Hand {
                         color = some_tile.get_type_char();
                     }
 
-                    out.push_str(&some_tile.get_value().to_string()[..]);
+                    if some_tile.is_draw {
+                        last_tile = Option::Some(some_tile.to_string());
+                    } else {
+                        out.push_str(&some_tile.get_value().to_string()[..]);
+                    }
                 }
                 Option::None => ()
             }
@@ -224,10 +525,17 @@ impl Hand {
 
         out.push_str(&color.to_string()[..]);
 
+        match last_tile {
+            Option::Some(tile_repr) => {
+                out.push_str(&tile_repr[..])
+            },
+            Option::None => ()
+        }
+
         out
     }
 
-    pub fn to_array_of_strings(&self) -> Vec<String> {
+    pub fn to_vec_of_strings(&self) -> Vec<String> {
         let mut tile_vec = vec!();
         let mut color = 'x';
         let mut last_tile: Option<String> = Option::None;
@@ -400,7 +708,7 @@ impl Hand {
         }
 
         let mut accept_count: u8 = 0;
-        let array_34 = self.get_34_array();
+        let array_34 = self.get_34_array(true);
 
         // we draw a tile and count shanten - if it improves, we add it to the tiles
         for i in try_tiles.iter() {
@@ -441,7 +749,8 @@ impl Hand {
 impl Default for Hand {
     fn default() -> Hand {
         Hand {
-            tiles: vec!(),
+            tiles: vec![],
+            open_shapes: vec![],
             array_34: None,
             shapes: None,
             shanten: 99,
@@ -461,11 +770,65 @@ mod tests {
 
     #[test]
     fn from_text_hand() {
-        let rep = "123m123p12345s22z";
+        let rep = "123m123p12345s2z2z";
         let hand = Hand::from_text(rep, false).unwrap();
 
         let rep2 = hand.to_string();
         assert_eq!(rep2, rep);
+    }
+
+    #[test]
+    fn from_text_hand_add_chi() {
+        let rep = "123m123p12345s2z2z";
+        let mut hand = Hand::from_text(rep, false).unwrap();
+
+        hand.add_open_shape(OpenShape::Chi([Tile::from_text("1m").unwrap(), Tile::from_text("2m").unwrap(), Tile::from_text("3m").unwrap()]));
+
+        let mut open_tiles_count = 0u8;
+        for rt in hand.get_tiles().iter() {
+            match rt {
+                None => {},
+                Some(tile) => {
+                    if tile.is_open {
+                        open_tiles_count += 1;
+                    }
+                },
+            }
+        }
+
+        let rep2 = hand.to_string();
+        assert_eq!(rep2, rep);
+
+        assert_eq!(open_tiles_count, 3);
+
+        assert_eq!(hand.get_open_shapes().len(), 1);
+    }
+
+    #[test]
+    fn from_text_hand_add_pon() {
+        let rep = "444m123p12345s2z2z";
+        let mut hand = Hand::from_text(rep, false).unwrap();
+
+        hand.add_open_shape(OpenShape::Pon([Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap()]));
+
+        let mut open_tiles_count = 0u8;
+        for rt in hand.get_tiles().iter() {
+            match rt {
+                None => {},
+                Some(tile) => {
+                    if tile.is_open {
+                        open_tiles_count += 1;
+                    }
+                },
+            }
+        }
+
+        let rep2 = hand.to_string();
+        assert_eq!(rep2, rep);
+
+        assert_eq!(open_tiles_count, 3);
+
+        assert_eq!(hand.get_open_shapes().len(), 1);
     }
 
     #[test]
@@ -625,7 +988,7 @@ mod tests {
         hand.remove_tile(&tile);
 
         assert_eq!(hand.count_tiles(), 13);
-        assert_eq!(hand.to_string(), "237m45699p13478s")
+        assert_eq!(hand.to_string(), "237m4569p13478s9p")
     }
 
     #[test]
@@ -635,6 +998,18 @@ mod tests {
         hand.remove_tile_by_id(tile_id);
 
         assert_eq!(hand.count_tiles(), 13);
-        assert_eq!(hand.to_string(), "237m45699p13478s")
+        assert_eq!(hand.to_string(), "237m4569p13478s9p")
+    }
+
+    #[test]
+    fn random_complete_hand() {
+        let mut hand = Hand::random_complete_hand(true, false);
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), -1);
     }
 }
