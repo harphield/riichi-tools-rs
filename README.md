@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.61
+v0.0.62
 
 [![Build Status](https://travis-ci.org/harphield/riichi-tools-rs.png?branch=master)](https://travis-ci.org/harphield/riichi-tools-rs)
 
@@ -12,7 +12,7 @@ Showcase / frontend of this library can be found at https://riichi.harphield.com
 
 ## Roadmap
 - South 4 Simulator
-    - A game where you try to win in the last round [DONE]
+    - A game where you try to win in the last round [DONE] [moved to a separate project, riichi-tools-wasm]
 - Hand analysis
     - Shanten for 13 tiles [DONE]
     - Shanten for 14 tiles with complete hand indication [DONE]
