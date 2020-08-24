@@ -1,6 +1,6 @@
 pub mod table;
 pub mod hand;
-mod tile;
+pub mod tile;
 mod shapes;
 mod shape_finder;
 mod shanten;
