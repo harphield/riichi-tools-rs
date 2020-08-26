@@ -39,10 +39,11 @@ pub struct Table {
     total_round: Option<u8>,
     tiles_remaining: Option<u8>,
 
-    dora_indicators: Option<Vec<Tile>>,
-
     riichi_sticks_in_pot: Option<u8>,
     tsumibo: Option<u8>,
+
+    dora_indicators: Vec<Tile>,
+    visible_tiles: Vec<Tile>,
 }
 
 impl Table {
@@ -73,9 +74,10 @@ impl Table {
             wind_round: None,
             total_round: None,
             tiles_remaining: None,
-            dora_indicators: None,
             riichi_sticks_in_pot: None,
-            tsumibo: None
+            tsumibo: None,
+            dora_indicators: vec![],
+            visible_tiles: vec![],
         };
 
         for (index, value) in params {
@@ -132,6 +134,10 @@ impl Table {
         Ok(t)
     }
 
+    pub fn set_seat(&mut self, seat: u8) {
+        self.my_seat_wind = Some(seat);
+    }
+
     pub fn am_i_oya(&self) -> bool {
         match self.my_seat_wind {
             None => false,
@@ -141,6 +147,10 @@ impl Table {
         }
     }
 
+    pub fn set_my_tsumo(&mut self, value: bool) {
+        self.my_tsumo = Some(value);
+    }
+
     pub fn did_i_tsumo(&self) -> bool {
         match self.my_tsumo {
             None => false,
@@ -148,11 +158,19 @@ impl Table {
         }
     }
 
+    pub fn set_my_riichi(&mut self, value: bool) {
+        self.my_riichi = Some(value);
+    }
+
     pub fn did_i_riichi(&self) -> bool {
         match self.my_riichi {
             None => false,
             Some(value) => value,
         }
+    }
+
+    pub fn set_my_hand(&mut self, hand: Hand) {
+        self.my_hand = Some(hand);
     }
 
     pub fn get_my_hand(&mut self) -> &mut Hand {
@@ -166,28 +184,76 @@ impl Table {
         match &self.my_hand {
             None => panic!("No drawn tile in hand!"),
             Some(hand) => {
-                hand.get_drawn_tile().clone()
+                hand.get_drawn_tile().unwrap().clone()
             },
         }
     }
 
-    pub fn get_my_riichi(&self) -> bool {
-        match self.my_riichi {
-            None => false,
-            Some(value) => value,
-        }
+    pub fn set_tiles_remaining(&mut self, value: u8) {
+        self.tiles_remaining = Some(value);
     }
 
     pub fn get_tiles_remaining(&self) -> Option<u8> {
         self.tiles_remaining
     }
 
+    pub fn set_my_seat_wind(&mut self, value: u8) {
+        self.my_seat_wind = Some(value);
+    }
+
     pub fn get_my_seat_wind(&self) -> Option<u8> {
         self.my_seat_wind
     }
 
+    pub fn set_prevalent_wind(&mut self, value: u8) {
+        self.prevalent_wind = Some(value);
+    }
+
     pub fn get_prevalent_wind(&self) -> Option<u8> {
         self.prevalent_wind
+    }
+
+    pub fn set_dora_indicators(&mut self, indicators: Vec<Tile>) {
+        self.dora_indicators = indicators;
+    }
+
+    pub fn add_dora_indicator(&mut self, indicator: Tile) {
+        self.dora_indicators.push(indicator);
+        self.visible_tiles.push(indicator);
+    }
+
+    pub fn get_dora_indicators(&self) -> &Vec<Tile> {
+        &self.dora_indicators
+    }
+
+    pub fn add_tile_to_visible_tiles(&mut self, tile: Tile) {
+        self.visible_tiles.push(tile);
+    }
+
+    pub fn add_vector_to_visible_tiles(&mut self, mut tiles: Vec<Tile>) {
+        self.visible_tiles.append(&mut tiles);
+    }
+
+    pub fn reset_visible_tiles(&mut self) {
+        self.visible_tiles = vec![];
+    }
+
+    pub fn get_visible_tiles(&self) -> &Vec<Tile> {
+        &self.visible_tiles
+    }
+
+    pub fn get_visible_tiles_as_array_34(&self) -> [u8; 34] {
+        let mut result = [0; 34];
+
+        for tile in &self.visible_tiles {
+            result[(tile.to_id() - 1) as usize] += 1;
+
+            if result[(tile.to_id() - 1) as usize] > 4 {
+                panic!("can not have more than 4 tiles!!!");
+            }
+        }
+
+        result
     }
 
     pub fn yaku(&mut self) -> Option<(Vec<Yaku>, Score)> {
