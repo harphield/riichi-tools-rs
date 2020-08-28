@@ -13,24 +13,24 @@ pub struct Table {
     my_riichi: Option<bool>,
     my_tsumo: Option<bool>,
     my_points: Option<i32>,
-    // player to the right
-    shimocha_discards: Option<Vec<Tile>>,
-    shimocha_open_tiles: Option<Vec<Shape>>,
-    shimocha_riichi: Option<bool>,
-    shimocha_tsumo: Option<bool>,
-    shimocha_points: Option<i32>,
-    // player to the left
-    kamicha_discards: Option<Vec<Tile>>,
-    kamicha_open_tiles: Option<Vec<Shape>>,
-    kamicha_riichi: Option<bool>,
-    kamicha_tsumo: Option<bool>,
-    kamicha_points: Option<i32>,
-    // opposite player
-    toimen_discards: Option<Vec<Tile>>,
-    toimen_open_tiles: Option<Vec<Shape>>,
-    toimen_riichi: Option<bool>,
-    toimen_tsumo: Option<bool>,
-    toimen_points: Option<i32>,
+    // player to the right (shimocha)
+    p1_discards: Vec<Tile>,
+    p1_open_tiles: Vec<Shape>,
+    p1_riichi: Option<bool>,
+    p1_tsumo: Option<bool>,
+    p1_points: Option<i32>,
+    // opposite player (toimen)
+    p2_discards: Vec<Tile>,
+    p2_open_tiles: Vec<Shape>,
+    p2_riichi: Option<bool>,
+    p2_tsumo: Option<bool>,
+    p2_points: Option<i32>,
+    // player to the left (kamicha)
+    p3_discards: Vec<Tile>,
+    p3_open_tiles: Vec<Shape>,
+    p3_riichi: Option<bool>,
+    p3_tsumo: Option<bool>,
+    p3_points: Option<i32>,
 
     // 1 = east, 2 = south, 3 = west, 4 = north
     prevalent_wind: Option<u8>,
@@ -54,21 +54,21 @@ impl Table {
             my_riichi: None,
             my_tsumo: None,
             my_points: None,
-            shimocha_discards: None,
-            shimocha_open_tiles: None,
-            shimocha_riichi: None,
-            shimocha_tsumo: None,
-            shimocha_points: None,
-            kamicha_discards: None,
-            kamicha_open_tiles: None,
-            kamicha_riichi: None,
-            kamicha_tsumo: None,
-            kamicha_points: None,
-            toimen_discards: None,
-            toimen_open_tiles: None,
-            toimen_riichi: None,
-            toimen_tsumo: None,
-            toimen_points: None,
+            p1_discards: vec![],
+            p1_open_tiles: vec![],
+            p1_riichi: None,
+            p1_tsumo: None,
+            p1_points: None,
+            p2_discards: vec![],
+            p2_open_tiles: vec![],
+            p2_riichi: None,
+            p2_tsumo: None,
+            p2_points: None,
+            p3_discards: vec![],
+            p3_open_tiles: vec![],
+            p3_riichi: None,
+            p3_tsumo: None,
+            p3_points: None,
             prevalent_wind: None,
             my_seat_wind: None,
             wind_round: None,
@@ -254,6 +254,36 @@ impl Table {
         }
 
         result
+    }
+
+    pub fn set_total_round(&mut self, value: u8) {
+        self.total_round = Some(value);
+    }
+
+    pub fn get_total_round(&self) -> Option<u8> {
+        self.total_round
+    }
+
+    pub fn set_riichi_sticks(&mut self, value: u8) {
+        self.riichi_sticks_in_pot = Some(value);
+    }
+
+    pub fn get_riichi_sticks(&self) -> u8 {
+        match self.riichi_sticks_in_pot {
+            None => 0,
+            Some(value) => value,
+        }
+    }
+
+    pub fn set_tsumibo(&mut self, value: u8) {
+        self.tsumibo = Some(value);
+    }
+
+    pub fn get_tsumibo(&self) -> u8 {
+        match self.tsumibo {
+            None => 0,
+            Some(value) => value,
+        }
     }
 
     pub fn yaku(&mut self) -> Option<(Vec<Yaku>, Score)> {
