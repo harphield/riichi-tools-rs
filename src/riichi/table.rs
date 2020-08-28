@@ -9,7 +9,7 @@ use crate::riichi::scores::Score;
 /// Representation of the game state
 pub struct Table {
     my_hand: Option<Hand>,
-    my_discards: Option<Vec<Tile>>,
+    my_discards: Vec<Tile>,
     my_riichi: Option<bool>,
     my_tsumo: Option<bool>,
     my_points: Option<i32>,
@@ -50,7 +50,7 @@ impl Table {
     pub fn from_map(params: &Map<String, Value>) -> Result<Table, RiichiError> {
         let mut t = Table {
             my_hand: None,
-            my_discards: None,
+            my_discards: vec![],
             my_riichi: None,
             my_tsumo: None,
             my_points: None,
@@ -283,6 +283,16 @@ impl Table {
         match self.tsumibo {
             None => 0,
             Some(value) => value,
+        }
+    }
+
+    pub fn add_tile_to_discards(&mut self, player: u8, tile: Tile) {
+        match player {
+            0 => self.my_discards.push(tile),
+            1 => self.p1_discards.push(tile),
+            2 => self.p2_discards.push(tile),
+            3 => self.p3_discards.push(tile),
+            _ => panic!("Invalid player")
         }
     }
 

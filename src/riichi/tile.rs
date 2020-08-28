@@ -68,7 +68,8 @@ pub struct Tile {
     pub is_draw: bool,
     pub is_chi: bool,
     pub is_pon: bool,
-    pub is_kan: bool
+    pub is_kan: bool,
+    pub is_tsumogiri: bool
 }
 
 impl Tile {
@@ -452,7 +453,8 @@ impl Default for Tile {
             is_open: false,
             is_chi: false,
             is_pon: false,
-            is_kan: false
+            is_kan: false,
+            is_tsumogiri: false,
         }
     }
 }
@@ -471,20 +473,20 @@ impl PartialOrd for Tile {
         let self_ord_values = self.get_ordering_values();
         let other_ord_values = other.get_ordering_values();
 
-        if self_ord_values[0] < other_ord_values[0] {
-            return Some(Ordering::Less);
+        return if self_ord_values[0] < other_ord_values[0] {
+            Some(Ordering::Less)
         } else if self_ord_values[0] > other_ord_values[0] {
-            return Some(Ordering::Greater);
+            Some(Ordering::Greater)
         } else if self_ord_values[1] < other_ord_values[1] {
-            return Some(Ordering::Less);
+            Some(Ordering::Less)
         } else if self_ord_values[1] > other_ord_values[1] {
-            return Some(Ordering::Greater);
+            Some(Ordering::Greater)
         } else if self_ord_values[2] < other_ord_values[2] {
-            return Some(Ordering::Less);
+            Some(Ordering::Less)
         } else if self_ord_values[2] > other_ord_values[2] {
-            return Some(Ordering::Greater);
+            Some(Ordering::Greater)
         } else {
-            return Some(Ordering::Equal);
+            Some(Ordering::Equal)
         }
     }
 }
@@ -514,7 +516,7 @@ mod tests {
     fn next_number_less_than_9() {
         let tile = Tile::new(TileType::Number(4, TileColor::Manzu));
         let next = tile.next(false);
-        assert!(next == Some(Tile::new(TileType::Number(5, TileColor::Manzu))));
+        assert_eq!(next, Some(Tile::new(TileType::Number(5, TileColor::Manzu))));
     }
 
     #[test]
