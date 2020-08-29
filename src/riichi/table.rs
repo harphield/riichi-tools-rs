@@ -296,9 +296,23 @@ impl Table {
         }
     }
 
+    /// Finds yaku based on the table state. Some yaku depend on winds, tsumo / ron, tiles remaining etc.
     pub fn yaku(&mut self) -> Option<(Vec<Yaku>, Score)> {
         let yf = YakuFinder::new();
         yf.find(self)
+    }
+
+    /// How safe is this tile to discard based on this table state?
+    /// This function should look at these criteria:
+    /// - other players discards
+    /// - temporary furiten
+    /// - suji
+    /// - kabe
+    /// - player's tenpai potential (riichi = 100% tenpai...)
+    pub fn tile_safety(&self, tile: &Tile) -> u8 {
+
+
+        0
     }
 }
 
