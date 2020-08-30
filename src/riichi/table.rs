@@ -150,6 +150,15 @@ impl Table {
     pub fn set_my_tsumo(&mut self, value: bool) {
         self.my_tsumo = Some(value);
     }
+    pub fn set_p1_tsumo(&mut self, value: bool) {
+        self.p1_tsumo = Some(value);
+    }
+    pub fn set_p2_tsumo(&mut self, value: bool) {
+        self.p2_tsumo = Some(value);
+    }
+    pub fn set_p3_tsumo(&mut self, value: bool) {
+        self.p3_tsumo = Some(value);
+    }
 
     pub fn did_i_tsumo(&self) -> bool {
         match self.my_tsumo {
@@ -160,6 +169,15 @@ impl Table {
 
     pub fn set_my_riichi(&mut self, value: bool) {
         self.my_riichi = Some(value);
+    }
+    pub fn set_p1_riichi(&mut self, value: bool) {
+        self.p1_riichi = Some(value);
+    }
+    pub fn set_p2_riichi(&mut self, value: bool) {
+        self.p2_riichi = Some(value);
+    }
+    pub fn set_p3_riichi(&mut self, value: bool) {
+        self.p3_riichi = Some(value);
     }
 
     pub fn did_i_riichi(&self) -> bool {
@@ -311,6 +329,22 @@ impl Table {
     /// - player's tenpai potential (riichi = 100% tenpai...)
     pub fn tile_safety(&self, tile: &Tile) -> u8 {
 
+
+        0
+    }
+
+    /// Guesses a player's tenpai probability based on:
+    /// - their riichi state (100% tenpai if riichi)
+    /// - discards
+    /// - tiles remaining
+    /// - calls
+    fn tenpai_probability(&self, player: u8) -> u8 {
+        let (open_shapes, discards, riichi) = match player {
+            1 => (&self.p2_open_tiles, &self.p1_discards, self.p1_riichi.unwrap()),
+            2 => (&self.p2_open_tiles, &self.p2_discards, self.p2_riichi.unwrap()),
+            3 => (&self.p2_open_tiles, &self.p3_discards, self.p3_riichi.unwrap()),
+            _ => panic!("Wrong player ID"),
+        };
 
         0
     }
