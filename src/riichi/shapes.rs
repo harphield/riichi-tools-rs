@@ -1,8 +1,6 @@
 use super::tile::Tile;
-use crate::riichi::tile::TileColor;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::tile::TileType::{Number, Wind, Dragon};
-use crate::riichi::shapes::ShapeType::Complete;
 
 /// A hand consists of shapes.
 /// A tenpai hand has (usually) only 1 incomplete shape.
@@ -135,7 +133,7 @@ impl Shape {
             let tile_3 = tiles.get(2).unwrap();
 
             return match tile_1.tile_type {
-                Number(value, color) => {
+                Number(_value, color) => {
                     match tile_1.next(false) {
                         None => {
                             Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
@@ -167,10 +165,10 @@ impl Shape {
                         },
                     }
                 }
-                Wind(value) => {
+                Wind(_value) => {
                     Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                 }
-                Dragon(value) => {
+                Dragon(_value) => {
                     Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                 }
             }
@@ -270,8 +268,10 @@ impl Shape {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::riichi::tile::Tile;
+    use crate::riichi::shapes::Shape;
 
     #[test]
     fn from_ones() {

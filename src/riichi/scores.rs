@@ -10,7 +10,7 @@ impl Score {
     pub fn new(han: u8, fu: u8, oya: bool, tsumo: bool) -> Score {
         let mut new_fu = fu;
         if fu != 25 {
-            new_fu = ((fu as f32 / 10f32).round() * 10f32) as u8;
+            new_fu = ((fu as f32 / 10f32).ceil() * 10f32) as u8;
         }
 
         Score {
@@ -129,7 +129,7 @@ impl Score {
 
     /// Returns the base points of this Score. See http://arcturus.su/wiki/Japanese_mahjong_scoring_rules#Scoring_procedure
     fn base_points(&self) -> u32 {
-        let mut points: u32 = 0;
+        let points: u32 = 0;
 
         if self.han == 5 ||
             (self.han == 3 && self.fu >= 70) ||
@@ -430,5 +430,12 @@ mod tests {
 
         assert_eq!(scores[1].han, 5);
         assert_eq!(scores[1].fu, 0);
+    }
+
+    #[test]
+    fn create_score_1_22() {
+        let score = Score::new(1, 22, false, true);
+        assert_eq!(score.han, 1);
+        assert_eq!(score.fu, 30);
     }
 }

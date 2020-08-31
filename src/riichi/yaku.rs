@@ -167,7 +167,7 @@ impl YakuFinder {
                                             match tiles[0].tile_type {
                                                 TileType::Number(value, _) => {
                                                     if value == 1 || value == 9 {
-                                                        fu += 8
+                                                        fu += 8;
                                                     } else {
                                                         fu += 4;
                                                     }
@@ -185,7 +185,7 @@ impl YakuFinder {
                                             match tiles[0].tile_type {
                                                 TileType::Number(value, _) => {
                                                     if value == 1 || value == 9 {
-                                                        fu += 32
+                                                        fu += 32;
                                                     } else {
                                                         fu += 16;
                                                     }
@@ -203,9 +203,29 @@ impl YakuFinder {
                                             match tiles[0].tile_type {
                                                 TileType::Number(_, _) => {},
                                                 TileType::Wind(value) => {
+                                                    // prevalent wind: +2 fu
+                                                    // my wind: another +2 fu
+                                                    match table.get_prevalent_wind() {
+                                                        None => {},
+                                                        Some(pw) => {
+                                                            if pw == value {
+                                                                fu += 2;
+                                                            }
+                                                        },
+                                                    }
 
+                                                    match table.get_my_seat_wind() {
+                                                        None => {},
+                                                        Some(msw) => {
+                                                            if msw == value {
+                                                                fu += 2;
+                                                            }
+                                                        },
+                                                    }
                                                 },
-                                                TileType::Dragon(_) => {},
+                                                TileType::Dragon(_) => {
+                                                    fu += 2;
+                                                },
                                             }
 
                                             if tiles[0].eq(&winning_tile) {
@@ -224,7 +244,7 @@ impl YakuFinder {
                                             match tiles[0].tile_type {
                                                 TileType::Number(value, _) => {
                                                     if value == 1 || value == 9 {
-                                                        fu += 4
+                                                        fu += 4;
                                                     } else {
                                                         fu += 2;
                                                     }
@@ -238,7 +258,7 @@ impl YakuFinder {
                                             match tiles[0].tile_type {
                                                 TileType::Number(value, _) => {
                                                     if value == 1 || value == 9 {
-                                                        fu += 8
+                                                        fu += 8;
                                                     } else {
                                                         fu += 4;
                                                     }
@@ -254,6 +274,10 @@ impl YakuFinder {
                         },
                         ShapeType::Incomplete(_) => {},
                     }
+                }
+
+                if has_value_wait {
+                    fu += 2;
                 }
             }
 
@@ -1431,7 +1455,7 @@ impl Yaku {
                                         },
                                         ClosedShape::Koutsu(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1439,7 +1463,7 @@ impl Yaku {
                                         },
                                         ClosedShape::Kantsu(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1473,7 +1497,7 @@ impl Yaku {
                                         },
                                         OpenShape::Pon(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1481,7 +1505,7 @@ impl Yaku {
                                         },
                                         OpenShape::Kan(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1508,7 +1532,7 @@ impl Yaku {
                                     match closed {
                                         ClosedShape::Koutsu(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1516,7 +1540,7 @@ impl Yaku {
                                         },
                                         ClosedShape::Kantsu(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1544,7 +1568,7 @@ impl Yaku {
                                         OpenShape::Chi(_) => return false,
                                         OpenShape::Pon(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1552,7 +1576,7 @@ impl Yaku {
                                         },
                                         OpenShape::Kan(tiles) => {
                                             match tiles[0].tile_type {
-                                                TileType::Wind(value) => {},
+                                                TileType::Wind(_value) => {},
                                                 _ => {
                                                     other += 1;
                                                 },
@@ -1687,7 +1711,7 @@ impl Yaku {
                 // 1112345678999 + 1 tile
 
                 let array_34 = table.get_my_hand().get_34_array(true);
-                let mut offset = 0;
+                let offset;
 
                 if array_34[0] >= 3 {
                     offset = 0;
@@ -1888,9 +1912,38 @@ impl Yaku {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::{Map, Value};
+
+    #[test]
+    fn find_1_30_score() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("123m234s456789p11z")); // won on east tanki wait
+        map.insert("my_tsumo".to_string(), Value::from(true));
+        map.insert("prevalent_wind".to_string(), Value::from(1)); // east as prevalent wind = +2 fu
+
+        let mut table = Table::from_map(&map).unwrap();
+        let (yakus, score) = table.yaku().unwrap();
+
+        assert_eq!(score.han, 1);
+        assert_eq!(score.fu, 30);
+    }
+
+    #[test]
+    fn find_1_30_kanchan() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("123m24s456789p22z3s"));
+        map.insert("my_tsumo".to_string(), Value::from(true));
+        map.insert("prevalent_wind".to_string(), Value::from(1));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let (yakus, score) = table.yaku().unwrap();
+
+        assert_eq!(score.han, 1);
+        assert_eq!(score.fu, 30);
+    }
 
     #[test]
     fn find_mentanpin() {

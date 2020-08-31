@@ -1,7 +1,6 @@
 use super::tile::Tile;
 use super::hand::Hand;
 use crate::riichi::riichi_error::RiichiError;
-use core::cmp;
 
 pub struct ShantenFinder {
     pairs: i8,
@@ -259,7 +258,7 @@ impl ShantenFinder {
 
     /// ryanmen or penchan wait
     fn add_incomplete_meld_1(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let mut tile;
+        let tile;
 
         match Tile::from_id((depth + 1) as u8) {
             Ok(t) => tile = t,
@@ -293,7 +292,7 @@ impl ShantenFinder {
 
     /// kanchan wait
     fn add_incomplete_meld_2(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let mut tile;
+        let tile;
         match Tile::from_id((depth + 1) as u8) {
             Ok(t) => tile = t,
             Err(error) => return false
@@ -342,6 +341,7 @@ impl Default for ShantenFinder {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::riichi::shapes::OpenShape;

@@ -5,11 +5,7 @@ use super::tile::TileType;
 use super::tile::TileColor;
 use super::shanten::ShantenFinder;
 use crate::riichi::riichi_error::RiichiError;
-use std::collections::HashMap;
 use crate::riichi::shapes::{Shape, OpenShape};
-use crate::riichi::shape_finder::ShapeFinder;
-use crate::riichi::yaku::{YakuFinder, Yaku};
-use crate::riichi::scores::Score;
 use rand::Rng;
 use rand::seq::SliceRandom;
 
@@ -113,7 +109,7 @@ impl Hand {
             }
 
             // open or closed shape?
-            let mut open_or_closed: bool;
+            let open_or_closed: bool;
             if !closed {
                 open_or_closed = rng.gen_bool(0.5);
             } else {
@@ -146,7 +142,7 @@ impl Hand {
                     max = 3;
                 }
 
-                let mut closed_shape_type = 0;
+                let mut closed_shape_type;
                 loop {
                     closed_shape_type = rng.gen_range(0, max);
                     if closed_shape_type == 2 && !kans {
@@ -159,7 +155,7 @@ impl Hand {
                 match closed_shape_type {
                     // Shuntsu
                     0 => {
-                        let mut tile_id: u8 = 0;
+                        let mut tile_id: u8;
 
                         loop {
                             tile_id = rng.gen_range(0, 27); // we don't need honors
@@ -233,7 +229,7 @@ impl Hand {
                     },
                     // Koutsu
                     1 => {
-                        let mut tile_id: u8 = 0;
+                        let mut tile_id: u8;
 
                         loop {
                             tile_id = rng.gen_range(0, 34);
@@ -251,7 +247,7 @@ impl Hand {
                     },
                     // Kantsu
                     2 => {
-                        let mut tile_id: u8 = 0;
+                        let mut tile_id: u8;
 
                         loop {
                             tile_id = rng.gen_range(0, 34);
@@ -300,7 +296,7 @@ impl Hand {
 
     fn generate_toitsu(used_tiles: &mut [u8; 34], tiles: &mut Vec<Tile>) {
         let mut rng = rand::thread_rng();
-        let mut tile_id: u8 = 0;
+        let mut tile_id: u8;
         loop {
             tile_id = rng.gen_range(0, 34);
             if used_tiles[tile_id as usize] < 3 {
@@ -490,7 +486,7 @@ impl Hand {
         }
 
         // subtract 1 tile for each kan
-        hand_size -= (kan_tiles / 4);
+        hand_size -= kan_tiles / 4;
 
         hand_size
     }
@@ -582,7 +578,7 @@ impl Hand {
                 Ok(shanten) => {
                     self.shanten = shanten;
                 },
-                Err(error) => ()
+                Err(_error) => ()
             }
         }
 
@@ -620,9 +616,7 @@ impl Hand {
 
             // first we choose a tile to discard, then we look at our tiles
             let original_shanten = self.shanten();
-            let mut hand_tiles = vec!();
-
-            hand_tiles = self.tiles.to_vec();
+            let hand_tiles = self.tiles.to_vec();
 
             let mut tried = vec![];
             for o_tile in hand_tiles.iter() {
@@ -715,7 +709,7 @@ impl Hand {
         // we draw a tile and count shanten - if it improves, we add it to the tiles
         for i in try_tiles.iter() {
             let drawn_tile = Tile::from_id(*i).unwrap();
-            let tile_str = drawn_tile.to_string();
+            // let tile_str = drawn_tile.to_string();
             self.add_tile(drawn_tile);
 
             self.reset_shanten();
@@ -991,14 +985,14 @@ mod tests {
 
     #[test]
     fn count_hand_normal_13() {
-        let mut hand = Hand::from_text("237m13478s45699p", false).unwrap();
+        let hand = Hand::from_text("237m13478s45699p", false).unwrap();
 
         assert_eq!(hand.count_tiles(), 13);
     }
 
     #[test]
     fn count_hand_normal_14() {
-        let mut hand = Hand::from_text("1237m13478s45699p", false).unwrap();
+        let hand = Hand::from_text("1237m13478s45699p", false).unwrap();
 
         assert_eq!(hand.count_tiles(), 14);
     }

@@ -21,9 +21,9 @@ pub enum TileType {
 impl TileType {
     pub fn to_char(&self) -> char {
         match &self {
-            TileType::Number(number, color) => color.to_char(),
-            TileType::Wind(number) => 'z',
-            TileType::Dragon(number) => 'z'
+            TileType::Number(_number, color) => color.to_char(),
+            TileType::Wind(_number) => 'z',
+            TileType::Dragon(_number) => 'z'
         }
     }
 }
@@ -75,7 +75,7 @@ pub struct Tile {
 impl Tile {
     pub fn new(tile_type: TileType) -> Tile {
         match &tile_type {
-            TileType::Number(number, color) => {
+            TileType::Number(number, _color) => {
                 if *number > 9 {
                     panic!("Numbers can be only up to 9");
                 }
@@ -368,7 +368,7 @@ impl Tile {
 
     pub fn is_terminal(&self) -> bool {
         match &self.tile_type {
-            TileType::Number(number, color) => *number == 1 || *number == 9,
+            TileType::Number(number, _color) => *number == 1 || *number == 9,
             TileType::Wind(_) | TileType::Dragon(_) => false
         }
     }
@@ -400,15 +400,15 @@ impl Tile {
 
     pub fn get_type_char(&self) -> char {
         match &self.tile_type {
-            TileType::Number(number, color) => color.to_char(),
-            TileType::Wind(number) => 'z',
-            TileType::Dragon(number) => 'z'
+            TileType::Number(_number, color) => color.to_char(),
+            TileType::Wind(_number) => 'z',
+            TileType::Dragon(_number) => 'z'
         }
     }
 
     pub fn get_value(&self) -> u8 {
         match &self.tile_type {
-            TileType::Number(number, color) => *number,
+            TileType::Number(number, _color) => *number,
             TileType::Wind(number) => *number,
             TileType::Dragon(number) => *number
         }

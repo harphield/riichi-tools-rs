@@ -156,7 +156,7 @@ impl ShapeFinder {
                     match ct {
                         CompleteShape::Closed(closed) => {
                             match closed {
-                                ClosedShape::Single(tile) => {
+                                ClosedShape::Single(_tile) => {
                                     // we can only have single tiles in kokushi, so no melds and no more than 1 pair
                                     if has_koutsu || has_shuntsu || toitsu_count > 1 {
                                         return false;
@@ -164,7 +164,7 @@ impl ShapeFinder {
 
                                     has_single = true;
                                 },
-                                ClosedShape::Toitsu(tiles) => {
+                                ClosedShape::Toitsu(_tiles) => {
                                     // we can have more than 1 pair only in chiitoitsu, so no melds and singles there
                                     if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single) {
                                         return false;
@@ -172,7 +172,7 @@ impl ShapeFinder {
 
                                     toitsu_count += 1;
                                 },
-                                ClosedShape::Koutsu(tiles) => {
+                                ClosedShape::Koutsu(_tiles) => {
                                     // we can't have singles or more than 1 pair with melds
                                     if toitsu_count > 1 || has_single {
                                         return false;
@@ -180,7 +180,7 @@ impl ShapeFinder {
 
                                     has_koutsu = true;
                                 },
-                                ClosedShape::Kantsu(tiles) => {
+                                ClosedShape::Kantsu(_tiles) => {
                                     // we can't have singles or more than 1 pair with melds
                                     if toitsu_count > 1 || has_single {
                                         return false;
@@ -189,7 +189,7 @@ impl ShapeFinder {
                                     // kan = koutsu anyway
                                     has_koutsu = true;
                                 },
-                                ClosedShape::Shuntsu(tiles) => {
+                                ClosedShape::Shuntsu(_tiles) => {
                                     // we can't have singles or more than 1 pair with melds
                                     if toitsu_count > 1 || has_single {
                                         return false;
@@ -264,6 +264,7 @@ impl Default for ShapeFinder {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
