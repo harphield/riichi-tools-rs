@@ -181,9 +181,9 @@ impl Table {
     }
 
     pub fn did_i_riichi(&self) -> bool {
-        match self.my_riichi {
+        match &self.my_riichi {
             None => false,
-            Some(value) => value,
+            Some(value) => *value,
         }
     }
 
@@ -320,6 +320,67 @@ impl Table {
         yf.find(self)
     }
 
+    pub fn can_ankan(&mut self) -> bool {
+        let mut hand = self.get_my_hand().clone();
+        if !hand.is_closed() {
+            return false;
+        }
+
+        if hand.count_tiles() < 14 {
+            return false;
+        }
+
+        let array_34 = hand.get_34_array(true);
+        let mut has_4_tiles = false;
+        let mut kannable_tiles = vec![];
+        for (i, count) in array_34.iter().enumerate() {
+            if *count == 4 {
+                has_4_tiles = true;
+                kannable_tiles.push((i + 1) as u8);
+            }
+        }
+
+        if kannable_tiles.is_empty() {
+            return false;
+        }
+
+        return if self.did_i_riichi() {
+            // I can only kan with tiles that won't change my hand structure
+            // I can also only kan with the drawn tile
+            let mut drawn_tile = hand.get_drawn_tile().unwrap().clone();
+            let drawn_tile_id = drawn_tile.to_id();
+
+            if !kannable_tiles.contains(&drawn_tile_id) {
+                return false;
+            }
+
+            hand.remove_tile_by_id(drawn_tile_id);
+            let no_kan_improving_tiles = hand.find_shanten_improving_tiles(None);
+
+            drawn_tile.is_draw = false;
+            hand.add_tile(drawn_tile);
+            hand.ankan_tiles(drawn_tile);
+
+            hand.reset_shanten();
+            let kan_improving_tiles = hand.find_shanten_improving_tiles(None);
+
+            if no_kan_improving_tiles.is_empty() || kan_improving_tiles.is_empty() {
+                return false;
+            } else {
+                let (_to, no_kan_imp_tiles, _ukeire) = no_kan_improving_tiles.get(0).unwrap();
+                let (_to, kan_imp_tiles, _ukeire) = kan_improving_tiles.get(0).unwrap();
+
+                if no_kan_imp_tiles.eq(kan_imp_tiles) {
+                    return true;
+                }
+            }
+
+            false
+        } else {
+            true
+        }
+    }
+
     /// How safe is this tile to discard based on this table state?
     /// This function should look at these criteria:
     /// - other players discards
@@ -351,5 +412,116 @@ impl Table {
 }
 
 mod tests {
-    // use super::*;
+    use super::*;
+
+    #[test]
+    fn ankan_test() {
+        let mut table = Table {
+            my_hand: Some(Hand::from_text("11123m234p456s44z1m", false).unwrap()),
+            my_discards: vec![],
+            my_riichi: None,
+            my_tsumo: None,
+            my_points: None,
+            p1_discards: vec![],
+            p1_open_tiles: vec![],
+            p1_riichi: None,
+            p1_tsumo: None,
+            p1_points: None,
+            p2_discards: vec![],
+            p2_open_tiles: vec![],
+            p2_riichi: None,
+            p2_tsumo: None,
+            p2_points: None,
+            p3_discards: vec![],
+            p3_open_tiles: vec![],
+            p3_riichi: None,
+            p3_tsumo: None,
+            p3_points: None,
+            prevalent_wind: None,
+            my_seat_wind: None,
+            wind_round: None,
+            total_round: None,
+            tiles_remaining: None,
+            riichi_sticks_in_pot: None,
+            tsumibo: None,
+            dora_indicators: vec![],
+            visible_tiles: vec![]
+        };
+
+        assert!(table.can_ankan());
+    }
+
+    #[test]
+    fn bad_ankan_riichi_test() {
+        let mut table = Table {
+            my_hand: Some(Hand::from_text("11123m234p456s44z1m", false).unwrap()),
+            my_discards: vec![],
+            my_riichi: Some(true),
+            my_tsumo: None,
+            my_points: None,
+            p1_discards: vec![],
+            p1_open_tiles: vec![],
+            p1_riichi: None,
+            p1_tsumo: None,
+            p1_points: None,
+            p2_discards: vec![],
+            p2_open_tiles: vec![],
+            p2_riichi: None,
+            p2_tsumo: None,
+            p2_points: None,
+            p3_discards: vec![],
+            p3_open_tiles: vec![],
+            p3_riichi: None,
+            p3_tsumo: None,
+            p3_points: None,
+            prevalent_wind: None,
+            my_seat_wind: None,
+            wind_round: None,
+            total_round: None,
+            tiles_remaining: None,
+            riichi_sticks_in_pot: None,
+            tsumibo: None,
+            dora_indicators: vec![],
+            visible_tiles: vec![]
+        };
+
+        assert!(!table.can_ankan());
+    }
+
+    #[test]
+    fn good_ankan_riichi_test() {
+        let mut table = Table {
+            my_hand: Some(Hand::from_text("23666m234p456s44z6m", false).unwrap()),
+            my_discards: vec![],
+            my_riichi: Some(true),
+            my_tsumo: None,
+            my_points: None,
+            p1_discards: vec![],
+            p1_open_tiles: vec![],
+            p1_riichi: None,
+            p1_tsumo: None,
+            p1_points: None,
+            p2_discards: vec![],
+            p2_open_tiles: vec![],
+            p2_riichi: None,
+            p2_tsumo: None,
+            p2_points: None,
+            p3_discards: vec![],
+            p3_open_tiles: vec![],
+            p3_riichi: None,
+            p3_tsumo: None,
+            p3_points: None,
+            prevalent_wind: None,
+            my_seat_wind: None,
+            wind_round: None,
+            total_round: None,
+            tiles_remaining: None,
+            riichi_sticks_in_pot: None,
+            tsumibo: None,
+            dora_indicators: vec![],
+            visible_tiles: vec![]
+        };
+
+        assert!(table.can_ankan());
+    }
 }

@@ -30,6 +30,10 @@ impl ShantenFinder {
         let mut kokushi_shanten = 99;
         let mut chiitoi_shanten = 99;
 
+        // add kans to completed melds
+        self.complete_melds += hand.get_kans() as i8;
+        // TODO add other open shapes to completed melds
+
         if hand.is_closed() {
             kokushi_shanten = self.kokushi_shanten(&array_34);
             chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
@@ -82,6 +86,7 @@ impl ShantenFinder {
     /// discarded and changed remain - that is the shanten of a hand.
     fn analyze(&mut self, array_34: &mut [u8; 34], depth: usize) -> i8 {
         if (self.hand_count == 13 && self.min_found <= 0) || (self.hand_count == 14 && self.min_found < 0) {
+            // println!("done {}", self.min_found);
             return 99;
         }
 
@@ -166,6 +171,8 @@ impl ShantenFinder {
     }
 
     fn final_calculations(&mut self) -> i8 {
+        // TODO add open melds and closed kans to complete_melds
+
         let mut over = 0;
         if self.complete_melds + self.incomplete_melds + self.pairs > 5 {
             over = 5 - self.complete_melds + self.incomplete_melds + self.pairs;

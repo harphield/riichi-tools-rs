@@ -64,22 +64,19 @@ impl Hand {
     }
 
     /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
-    pub fn get_34_array(&mut self, remove_open_tiles: bool) -> [u8; 34] {
-        match self.array_34 {
-            Some(array_34) => return array_34,
-            None => {
-                let mut array_34 = [0; 34];
-                for tile in self.tiles.iter() {
-                    if let Option::Some(t) = tile {
-                        if !remove_open_tiles || !t.is_open {
-                            array_34[(t.to_id() - 1) as usize] += 1;
-                        }
-                    }
+    /// remove_open_tiles: ignores chi, pon and kanned tiles (also closed kans)
+    pub fn get_34_array(&self, remove_open_tiles: bool) -> [u8; 34] {
+        let mut array_34 = [0; 34];
+        for tile in self.tiles.iter() {
+            if let Option::Some(t) = tile {
+                // ignoring open tiles and kanned tiles
+                if !(remove_open_tiles && (t.is_open || t.is_kan)) {
+                    array_34[(t.to_id() - 1) as usize] += 1;
                 }
-                self.array_34 = Some(array_34);
-                array_34
             }
         }
+
+        array_34
     }
 
     /// TODO
@@ -391,6 +388,36 @@ impl Hand {
         self.remove_tile(&tile);
     }
 
+    /// Do a closed kan with these tiles, if it has them
+    pub fn ankan_tiles(&mut self, mut tile: Tile) {
+        let array_34 = self.get_34_array(true);
+        if array_34[(tile.to_id() - 1) as usize] != 4 {
+            panic!("Trying to kan, but don't have 4 tiles!");
+        }
+
+        // remove the kanned tiles
+        self.tiles.retain(|x| {
+            match x {
+                None => true,
+                Some(t) => {
+                    if t.to_id() == tile.to_id() {
+                       return false;
+                    }
+
+                    true
+                },
+            }
+        });
+
+        // add them as kanned
+        tile.is_kan = true;
+
+        self.add_tile(tile);
+        self.add_tile(tile);
+        self.add_tile(tile);
+        self.add_tile(tile);
+    }
+
     pub fn add_open_shape(&mut self, shape: OpenShape) {
         // TODO change the drawn tile to a different one if we removed all of them
         match shape {
@@ -489,6 +516,30 @@ impl Hand {
         hand_size -= kan_tiles / 4;
 
         hand_size
+    }
+
+    fn get_tile_count_by_id(&self, tile_id: u8) -> u8 {
+        self.get_34_array(false)[(tile_id - 1) as usize]
+    }
+
+    pub fn get_kans(&self) -> u8 {
+        let mut array_34 = [0u8; 34];
+        let mut cnt = 0;
+        for t_o in self.tiles.iter() {
+            match t_o {
+                None => {},
+                Some(tile) => {
+                    if tile.is_kan {
+                        array_34[(tile.to_id() - 1) as usize] += 1;
+                        if array_34[(tile.to_id() - 1) as usize] == 4 {
+                            cnt += 1;
+                        }
+                    }
+                },
+            }
+        }
+
+        cnt
     }
 
     pub fn is_closed(&self) -> bool {
@@ -708,12 +759,16 @@ impl Hand {
 
         // we draw a tile and count shanten - if it improves, we add it to the tiles
         for i in try_tiles.iter() {
+            if self.get_tile_count_by_id(*i) == 4 {
+                continue;
+            }
             let drawn_tile = Tile::from_id(*i).unwrap();
             // let tile_str = drawn_tile.to_string();
             self.add_tile(drawn_tile);
 
             self.reset_shanten();
             let new_shanten = self.shanten();
+            // println!("new shanten with {} = {}", drawn_tile.to_string(), new_shanten);
 
             if new_shanten < current_shanten {
                 tiles.push(Tile::from_id(*i).unwrap());
@@ -1033,6 +1088,41 @@ mod tests {
                 panic!("I should not have found a drawn tile here!");
             },
         }
+    }
+
+    #[test]
+    fn tile_counting_with_kan() {
+        let mut hand = Hand::from_text("23m456s678p22z", true).unwrap();
+        let mut tile = Tile::from_id(1).unwrap();
+
+        // 4 kan tiles = 3 tiles
+        tile.is_kan = true;
+        hand.add_tile(tile);
+        hand.add_tile(tile);
+        hand.add_tile(tile);
+        hand.add_tile(tile);
+
+        assert_eq!(hand.count_tiles(), 13);
+    }
+
+    #[test]
+    fn tile_counting_with_kan_method() {
+        let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
+        let mut tile = Tile::from_id(1).unwrap();
+
+        hand.ankan_tiles(tile);
+
+        assert_eq!(hand.count_tiles(), 13);
+    }
+
+    #[test]
+    fn shanten_with_kan_method() {
+        let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
+        let mut tile = Tile::from_id(1).unwrap();
+
+        hand.ankan_tiles(tile);
+
+        assert_eq!(hand.shanten(), 0);
     }
 
     #[test]
