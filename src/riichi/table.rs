@@ -320,28 +320,26 @@ impl Table {
         yf.find(self)
     }
 
-    pub fn can_ankan(&mut self) -> bool {
+    pub fn can_ankan(&mut self) -> Option<Vec<Tile>> {
         let mut hand = self.get_my_hand().clone();
         if !hand.is_closed() {
-            return false;
+            return None;
         }
 
         if hand.count_tiles() < 14 {
-            return false;
+            return None;
         }
 
         let array_34 = hand.get_34_array(true);
-        let mut has_4_tiles = false;
         let mut kannable_tiles = vec![];
         for (i, count) in array_34.iter().enumerate() {
             if *count == 4 {
-                has_4_tiles = true;
                 kannable_tiles.push((i + 1) as u8);
             }
         }
 
         if kannable_tiles.is_empty() {
-            return false;
+            return None;
         }
 
         return if self.did_i_riichi() {
@@ -351,7 +349,7 @@ impl Table {
             let drawn_tile_id = drawn_tile.to_id();
 
             if !kannable_tiles.contains(&drawn_tile_id) {
-                return false;
+                return None;
             }
 
             hand.remove_tile_by_id(drawn_tile_id);
@@ -365,19 +363,24 @@ impl Table {
             let kan_improving_tiles = hand.find_shanten_improving_tiles(None);
 
             if no_kan_improving_tiles.is_empty() || kan_improving_tiles.is_empty() {
-                return false;
+                return None;
             } else {
                 let (_to, no_kan_imp_tiles, _ukeire) = no_kan_improving_tiles.get(0).unwrap();
                 let (_to, kan_imp_tiles, _ukeire) = kan_improving_tiles.get(0).unwrap();
 
                 if no_kan_imp_tiles.eq(kan_imp_tiles) {
-                    return true;
+                    return Some(vec![drawn_tile]);
                 }
             }
 
-            false
+            None
         } else {
-            true
+            let mut kannable_vec = vec![];
+            for tile_id in kannable_tiles.iter() {
+                kannable_vec.push(Tile::from_id(*tile_id).unwrap());
+            }
+
+            Some(kannable_vec)
         }
     }
 
@@ -448,7 +451,7 @@ mod tests {
             visible_tiles: vec![]
         };
 
-        assert!(table.can_ankan());
+        assert!(table.can_ankan() != None);
     }
 
     #[test]
@@ -485,7 +488,7 @@ mod tests {
             visible_tiles: vec![]
         };
 
-        assert!(!table.can_ankan());
+        assert!(table.can_ankan() == None);
     }
 
     #[test]
@@ -522,6 +525,6 @@ mod tests {
             visible_tiles: vec![]
         };
 
-        assert!(table.can_ankan());
+        assert!(table.can_ankan() != None);
     }
 }

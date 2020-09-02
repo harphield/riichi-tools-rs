@@ -33,6 +33,7 @@ impl ShantenFinder {
         // add kans to completed melds
         self.complete_melds += hand.get_kans() as i8;
         // TODO add other open shapes to completed melds
+        self.complete_melds += hand.get_open_shapes().len() as i8;
 
         if hand.is_closed() {
             kokushi_shanten = self.kokushi_shanten(&array_34);
