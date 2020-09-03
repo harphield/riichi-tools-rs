@@ -7,3 +7,4 @@ mod shanten;
 pub mod riichi_error;
 pub mod scores;
 pub mod yaku;
+pub mod rules;

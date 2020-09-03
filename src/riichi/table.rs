@@ -5,6 +5,7 @@ use serde_json::{Map, Value};
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::yaku::{YakuFinder, Yaku};
 use crate::riichi::scores::Score;
+use crate::riichi::rules::Rules;
 
 /// Representation of the game state
 pub struct Table {
@@ -44,6 +45,8 @@ pub struct Table {
 
     dora_indicators: Vec<Tile>,
     visible_tiles: Vec<Tile>,
+
+    rules: Option<Rules>,
 }
 
 impl Table {
@@ -78,6 +81,7 @@ impl Table {
             tsumibo: None,
             dora_indicators: vec![],
             visible_tiles: vec![],
+            rules: None,
         };
 
         for (index, value) in params {
@@ -448,7 +452,8 @@ mod tests {
             riichi_sticks_in_pot: None,
             tsumibo: None,
             dora_indicators: vec![],
-            visible_tiles: vec![]
+            visible_tiles: vec![],
+            rules: None
         };
 
         assert!(table.can_ankan() != None);
@@ -485,7 +490,8 @@ mod tests {
             riichi_sticks_in_pot: None,
             tsumibo: None,
             dora_indicators: vec![],
-            visible_tiles: vec![]
+            visible_tiles: vec![],
+            rules: None
         };
 
         assert!(table.can_ankan() == None);
@@ -522,7 +528,8 @@ mod tests {
             riichi_sticks_in_pot: None,
             tsumibo: None,
             dora_indicators: vec![],
-            visible_tiles: vec![]
+            visible_tiles: vec![],
+            rules: None
         };
 
         assert!(table.can_ankan() != None);
