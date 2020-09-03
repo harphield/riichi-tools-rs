@@ -4,8 +4,9 @@ pub enum GameLength {
 }
 
 pub struct Rules {
-    game_length: GameLength,
-    aka_ari: bool,
-    kuitan_ari: bool,
+    pub game_length: GameLength,
+    pub aka_ari: bool,
+    pub kuitan_ari: bool,
+
     // TODO more rules
 }

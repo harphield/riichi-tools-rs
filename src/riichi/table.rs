@@ -308,6 +308,14 @@ impl Table {
         }
     }
 
+    pub fn set_rules(&mut self, rules: Rules) {
+        self.rules = Some(rules);
+    }
+
+    pub fn get_rules(&self) -> &Option<Rules> {
+        &self.rules
+    }
+
     pub fn add_tile_to_discards(&mut self, player: u8, tile: Tile) {
         match player {
             0 => self.my_discards.push(tile),
@@ -395,10 +403,46 @@ impl Table {
     /// - suji
     /// - kabe
     /// - player's tenpai potential (riichi = 100% tenpai...)
-    pub fn tile_safety(&self, tile: &Tile) -> u8 {
+    pub fn tile_safety(&self, tile: &Tile) -> f32 {
+        let tenpai_probs = [
+            self.tenpai_probability(1),
+            self.tenpai_probability(2),
+            self.tenpai_probability(3),
+        ];
+
+        let discards = [
+            &self.p1_discards,
+            &self.p2_discards,
+            &self.p3_discards,
+        ];
+
+        let mut safety = 0.0;
+        let mut safeties = [
+            0.0,
+            0.0,
+            0.0,
+        ];
+
+        if discards[0].contains(&tile) {
+            safeties[0] = 1.0;
+        }
+
+        if discards[1].contains(&tile) {
+            safeties[1] = 1.0;
+        }
+
+        if discards[2].contains(&tile){
+            safeties[2] = 1.0;
+        }
+
+        if safeties[0] == 1.0 && safeties[1] == 1.0 && safeties[2] == 1.0 {
+            // genbutsu, everyone has discarded this tile already
+            return 1.0;
+        }
 
 
-        0
+
+        0.0
     }
 
     /// Guesses a player's tenpai probability based on:
@@ -406,7 +450,7 @@ impl Table {
     /// - discards
     /// - tiles remaining
     /// - calls
-    fn tenpai_probability(&self, player: u8) -> u8 {
+    fn tenpai_probability(&self, player: u8) -> f32 {
         let (open_shapes, discards, riichi) = match player {
             1 => (&self.p2_open_tiles, &self.p1_discards, self.p1_riichi.unwrap()),
             2 => (&self.p2_open_tiles, &self.p2_discards, self.p2_riichi.unwrap()),
@@ -414,7 +458,11 @@ impl Table {
             _ => panic!("Wrong player ID"),
         };
 
-        0
+        if riichi {
+            return 1.0;
+        }
+
+        0.0
     }
 }
 
