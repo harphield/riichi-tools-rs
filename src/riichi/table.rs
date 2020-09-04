@@ -416,33 +416,66 @@ impl Table {
             &self.p3_discards,
         ];
 
-        let mut safety = 0.0;
+        let last_discards = [
+            discards[0].last(),
+            discards[1].last(),
+            discards[2].last(),
+        ];
+
+        // percentage of safety against players
         let mut safeties = [
-            0.0,
-            0.0,
-            0.0,
+            0.0, // p1 (kamicha)
+            0.0, // p2 (toimen)
+            0.0, // p3 (shimocha)
         ];
 
         if discards[0].contains(&tile) {
             safeties[0] = 1.0;
+        } else {
+            if self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]]) {
+                safeties[0] = 1.0;
+            }
         }
 
         if discards[1].contains(&tile) {
             safeties[1] = 1.0;
+        } else {
+            if self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]]) {
+                safeties[0] = 1.0;
+            }
         }
 
         if discards[2].contains(&tile){
             safeties[2] = 1.0;
+        } else {
+            if self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]]) {
+                safeties[0] = 1.0;
+            }
         }
 
-        if safeties[0] == 1.0 && safeties[1] == 1.0 && safeties[2] == 1.0 {
+        if safeties.iter().sum::<f32>() / safeties.len() as f32 == 1.0 {
             // genbutsu, everyone has discarded this tile already
             return 1.0;
         }
 
-
+        // TODO more stuff
 
         0.0
+    }
+
+    fn is_temporary_furiten(&self, tile: &Tile, last_discards: Vec<&Option<&Tile>>) -> bool {
+        for ld_o in last_discards.iter() {
+            match ld_o {
+                None => {},
+                Some(ld) => {
+                    if ld.eq(&tile) {
+                        return true;
+                    }
+                },
+            }
+        }
+
+        false
     }
 
     /// Guesses a player's tenpai probability based on:
