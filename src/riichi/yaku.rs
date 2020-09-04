@@ -80,7 +80,7 @@ impl YakuFinder {
     /// Finds the best variant of the hand + its score
     pub fn find(&self, mut table: &mut Table) -> Option<(Vec<Yaku>, Score)> {
         // only complete hands
-        let mut hand: &mut Hand = table.get_my_hand();
+        let mut hand = &mut table.get_my_hand().clone();
 
         if hand.shanten() != -1 {
             return None;

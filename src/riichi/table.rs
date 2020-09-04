@@ -195,10 +195,10 @@ impl Table {
         self.my_hand = Some(hand);
     }
 
-    pub fn get_my_hand(&mut self) -> &mut Hand {
-        match &mut self.my_hand {
+    pub fn get_my_hand(&self) -> &Hand {
+        match &self.my_hand {
             None => panic!("No hand!"),
-            Some(hand) => hand,
+            Some(hand) => &hand,
         }
     }
 
@@ -400,6 +400,7 @@ impl Table {
     /// This function should look at these criteria:
     /// - other players discards
     /// - temporary furiten
+    /// - other player's calls (chinitsu / honitsu / sanshoku / ittsu calls etc.)
     /// - suji
     /// - kabe
     /// - player's tenpai potential (riichi = 100% tenpai...)
@@ -422,6 +423,12 @@ impl Table {
             discards[2].last(),
         ];
 
+        let open_tiles = [
+            &self.p1_open_tiles,
+            &self.p2_open_tiles,
+            &self.p3_open_tiles,
+        ];
+
         // percentage of safety against players
         let mut safeties = [
             0.0, // p1 (kamicha)
@@ -429,38 +436,27 @@ impl Table {
             0.0, // p3 (shimocha)
         ];
 
-        if discards[0].contains(&tile) {
+        if discards[0].contains(&tile) || self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]]) {
             safeties[0] = 1.0;
         } else {
-            if self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]]) {
-                safeties[0] = 1.0;
-            }
+
         }
 
-        if discards[1].contains(&tile) {
+        if discards[1].contains(&tile) || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]]) {
             safeties[1] = 1.0;
         } else {
-            if self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]]) {
-                safeties[0] = 1.0;
-            }
+
         }
 
-        if discards[2].contains(&tile){
+        if discards[2].contains(&tile) || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]]) {
             safeties[2] = 1.0;
         } else {
-            if self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]]) {
-                safeties[0] = 1.0;
-            }
-        }
 
-        if safeties.iter().sum::<f32>() / safeties.len() as f32 == 1.0 {
-            // genbutsu, everyone has discarded this tile already
-            return 1.0;
         }
 
         // TODO more stuff
 
-        0.0
+        safeties.iter().sum::<f32>() / safeties.len() as f32
     }
 
     fn is_temporary_furiten(&self, tile: &Tile, last_discards: Vec<&Option<&Tile>>) -> bool {
@@ -483,17 +479,19 @@ impl Table {
     /// - discards
     /// - tiles remaining
     /// - calls
-    fn tenpai_probability(&self, player: u8) -> f32 {
+    pub fn tenpai_probability(&self, player: u8) -> f32 {
         let (open_shapes, discards, riichi) = match player {
-            1 => (&self.p2_open_tiles, &self.p1_discards, self.p1_riichi.unwrap()),
+            1 => (&self.p1_open_tiles, &self.p1_discards, self.p1_riichi.unwrap()),
             2 => (&self.p2_open_tiles, &self.p2_discards, self.p2_riichi.unwrap()),
-            3 => (&self.p2_open_tiles, &self.p3_discards, self.p3_riichi.unwrap()),
+            3 => (&self.p3_open_tiles, &self.p3_discards, self.p3_riichi.unwrap()),
             _ => panic!("Wrong player ID"),
         };
 
         if riichi {
             return 1.0;
         }
+
+        // TODO more stuff
 
         0.0
     }
@@ -504,114 +502,26 @@ mod tests {
 
     #[test]
     fn ankan_test() {
-        let mut table = Table {
-            my_hand: Some(Hand::from_text("11123m234p456s44z1m", false).unwrap()),
-            my_discards: vec![],
-            my_riichi: None,
-            my_tsumo: None,
-            my_points: None,
-            p1_discards: vec![],
-            p1_open_tiles: vec![],
-            p1_riichi: None,
-            p1_tsumo: None,
-            p1_points: None,
-            p2_discards: vec![],
-            p2_open_tiles: vec![],
-            p2_riichi: None,
-            p2_tsumo: None,
-            p2_points: None,
-            p3_discards: vec![],
-            p3_open_tiles: vec![],
-            p3_riichi: None,
-            p3_tsumo: None,
-            p3_points: None,
-            prevalent_wind: None,
-            my_seat_wind: None,
-            wind_round: None,
-            total_round: None,
-            tiles_remaining: None,
-            riichi_sticks_in_pot: None,
-            tsumibo: None,
-            dora_indicators: vec![],
-            visible_tiles: vec![],
-            rules: None
-        };
+        let mut table = Table::from_map(&Map::new()).unwrap();
+        table.set_my_hand(Hand::from_text("11123m234p456s44z1m", false).unwrap());
 
         assert!(table.can_ankan() != None);
     }
 
     #[test]
     fn bad_ankan_riichi_test() {
-        let mut table = Table {
-            my_hand: Some(Hand::from_text("11123m234p456s44z1m", false).unwrap()),
-            my_discards: vec![],
-            my_riichi: Some(true),
-            my_tsumo: None,
-            my_points: None,
-            p1_discards: vec![],
-            p1_open_tiles: vec![],
-            p1_riichi: None,
-            p1_tsumo: None,
-            p1_points: None,
-            p2_discards: vec![],
-            p2_open_tiles: vec![],
-            p2_riichi: None,
-            p2_tsumo: None,
-            p2_points: None,
-            p3_discards: vec![],
-            p3_open_tiles: vec![],
-            p3_riichi: None,
-            p3_tsumo: None,
-            p3_points: None,
-            prevalent_wind: None,
-            my_seat_wind: None,
-            wind_round: None,
-            total_round: None,
-            tiles_remaining: None,
-            riichi_sticks_in_pot: None,
-            tsumibo: None,
-            dora_indicators: vec![],
-            visible_tiles: vec![],
-            rules: None
-        };
+        let mut table = Table::from_map(&Map::new()).unwrap();
+        table.set_my_hand(Hand::from_text("11123m234p456s44z1m", false).unwrap());
+        table.set_my_riichi(true);
 
         assert!(table.can_ankan() == None);
     }
 
     #[test]
     fn good_ankan_riichi_test() {
-        let mut table = Table {
-            my_hand: Some(Hand::from_text("23666m234p456s44z6m", false).unwrap()),
-            my_discards: vec![],
-            my_riichi: Some(true),
-            my_tsumo: None,
-            my_points: None,
-            p1_discards: vec![],
-            p1_open_tiles: vec![],
-            p1_riichi: None,
-            p1_tsumo: None,
-            p1_points: None,
-            p2_discards: vec![],
-            p2_open_tiles: vec![],
-            p2_riichi: None,
-            p2_tsumo: None,
-            p2_points: None,
-            p3_discards: vec![],
-            p3_open_tiles: vec![],
-            p3_riichi: None,
-            p3_tsumo: None,
-            p3_points: None,
-            prevalent_wind: None,
-            my_seat_wind: None,
-            wind_round: None,
-            total_round: None,
-            tiles_remaining: None,
-            riichi_sticks_in_pot: None,
-            tsumibo: None,
-            dora_indicators: vec![],
-            visible_tiles: vec![],
-            rules: None
-        };
+        let mut table = Table::from_map(&Map::new()).unwrap();
+        table.set_my_hand(Hand::from_text("23666m234p456s44z6m", false).unwrap());
+        table.set_my_riichi(true);
 
         assert!(table.can_ankan() != None);
     }
