@@ -69,6 +69,7 @@ pub struct Tile {
     pub is_chi: bool,
     pub is_pon: bool,
     pub is_kan: bool,
+    pub is_riichi: bool,
     pub is_tsumogiri: bool,
     pub id_136: Option<u8>,
 }
@@ -455,6 +456,7 @@ impl Default for Tile {
             is_chi: false,
             is_pon: false,
             is_kan: false,
+            is_riichi: false,
             is_tsumogiri: false,
             id_136: None,
         }

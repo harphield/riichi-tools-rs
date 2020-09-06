@@ -16,22 +16,27 @@ pub struct Table {
     my_points: Option<i32>,
     // player to the right (shimocha)
     p1_discards: Vec<Tile>,
+    p1_safe_tiles: Vec<Tile>,
     p1_open_tiles: Vec<Shape>,
     p1_riichi: Option<bool>,
     p1_tsumo: Option<bool>,
     p1_points: Option<i32>,
     // opposite player (toimen)
     p2_discards: Vec<Tile>,
+    p2_safe_tiles: Vec<Tile>,
     p2_open_tiles: Vec<Shape>,
     p2_riichi: Option<bool>,
     p2_tsumo: Option<bool>,
     p2_points: Option<i32>,
     // player to the left (kamicha)
     p3_discards: Vec<Tile>,
+    p3_safe_tiles: Vec<Tile>,
     p3_open_tiles: Vec<Shape>,
     p3_riichi: Option<bool>,
     p3_tsumo: Option<bool>,
     p3_points: Option<i32>,
+
+    riichi_declaring_player: Option<u8>,
 
     // 1 = east, 2 = south, 3 = west, 4 = north
     prevalent_wind: Option<u8>,
@@ -58,20 +63,24 @@ impl Table {
             my_tsumo: None,
             my_points: None,
             p1_discards: vec![],
+            p1_safe_tiles: vec![],
             p1_open_tiles: vec![],
             p1_riichi: None,
             p1_tsumo: None,
             p1_points: None,
             p2_discards: vec![],
+            p2_safe_tiles: vec![],
             p2_open_tiles: vec![],
             p2_riichi: None,
             p2_tsumo: None,
             p2_points: None,
             p3_discards: vec![],
+            p3_safe_tiles: vec![],
             p3_open_tiles: vec![],
             p3_riichi: None,
             p3_tsumo: None,
             p3_points: None,
+            riichi_declaring_player: None,
             prevalent_wind: None,
             my_seat_wind: None,
             wind_round: None,
@@ -184,6 +193,47 @@ impl Table {
         self.p3_riichi = Some(value);
     }
 
+    pub fn get_p1_riichi(&self) -> bool {
+        match self.p1_riichi {
+            None => false,
+            Some(value) => value,
+        }
+    }
+
+    pub fn get_p2_riichi(&self) -> bool {
+        match self.p2_riichi {
+            None => false,
+            Some(value) => value,
+        }
+    }
+
+    pub fn get_p3_riichi(&self) -> bool {
+        match self.p3_riichi {
+            None => false,
+            Some(value) => value,
+        }
+    }
+
+    pub fn set_riichi_declaring_player(&mut self, player_id: u8) {
+        self.riichi_declaring_player = Some(player_id);
+
+        if player_id == 1 {
+            self.set_p1_riichi(true);
+        } else if player_id == 2 {
+            self.set_p2_riichi(true);
+        } else if player_id == 3 {
+            self.set_p3_riichi(true);
+        }
+    }
+
+    pub fn unset_riichi_declaring_player(&mut self) {
+        self.riichi_declaring_player = None;
+    }
+
+    pub fn get_riichi_declaring_player(&self) -> Option<u8> {
+        self.riichi_declaring_player
+    }
+
     pub fn did_i_riichi(&self) -> bool {
         match &self.my_riichi {
             None => false,
@@ -256,8 +306,14 @@ impl Table {
         self.visible_tiles.append(&mut tiles);
     }
 
-    pub fn reset_visible_tiles(&mut self) {
+    pub fn reset_tile_vectors(&mut self) {
         self.visible_tiles = vec![];
+        self.p1_discards = vec![];
+        self.p2_discards = vec![];
+        self.p3_discards = vec![];
+        self.p1_safe_tiles = vec![];
+        self.p2_safe_tiles = vec![];
+        self.p3_safe_tiles = vec![];
     }
 
     pub fn get_visible_tiles(&self) -> &Vec<Tile> {
@@ -322,6 +378,15 @@ impl Table {
             1 => self.p1_discards.push(tile),
             2 => self.p2_discards.push(tile),
             3 => self.p3_discards.push(tile),
+            _ => panic!("Invalid player")
+        }
+    }
+
+    pub fn add_tile_to_safe_tiles(&mut self, player: u8, tile: Tile) {
+        match player {
+            1 => self.p1_safe_tiles.push(tile),
+            2 => self.p2_safe_tiles.push(tile),
+            3 => self.p3_safe_tiles.push(tile),
             _ => panic!("Invalid player")
         }
     }
@@ -423,6 +488,12 @@ impl Table {
             discards[2].last(),
         ];
 
+        let safe_tiles = [
+            &self.p1_safe_tiles,
+            &self.p2_safe_tiles,
+            &self.p3_safe_tiles,
+        ];
+
         let open_tiles = [
             &self.p1_open_tiles,
             &self.p2_open_tiles,
@@ -436,25 +507,34 @@ impl Table {
             0.0, // p3 (shimocha)
         ];
 
-        if discards[0].contains(&tile) || self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]]) {
+        if discards[0].contains(&tile) ||
+            safe_tiles[0].contains(&tile) ||
+            self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]]) {
             safeties[0] = 1.0;
         } else {
 
         }
 
-        if discards[1].contains(&tile) || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]]) {
+        if discards[1].contains(&tile) ||
+            safe_tiles[1].contains(&tile) ||
+            self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]]) {
             safeties[1] = 1.0;
         } else {
 
         }
 
-        if discards[2].contains(&tile) || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]]) {
+        if discards[2].contains(&tile) ||
+            safe_tiles[2].contains(&tile) ||
+            self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]]) {
             safeties[2] = 1.0;
         } else {
 
         }
 
-        // TODO more stuff
+        // weigh safeties by tenpai probability
+        safeties[0] *= tenpai_probs[0];
+        safeties[1] *= tenpai_probs[1];
+        safeties[2] *= tenpai_probs[2];
 
         safeties.iter().sum::<f32>() / safeties.len() as f32
     }
@@ -524,5 +604,24 @@ mod tests {
         table.set_my_riichi(true);
 
         assert!(table.can_ankan() != None);
+    }
+
+    #[test]
+    fn safety_riichi() {
+        let mut table = Table::from_map(&Map::new()).unwrap();
+        table.set_my_hand(Hand::from_text("23666m234p456s44z6m", false).unwrap());
+
+        let tile = Tile::from_text("2m").unwrap();
+
+        table.set_p1_riichi(true);
+        table.set_p2_riichi(false);
+        table.set_p3_riichi(false);
+
+        table.add_tile_to_discards(1, tile);
+        table.add_tile_to_safe_tiles(1, tile);
+
+        let safety = table.tile_safety(&tile);
+
+        println!("{}", safety);
     }
 }
