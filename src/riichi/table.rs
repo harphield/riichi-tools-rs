@@ -49,7 +49,7 @@ pub struct Table {
     tsumibo: Option<u8>,
 
     dora_indicators: Vec<Tile>,
-    visible_tiles: Vec<Tile>,
+    visible_tiles: [u8; 34], // in array_34 format
 
     rules: Option<Rules>,
 }
@@ -89,7 +89,7 @@ impl Table {
             riichi_sticks_in_pot: None,
             tsumibo: None,
             dora_indicators: vec![],
-            visible_tiles: vec![],
+            visible_tiles: [0; 34],
             rules: None,
         };
 
@@ -269,6 +269,17 @@ impl Table {
         self.tiles_remaining
     }
 
+    pub fn decrement_tiles_remaining(&mut self) {
+        match self.tiles_remaining {
+            None => {
+                self.set_tiles_remaining(0);
+            },
+            Some(value) => {
+                self.set_tiles_remaining(value - 1);
+            },
+        }
+    }
+
     pub fn set_my_seat_wind(&mut self, value: u8) {
         self.my_seat_wind = Some(value);
     }
@@ -291,7 +302,7 @@ impl Table {
 
     pub fn add_dora_indicator(&mut self, indicator: Tile) {
         self.dora_indicators.push(indicator);
-        self.visible_tiles.push(indicator);
+        self.visible_tiles[(indicator.to_id() - 1) as usize] += 1;
     }
 
     pub fn get_dora_indicators(&self) -> &Vec<Tile> {
@@ -299,15 +310,11 @@ impl Table {
     }
 
     pub fn add_tile_to_visible_tiles(&mut self, tile: Tile) {
-        self.visible_tiles.push(tile);
-    }
-
-    pub fn add_vector_to_visible_tiles(&mut self, mut tiles: Vec<Tile>) {
-        self.visible_tiles.append(&mut tiles);
+        self.visible_tiles[(tile.to_id() - 1) as usize] += 1;
     }
 
     pub fn reset_tile_vectors(&mut self) {
-        self.visible_tiles = vec![];
+        self.visible_tiles = [0; 34];
         self.p1_discards = vec![];
         self.p2_discards = vec![];
         self.p3_discards = vec![];
@@ -316,22 +323,8 @@ impl Table {
         self.p3_safe_tiles = vec![];
     }
 
-    pub fn get_visible_tiles(&self) -> &Vec<Tile> {
+    pub fn get_visible_tiles(&self) -> &[u8; 34] {
         &self.visible_tiles
-    }
-
-    pub fn get_visible_tiles_as_array_34(&self) -> [u8; 34] {
-        let mut result = [0; 34];
-
-        for tile in &self.visible_tiles {
-            result[(tile.to_id() - 1) as usize] += 1;
-
-            if result[(tile.to_id() - 1) as usize] > 4 {
-                panic!("can not have more than 4 tiles!!!");
-            }
-        }
-
-        result
     }
 
     pub fn set_total_round(&mut self, value: u8) {

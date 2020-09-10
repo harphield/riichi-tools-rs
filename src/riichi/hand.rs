@@ -646,7 +646,7 @@ impl Hand {
     /// For 13 tile hands, there is only one option.
     /// For 14 tile hands, we list options for all discards that don't lower our shanten.
     /// You can set visible_tiles that you can see on the table and it will remove them from the final list / ukeire count
-    pub fn find_shanten_improving_tiles(&mut self, visible_tiles: Option<[u8; 34]>) -> Vec<(Option<Tile>, Vec<Tile>, u8)> {
+    pub fn find_shanten_improving_tiles(&mut self, visible_tiles: Option<&[u8; 34]>) -> Vec<(Option<Tile>, Vec<Tile>, u8)> {
         let mut imp_tiles = vec!();
 
         let current_shanten = self.shanten();
@@ -703,7 +703,7 @@ impl Hand {
         imp_tiles
     }
 
-    fn get_shanten_improving_tiles_13(&mut self, current_shanten: i8, visible_tiles: &Option<[u8; 34]>) -> (Vec<Tile>, u8) {
+    fn get_shanten_improving_tiles_13(&mut self, current_shanten: i8, visible_tiles: &Option<&[u8; 34]>) -> (Vec<Tile>, u8) {
         let mut try_tiles: Vec<u8> = vec!();
         let mut tiles: Vec<Tile> = vec!();
 
