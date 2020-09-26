@@ -564,6 +564,11 @@ impl Table {
             return 1.0;
         }
 
+        // 4 open shapes = tanki wait
+        if open_shapes.len() == 4 {
+            return 1.0;
+        }
+
         // TODO more stuff
 
         0.0
