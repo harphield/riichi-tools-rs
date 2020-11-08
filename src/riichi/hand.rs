@@ -1,13 +1,13 @@
 use std::fmt;
 
-use super::tile::Tile;
-use super::tile::TileType;
-use super::tile::TileColor;
 use super::shanten::ShantenFinder;
+use super::tile::Tile;
+use super::tile::TileColor;
+use super::tile::TileType;
 use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::shapes::{Shape, OpenShape};
-use rand::Rng;
+use crate::riichi::shapes::{OpenShape, Shape};
 use rand::seq::SliceRandom;
+use rand::Rng;
 
 #[derive(Clone)]
 pub struct Hand {
@@ -84,7 +84,10 @@ impl Hand {
         if count < 13 || count > 14 {
             panic!("Only 13 or 14 tile hands allowed");
         } else {
-            Hand::new(vec!(Option::Some(Tile::new(TileType::Number(1, TileColor::Manzu)))))
+            Hand::new(vec![Option::Some(Tile::new(TileType::Number(
+                1,
+                TileColor::Manzu,
+            )))])
         }
     }
 
@@ -118,17 +121,11 @@ impl Hand {
                 let open_shape_type = rng.gen_range(0, 3);
                 match open_shape_type {
                     // Chi
-                    0 => {
-
-                    },
+                    0 => {}
                     // Pon
-                    1 => {
-
-                    },
+                    1 => {}
                     // Kan
-                    2 => {
-
-                    }
+                    2 => {}
                     _ => {}
                 }
             } else {
@@ -164,7 +161,9 @@ impl Hand {
                             let tile = Tile::from_id((tile_id + 1) as u8).unwrap();
                             if tile.next(false).is_none() {
                                 // 9, we go backwards (789)
-                                if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id - 2) as usize] < 4 {
+                                if used_tiles[(tile_id - 1) as usize] < 4
+                                    && used_tiles[(tile_id - 2) as usize] < 4
+                                {
                                     // ok
                                     used_tiles[tile_id as usize] += 1;
                                     used_tiles[(tile_id - 1) as usize] += 1;
@@ -180,7 +179,9 @@ impl Hand {
                                 // 8, we do 678 or 789
                                 if rng.gen_bool(0.5) {
                                     // 678
-                                    if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id - 2) as usize] < 4 {
+                                    if used_tiles[(tile_id - 1) as usize] < 4
+                                        && used_tiles[(tile_id - 2) as usize] < 4
+                                    {
                                         // ok
                                         used_tiles[tile_id as usize] += 1;
                                         used_tiles[(tile_id - 1) as usize] += 1;
@@ -194,7 +195,9 @@ impl Hand {
                                     }
                                 } else {
                                     // 789
-                                    if used_tiles[(tile_id - 1) as usize] < 4 && used_tiles[(tile_id + 1) as usize] < 4 {
+                                    if used_tiles[(tile_id - 1) as usize] < 4
+                                        && used_tiles[(tile_id + 1) as usize] < 4
+                                    {
                                         // ok
                                         used_tiles[tile_id as usize] += 1;
                                         used_tiles[(tile_id - 1) as usize] += 1;
@@ -209,7 +212,9 @@ impl Hand {
                                 }
                             } else {
                                 // others do next next
-                                if used_tiles[(tile_id + 1) as usize] < 4 && used_tiles[(tile_id + 2) as usize] < 4 {
+                                if used_tiles[(tile_id + 1) as usize] < 4
+                                    && used_tiles[(tile_id + 2) as usize] < 4
+                                {
                                     // ok
                                     used_tiles[tile_id as usize] += 1;
                                     used_tiles[(tile_id + 1) as usize] += 1;
@@ -223,7 +228,7 @@ impl Hand {
                                 }
                             }
                         }
-                    },
+                    }
                     // Koutsu
                     1 => {
                         let mut tile_id: u8;
@@ -241,7 +246,7 @@ impl Hand {
                             tiles.push(Tile::from_id(tile_id + 1).unwrap());
                             break;
                         }
-                    },
+                    }
                     // Kantsu
                     2 => {
                         let mut tile_id: u8;
@@ -264,7 +269,7 @@ impl Hand {
                             tiles.push(tile);
                             break;
                         }
-                    },
+                    }
                     // Toitsu
                     3 => {
                         Hand::generate_toitsu(&mut used_tiles, &mut tiles);
@@ -336,7 +341,7 @@ impl Hand {
                             found_draw = true;
                         }
                         tiles.push(Option::Some(tile));
-                    },
+                    }
                     Err(error) => {
                         return Err(error);
                     }
@@ -371,8 +376,8 @@ impl Hand {
                         found = i;
                         break;
                     }
-                },
-                None => ()
+                }
+                None => (),
             }
         }
 
@@ -396,16 +401,14 @@ impl Hand {
         }
 
         // remove the kanned tiles
-        self.tiles.retain(|x| {
-            match x {
-                None => true,
-                Some(t) => {
-                    if t.to_id() == tile.to_id() {
-                       return false;
-                    }
+        self.tiles.retain(|x| match x {
+            None => true,
+            Some(t) => {
+                if t.to_id() == tile.to_id() {
+                    return false;
+                }
 
-                    true
-                },
+                true
             }
         });
 
@@ -426,7 +429,7 @@ impl Hand {
                     let mut found = false;
                     for (i, t) in self.tiles.iter().enumerate() {
                         match t {
-                            None => {},
+                            None => {}
                             Some(mut hand_tile) => {
                                 if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
                                     hand_tile.is_open = true;
@@ -435,7 +438,7 @@ impl Hand {
                                     found = true;
                                     break;
                                 }
-                            },
+                            }
                         }
                     }
 
@@ -443,13 +446,13 @@ impl Hand {
                         panic!("Invalid tiles in open shape");
                     }
                 }
-            },
+            }
             OpenShape::Pon(tiles) => {
                 for tile in tiles.iter() {
                     let mut found = false;
                     for (i, t) in self.tiles.iter().enumerate() {
                         match t {
-                            None => {},
+                            None => {}
                             Some(mut hand_tile) => {
                                 if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
                                     hand_tile.is_open = true;
@@ -458,7 +461,7 @@ impl Hand {
                                     found = true;
                                     break;
                                 }
-                            },
+                            }
                         }
                     }
 
@@ -466,13 +469,13 @@ impl Hand {
                         panic!("Invalid tiles in open shape");
                     }
                 }
-            },
+            }
             OpenShape::Kan(tiles) => {
                 for tile in tiles.iter() {
                     let mut found = false;
                     for (i, t) in self.tiles.iter().enumerate() {
                         match t {
-                            None => {},
+                            None => {}
                             Some(mut hand_tile) => {
                                 if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
                                     hand_tile.is_open = true;
@@ -481,7 +484,7 @@ impl Hand {
                                     found = true;
                                     break;
                                 }
-                            },
+                            }
                         }
                     }
 
@@ -489,7 +492,7 @@ impl Hand {
                         panic!("Invalid tiles in open shape");
                     }
                 }
-            },
+            }
         }
 
         self.open_shapes.push(shape);
@@ -507,8 +510,8 @@ impl Hand {
                     if t.is_kan {
                         kan_tiles += 1;
                     }
-                },
-                None => ()
+                }
+                None => (),
             }
         }
 
@@ -527,7 +530,7 @@ impl Hand {
         let mut cnt = 0;
         for t_o in self.tiles.iter() {
             match t_o {
-                None => {},
+                None => {}
                 Some(tile) => {
                     if tile.is_kan {
                         array_34[(tile.to_id() - 1) as usize] += 1;
@@ -535,7 +538,7 @@ impl Hand {
                             cnt += 1;
                         }
                     }
-                },
+                }
             }
         }
 
@@ -567,24 +570,22 @@ impl Hand {
                         out.push_str(&some_tile.get_value().to_string()[..]);
                     }
                 }
-                Option::None => ()
+                Option::None => (),
             }
         }
 
         out.push_str(&color.to_string()[..]);
 
         match last_tile {
-            Option::Some(tile_repr) => {
-                out.push_str(&tile_repr[..])
-            },
-            Option::None => ()
+            Option::Some(tile_repr) => out.push_str(&tile_repr[..]),
+            Option::None => (),
         }
 
         out
     }
 
     pub fn to_vec_of_strings(&self) -> Vec<String> {
-        let mut tile_vec = vec!();
+        let mut tile_vec = vec![];
         let mut color = 'x';
         let mut last_tile: Option<String> = Option::None;
 
@@ -606,17 +607,15 @@ impl Hand {
                     } else {
                         tile_vec.push(tile_string);
                     }
-                },
-                Option::None => ()
+                }
+                Option::None => (),
             }
         }
 
         // tsumo tile will always be the last in the array
         match last_tile {
-            Option::Some(tile_repr) => {
-                tile_vec.push(tile_repr)
-            },
-            Option::None => ()
+            Option::Some(tile_repr) => tile_vec.push(tile_repr),
+            Option::None => (),
         }
 
         tile_vec
@@ -628,8 +627,8 @@ impl Hand {
             match ShantenFinder::new().shanten(self) {
                 Ok(shanten) => {
                     self.shanten = shanten;
-                },
-                Err(_error) => ()
+                }
+                Err(_error) => (),
             }
         }
 
@@ -646,8 +645,11 @@ impl Hand {
     /// For 13 tile hands, there is only one option.
     /// For 14 tile hands, we list options for all discards that don't lower our shanten.
     /// You can set visible_tiles that you can see on the table and it will remove them from the final list / ukeire count
-    pub fn find_shanten_improving_tiles(&mut self, visible_tiles: Option<&[u8; 34]>) -> Vec<(Option<Tile>, Vec<Tile>, u8)> {
-        let mut imp_tiles = vec!();
+    pub fn find_shanten_improving_tiles(
+        &mut self,
+        visible_tiles: Option<&[u8; 34]>,
+    ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>)> {
+        let mut imp_tiles = vec![];
 
         let current_shanten = self.shanten();
 
@@ -657,8 +659,8 @@ impl Hand {
         if hand_count == 13 {
             let mut result = self.get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
 
-            result.0.sort();
-            imp_tiles.push((None, result.0, result.1));
+            result.sort();
+            imp_tiles.push((None, result));
         } else if hand_count == 14 {
             // finished hand has no improving tiles
             if current_shanten < 0 {
@@ -684,28 +686,33 @@ impl Hand {
 
                         if new_shanten <= original_shanten {
                             // only cares about tiles that don't raise our shanten
-                            let mut result = self.get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
-                            result.0.sort();
-                            imp_tiles.push((Some(t.clone()), result.0, result.1));
+                            let mut result = self
+                                .get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
+                            result.sort();
+                            imp_tiles.push((Some(t.clone()), result));
                         }
 
                         self.add_tile(*t);
-                    },
-                    None => ()
+                    }
+                    None => (),
                 }
             }
         }
 
         self.reset_shanten();
 
-        imp_tiles.sort_by(|a, b| b.2.cmp(&a.2));
-
+        let count_total_ukeire = |ukeires: &Vec<(Tile, u8)>| ukeires.iter().map(|u| u.1).sum::<u8>();
+        imp_tiles.sort_by(|a, b| count_total_ukeire(&(b.1)).cmp(&count_total_ukeire(&(a.1))));
         imp_tiles
     }
 
-    fn get_shanten_improving_tiles_13(&mut self, current_shanten: i8, visible_tiles: &Option<&[u8; 34]>) -> (Vec<Tile>, u8) {
-        let mut try_tiles: Vec<u8> = vec!();
-        let mut tiles: Vec<Tile> = vec!();
+    fn get_shanten_improving_tiles_13(
+        &mut self,
+        current_shanten: i8,
+        visible_tiles: &Option<&[u8; 34]>,
+    ) -> Vec<(Tile, u8)> {
+        let mut try_tiles: Vec<u8> = vec![];
+        let mut tiles_and_counts = vec![];
 
         // we don't need to try all tiles:
         // - the same tile
@@ -714,6 +721,7 @@ impl Hand {
         // - previous tile
         // - previous - 1
         // - all terminals and honors because kokushi
+
         for o_tile in self.tiles.iter() {
             match o_tile {
                 Some(t) => {
@@ -742,8 +750,8 @@ impl Hand {
                     if t_next_2 > 0 && !try_tiles.contains(&t_next_2) {
                         try_tiles.push(t_next_2);
                     }
-                },
-                None => ()
+                }
+                None => (),
             }
         }
 
@@ -754,7 +762,6 @@ impl Hand {
             }
         }
 
-        let mut accept_count: u8 = 0;
         let array_34 = self.get_34_array(true);
 
         // we draw a tile and count shanten - if it improves, we add it to the tiles
@@ -771,18 +778,20 @@ impl Hand {
             // println!("new shanten with {} = {}", drawn_tile.to_string(), new_shanten);
 
             if new_shanten < current_shanten {
-                tiles.push(Tile::from_id(*i).unwrap());
+                tiles_and_counts.push((
+                    Tile::from_id(*i).unwrap(),
+                    match visible_tiles {
+                        None => 4 - array_34[*i as usize - 1],
+                        Some(v_t) => 4 - v_t[*i as usize - 1],
+                    },
+                ));
                 // we remove tiles that are visible in the hand from ukeire
-                match visible_tiles {
-                    None => accept_count += 4 - array_34[*i as usize - 1],
-                    Some(v_t) => accept_count += 4 - v_t[*i as usize - 1],
-                }
             }
 
             self.remove_tile(&Tile::from_id(*i).unwrap());
         }
 
-        (tiles, accept_count)
+        tiles_and_counts
     }
 
     pub fn reset_drawn_tiles(&mut self) {
@@ -792,8 +801,8 @@ impl Hand {
                 Some(mut tile) => {
                     tile.is_draw = false;
                     new_tiles.push(Some(tile));
-                },
-                None => ()
+                }
+                None => (),
             }
         }
 
@@ -808,8 +817,8 @@ impl Hand {
                     if tile.is_draw {
                         return Some(tile);
                     }
-                },
-                None => ()
+                }
+                None => (),
             }
         }
 
@@ -853,17 +862,21 @@ mod tests {
         let rep = "123m123p12345s2z2z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
-        hand.add_open_shape(OpenShape::Chi([Tile::from_text("1m").unwrap(), Tile::from_text("2m").unwrap(), Tile::from_text("3m").unwrap()]));
+        hand.add_open_shape(OpenShape::Chi([
+            Tile::from_text("1m").unwrap(),
+            Tile::from_text("2m").unwrap(),
+            Tile::from_text("3m").unwrap(),
+        ]));
 
         let mut open_tiles_count = 0u8;
         for rt in hand.get_tiles().iter() {
             match rt {
-                None => {},
+                None => {}
                 Some(tile) => {
                     if tile.is_open {
                         open_tiles_count += 1;
                     }
-                },
+                }
             }
         }
 
@@ -880,17 +893,21 @@ mod tests {
         let rep = "444m123p12345s2z2z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
-        hand.add_open_shape(OpenShape::Pon([Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap(), Tile::from_text("4m").unwrap()]));
+        hand.add_open_shape(OpenShape::Pon([
+            Tile::from_text("4m").unwrap(),
+            Tile::from_text("4m").unwrap(),
+            Tile::from_text("4m").unwrap(),
+        ]));
 
         let mut open_tiles_count = 0u8;
         for rt in hand.get_tiles().iter() {
             match rt {
-                None => {},
+                None => {}
                 Some(tile) => {
                     if tile.is_open {
                         open_tiles_count += 1;
                     }
-                },
+                }
             }
         }
 
@@ -957,27 +974,27 @@ mod tests {
             match row.0 {
                 Some(tile) => {
                     if tile.to_string() == "7m" {
-                        println!("tajl: {} count: {}", tile.to_string(), row.2);
-//                        println!("{:#?}", row.1);
+                        println!("tajl: {} count: {}", tile.to_string(), row.1.iter().map(|u| u.1).sum::<u8>());
+                        //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "1s" {
-                        println!("tajl: {} count: {}", tile.to_string(), row.2);
-//                        println!("{:#?}", row.1);
+                        println!("tajl: {} count: {}", tile.to_string(), row.1.iter().map(|u| u.1).sum::<u8>());
+                        //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "1z" {
-                        println!("tajl: {} count: {}", tile.to_string(), row.2);
-//                        println!("{:#?}", row.1);
+                        println!("tajl: {} count: {}", tile.to_string(), row.1.iter().map(|u| u.1).sum::<u8>());
+                        //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "4s" {
-                        println!("tajl: {} count: {}", tile.to_string(), row.2);
-//                        println!("{:#?}", row.1);
+                        println!("tajl: {} count: {}", tile.to_string(), row.1.iter().map(|u| u.1).sum::<u8>());
+                        //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 5);
-                        assert_eq!(row.2, 20);
+                        assert_eq!(row.1.iter().map(|u| u.1).sum::<u8>(), 20);
                     } else {
                         panic!("Test failed: wrong tiles found");
                     }
-                },
-                None => ()
+                }
+                None => (),
             }
         }
     }
@@ -1083,10 +1100,10 @@ mod tests {
 
         let dt = hand.get_drawn_tile();
         match dt {
-            None => {},
+            None => {}
             Some(_) => {
                 panic!("I should not have found a drawn tile here!");
-            },
+            }
         }
     }
 
@@ -1108,7 +1125,7 @@ mod tests {
     #[test]
     fn tile_counting_with_kan_method() {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
-        let mut tile = Tile::from_id(1).unwrap();
+        let tile = Tile::from_id(1).unwrap();
 
         hand.ankan_tiles(tile);
 
@@ -1118,7 +1135,7 @@ mod tests {
     #[test]
     fn shanten_with_kan_method() {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
-        let mut tile = Tile::from_id(1).unwrap();
+        let tile = Tile::from_id(1).unwrap();
 
         hand.ankan_tiles(tile);
 
