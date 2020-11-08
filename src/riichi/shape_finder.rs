@@ -1,12 +1,12 @@
 use crate::riichi::hand::Hand;
-use crate::riichi::shapes::{Shape, ClosedShape};
-use crate::riichi::shapes::ShapeType;
 use crate::riichi::shapes::CompleteShape;
+use crate::riichi::shapes::ShapeType;
+use crate::riichi::shapes::{ClosedShape, Shape};
 use crate::riichi::tile::Tile;
 
 pub struct ShapeFinder {
     variants: Vec<Vec<Shape>>,
-    current_variant: Vec<Shape>
+    current_variant: Vec<Shape>,
 }
 
 impl ShapeFinder {
@@ -102,12 +102,12 @@ impl ShapeFinder {
                                     }
                                     self.remove_shape(vec![current_tile, t, t2], array_34);
                                 }
-                            },
-                            None => ()
+                            }
+                            None => (),
                         }
                     }
-                },
-                None => ()
+                }
+                None => (),
             }
         } else {
             self.search(array_34, depth + 1);
@@ -115,14 +115,15 @@ impl ShapeFinder {
     }
 
     fn add_shape(&mut self, tiles: Vec<Tile>, array_34: &mut [u8; 34]) {
-        self.current_variant.push(Shape::from_tiles(&tiles,false,true).unwrap());
+        self.current_variant
+            .push(Shape::from_tiles(&tiles, false, true).unwrap());
         for t in tiles.iter() {
             array_34[(t.to_id() - 1) as usize] -= 1;
         }
     }
 
     fn remove_shape(&mut self, tiles: Vec<Tile>, array_34: &mut [u8; 34]) {
-        let shape = Shape::from_tiles(&tiles,false,true).unwrap();
+        let shape = Shape::from_tiles(&tiles, false, true).unwrap();
         let hash = shape.to_string();
 
         for (i, s) in self.current_variant.iter().enumerate() {
@@ -163,15 +164,16 @@ impl ShapeFinder {
                                     }
 
                                     has_single = true;
-                                },
+                                }
                                 ClosedShape::Toitsu(_tiles) => {
                                     // we can have more than 1 pair only in chiitoitsu, so no melds and singles there
-                                    if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single) {
+                                    if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single)
+                                    {
                                         return false;
                                     }
 
                                     toitsu_count += 1;
-                                },
+                                }
                                 ClosedShape::Koutsu(_tiles) => {
                                     // we can't have singles or more than 1 pair with melds
                                     if toitsu_count > 1 || has_single {
@@ -179,7 +181,7 @@ impl ShapeFinder {
                                     }
 
                                     has_koutsu = true;
-                                },
+                                }
                                 ClosedShape::Kantsu(_tiles) => {
                                     // we can't have singles or more than 1 pair with melds
                                     if toitsu_count > 1 || has_single {
@@ -188,7 +190,7 @@ impl ShapeFinder {
 
                                     // kan = koutsu anyway
                                     has_koutsu = true;
-                                },
+                                }
                                 ClosedShape::Shuntsu(_tiles) => {
                                     // we can't have singles or more than 1 pair with melds
                                     if toitsu_count > 1 || has_single {
@@ -198,10 +200,10 @@ impl ShapeFinder {
                                     has_shuntsu = true;
                                 }
                             }
-                        },
+                        }
                         _ => (),
                     }
-                },
+                }
                 ShapeType::Incomplete(..) => {
                     return false;
                 }
@@ -222,7 +224,7 @@ impl ShapeFinder {
         }
 
         let mut current_repr = String::from("");
-        let mut current_strings = vec!();
+        let mut current_strings = vec![];
         for s in self.current_variant.iter() {
             current_strings.push(s.to_string());
         }
@@ -236,7 +238,7 @@ impl ShapeFinder {
 
         for v in &self.variants {
             let mut v_repr = String::from("");
-            let mut v_strings = vec!();
+            let mut v_strings = vec![];
             for s in v.iter() {
                 v_strings.push(s.to_string());
             }
@@ -258,8 +260,8 @@ impl ShapeFinder {
 impl Default for ShapeFinder {
     fn default() -> ShapeFinder {
         ShapeFinder {
-            variants: vec!(),
-            current_variant: vec!(),
+            variants: vec![],
+            current_variant: vec![],
         }
     }
 }
@@ -329,9 +331,8 @@ mod tests {
         let mut sf = ShapeFinder::new();
         sf.find(&mut hand);
 
-//        println!("{:#?}", sf.variants);
+        //        println!("{:#?}", sf.variants);
 
         assert_eq!(sf.variants.len(), 2);
     }
-
 }

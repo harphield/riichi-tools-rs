@@ -318,7 +318,8 @@ impl Table {
         all_scores
             .iter()
             .position(|score| *score.1 == self.my_initial_seat_wind.unwrap_or(4))
-            .unwrap_or(4) as u8 + 1
+            .unwrap_or(4) as u8
+            + 1
     }
 
     pub fn set_dora_indicators(&mut self, indicators: Vec<Tile>) {

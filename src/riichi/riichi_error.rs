@@ -1,7 +1,7 @@
 use std::error::Error;
-use wasm_bindgen::__rt::core::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result;
+use wasm_bindgen::__rt::core::fmt::Display;
 
 #[derive(Debug)]
 pub struct RiichiError {
@@ -13,7 +13,7 @@ impl RiichiError {
     pub fn new(code: u16, message: &str) -> RiichiError {
         RiichiError {
             code,
-            message: message.to_string()
+            message: message.to_string(),
         }
     }
 }

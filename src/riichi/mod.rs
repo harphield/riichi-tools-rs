@@ -1,10 +1,10 @@
-pub mod table;
 pub mod hand;
-pub mod tile;
-pub mod shapes;
-mod shape_finder;
-mod shanten;
 pub mod riichi_error;
-pub mod scores;
-pub mod yaku;
 pub mod rules;
+pub mod scores;
+mod shanten;
+mod shape_finder;
+pub mod shapes;
+pub mod table;
+pub mod tile;
+pub mod yaku;
