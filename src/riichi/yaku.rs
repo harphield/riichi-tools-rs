@@ -1,4 +1,3 @@
-use crate::riichi::hand::Hand;
 use crate::riichi::shape_finder::ShapeFinder;
 use crate::riichi::shapes::{Shape, ShapeType, CompleteShape, ClosedShape, OpenShape};
 use enum_iterator::IntoEnumIterator;
@@ -968,7 +967,6 @@ impl Yaku {
                 let mut ankou: u8 = 0;
                 let mut has_tanki_wait = false;
                 let mut has_shuntsu_wait = false;
-                let mut has_shanpon_wait = false;
 
                 for shape in variant.iter() {
                     match shape.get_shape_type() {
@@ -981,11 +979,8 @@ impl Yaku {
                                                 has_shuntsu_wait = true;
                                             }
                                         },
-                                        ClosedShape::Koutsu(tiles) => {
+                                        ClosedShape::Koutsu(_) => {
                                             ankou += 1;
-                                            if tiles[0].eq(&winning_tile) {
-                                                has_shanpon_wait = true;
-                                            }
                                         },
                                         ClosedShape::Kantsu(_) => {
                                             ankou += 1;
@@ -1925,7 +1920,7 @@ mod tests {
         map.insert("prevalent_wind".to_string(), Value::from(1)); // east as prevalent wind = +2 fu
 
         let mut table = Table::from_map(&map).unwrap();
-        let (yakus, score) = table.yaku().unwrap();
+        let (_yakus, score) = table.yaku().unwrap();
 
         assert_eq!(score.han, 1);
         assert_eq!(score.fu, 30);
@@ -1939,7 +1934,7 @@ mod tests {
         map.insert("prevalent_wind".to_string(), Value::from(1));
 
         let mut table = Table::from_map(&map).unwrap();
-        let (yakus, score) = table.yaku().unwrap();
+        let (_yakus, score) = table.yaku().unwrap();
 
         assert_eq!(score.han, 1);
         assert_eq!(score.fu, 30);

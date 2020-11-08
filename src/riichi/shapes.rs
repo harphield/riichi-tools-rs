@@ -133,7 +133,7 @@ impl Shape {
             let tile_3 = tiles.get(2).unwrap();
 
             return match tile_1.tile_type {
-                Number(_value, color) => {
+                Number(_value, _) => {
                     match tile_1.next(false) {
                         None => {
                             Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)

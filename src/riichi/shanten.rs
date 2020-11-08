@@ -24,7 +24,6 @@ impl ShantenFinder {
         }
         self.hand_count = hand.count_tiles();
 
-        let mut shanten: i8 = 8; // max shanten ever ???
         let mut array_34 = hand.get_34_array(true);
 
         let mut kokushi_shanten = 99;
@@ -40,7 +39,7 @@ impl ShantenFinder {
             chiitoi_shanten = self.chiitoitsu_shanten(&array_34);
         }
 
-        shanten = self.analyze(&mut array_34, 0);
+        let shanten = self.analyze(&mut array_34, 0);
 
         let shantens = [kokushi_shanten, chiitoi_shanten, shanten];
 
@@ -225,7 +224,7 @@ impl ShantenFinder {
             Ok(t) => {
                 tile = t;
             },
-            Err(error) => {
+            Err(_) => {
                 return false;
             }
         };
@@ -270,7 +269,7 @@ impl ShantenFinder {
 
         match Tile::from_id((depth + 1) as u8) {
             Ok(t) => tile = t,
-            Err(error) => return false
+            Err(_) => return false
         }
 
         let second = tile.next(false);
@@ -303,7 +302,7 @@ impl ShantenFinder {
         let tile;
         match Tile::from_id((depth + 1) as u8) {
             Ok(t) => tile = t,
-            Err(error) => return false
+            Err(_) => return false
         }
         let second = tile.next(false);
 
@@ -356,7 +355,7 @@ mod tests {
 
     #[test]
     fn kokushi_tenpai_13_waits() {
-        let mut hand = Hand::from_text("19m19s19p1234567z", false).unwrap();
+        let hand = Hand::from_text("19m19s19p1234567z", false).unwrap();
         let array34 = hand.get_34_array(true);
 
         let mut shanten_finder = ShantenFinder::new();
@@ -368,7 +367,7 @@ mod tests {
 
     #[test]
     fn kokushi_complete() {
-        let mut hand = Hand::from_text("19m19s19p11234567z", false).unwrap();
+        let hand = Hand::from_text("19m19s19p11234567z", false).unwrap();
         let array34 = hand.get_34_array(true);
 
         let mut shanten_finder = ShantenFinder::new();
@@ -380,7 +379,7 @@ mod tests {
 
     #[test]
     fn kokushi_tenpai_1_wait() {
-        let mut hand = Hand::from_text("19m19s19p1234566z", false).unwrap();
+        let hand = Hand::from_text("19m19s19p1234566z", false).unwrap();
         let array34 = hand.get_34_array(true);
 
         let mut shanten_finder = ShantenFinder::new();
@@ -392,7 +391,7 @@ mod tests {
 
     #[test]
     fn kokushi_iishanten() {
-        let mut hand = Hand::from_text("129m19s19p123456z", false).unwrap();
+        let hand = Hand::from_text("129m19s19p123456z", false).unwrap();
         let array34 = hand.get_34_array(true);
 
         let mut shanten_finder = ShantenFinder::new();
@@ -404,7 +403,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_tenpai() {
-        let mut hand = Hand::from_text("1133557799p22s3z", false).unwrap();
+        let hand = Hand::from_text("1133557799p22s3z", false).unwrap();
         let array34 = hand.get_34_array(true);
 
         let shanten_finder = ShantenFinder::new();
@@ -415,7 +414,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_iishanten() {
-        let mut hand = Hand::from_text("113355779p22s34z", false).unwrap();
+        let hand = Hand::from_text("113355779p22s34z", false).unwrap();
         let array34 = hand.get_34_array(true);
 
         let shanten_finder = ShantenFinder::new();
@@ -434,7 +433,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_6shanten() {
-        let mut hand = Hand::from_text("123456789m123p1s", false).unwrap();
+        let hand = Hand::from_text("123456789m123p1s", false).unwrap();
         let array34 = hand.get_34_array(true);
 
         let shanten_finder = ShantenFinder::new();
