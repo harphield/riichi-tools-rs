@@ -41,7 +41,7 @@ pub struct Table {
     // 1 = east, 2 = south, 3 = west, 4 = north
     prevalent_wind: Option<u8>,
     my_seat_wind: Option<u8>,
-    wind_round: Option<u8>,
+    my_initial_seat_wind: Option<u8>,
     total_round: Option<u8>,
     tiles_remaining: Option<u8>,
 
@@ -83,7 +83,7 @@ impl Table {
             riichi_declaring_player: None,
             prevalent_wind: None,
             my_seat_wind: None,
-            wind_round: None,
+            my_initial_seat_wind: None,
             total_round: None,
             tiles_remaining: None,
             riichi_sticks_in_pot: None,
@@ -281,12 +281,44 @@ impl Table {
         self.my_seat_wind
     }
 
+    pub fn set_my_initial_seat_wind(&mut self, value: u8) {
+        self.my_initial_seat_wind = Some(value);
+    }
+
+    pub fn get_my_initial_seat_wind(&self) -> Option<u8> {
+        self.my_initial_seat_wind
+    }
+
     pub fn set_prevalent_wind(&mut self, value: u8) {
         self.prevalent_wind = Some(value);
     }
 
     pub fn get_prevalent_wind(&self) -> Option<u8> {
         self.prevalent_wind
+    }
+
+    pub fn get_placing(&self) -> u8 {
+        // TODO: account for different tie-breaking rules
+        let initial_seat_winds = match self.my_initial_seat_wind {
+            Some(1) => vec![1, 2, 3, 4],
+            Some(2) => vec![2, 3, 4, 1],
+            Some(3) => vec![3, 4, 1, 2],
+            _ => vec![4, 1, 2, 3],
+        };
+        let points = vec![
+            self.my_points.unwrap_or(25000),
+            self.p1_points.unwrap_or(25000),
+            self.p2_points.unwrap_or(25000),
+            self.p3_points.unwrap_or(25000),
+        ];
+        let mut all_scores: Vec<_> = (points.iter()).zip(initial_seat_winds.iter()).collect();
+        // sort from lowest to hightest
+        all_scores.sort_by(|a, b| b.0.cmp(a.0).then(a.1.cmp(b.1)));
+
+        all_scores
+            .iter()
+            .position(|score| *score.1 == self.my_initial_seat_wind.unwrap_or(4))
+            .unwrap_or(4) as u8 + 1
     }
 
     pub fn set_dora_indicators(&mut self, indicators: Vec<Tile>) {
@@ -573,6 +605,18 @@ impl Table {
 }
 
 mod tests {
+
+    #[test]
+    fn placing_test() {
+        use super::*;
+        let mut table = Table::from_map(&Map::new()).unwrap();
+        // table.set_my_hand(Hand::from_text("11123m234p456s44z1m", false).unwrap());
+
+        table.my_initial_seat_wind = Some(3);
+        assert!(table.get_placing() == 3);
+        table.my_points = Some(20000);
+        assert!(table.get_placing() == 4);
+    }
 
     #[test]
     fn ankan_test() {

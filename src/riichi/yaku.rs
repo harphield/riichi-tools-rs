@@ -271,7 +271,7 @@ impl YakuFinder {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => {},
+                        ShapeType::Incomplete(..) => {},
                     }
                 }
 
@@ -534,7 +534,7 @@ impl Yaku {
                                 CompleteShape::Open(_) => return false,
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -746,7 +746,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => {
+                        ShapeType::Incomplete(..) => {
                             return false;
                         },
                     }
@@ -832,7 +832,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
             },
@@ -924,7 +924,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -956,7 +956,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -996,7 +996,7 @@ impl Yaku {
                                 CompleteShape::Open(_) => {}
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1056,7 +1056,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
             },
@@ -1075,7 +1075,7 @@ impl Yaku {
                                 CompleteShape::Open(_) => return false,
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1126,7 +1126,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1181,7 +1181,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1264,7 +1264,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => {
+                        ShapeType::Incomplete(..) => {
                             return false;
                         },
                     }
@@ -1363,7 +1363,7 @@ impl Yaku {
                                 CompleteShape::Open(_) => return false,
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1429,7 +1429,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1510,7 +1510,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1581,7 +1581,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1629,7 +1629,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1677,7 +1677,7 @@ impl Yaku {
                                 }
                             }
                         },
-                        ShapeType::Incomplete(_) => return false,
+                        ShapeType::Incomplete(..) => return false,
                     }
                 }
 
@@ -1799,7 +1799,7 @@ impl Yaku {
                         }
                     }
                 },
-                ShapeType::Incomplete(_) => (),
+                ShapeType::Incomplete(..) => (),
             }
         }
 
@@ -1837,7 +1837,7 @@ impl Yaku {
                         CompleteShape::Open(_) => {}
                     }
                 },
-                ShapeType::Incomplete(_) => return 0,
+                ShapeType::Incomplete(..) => return 0,
             }
         }
 

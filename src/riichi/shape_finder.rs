@@ -202,7 +202,7 @@ impl ShapeFinder {
                         _ => (),
                     }
                 },
-                ShapeType::Incomplete(_) => {
+                ShapeType::Incomplete(..) => {
                     return false;
                 }
             }

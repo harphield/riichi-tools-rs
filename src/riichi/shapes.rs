@@ -1,6 +1,6 @@
 use super::tile::Tile;
 use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::tile::TileType::{Number, Wind, Dragon};
+use crate::riichi::tile::TileType::{Dragon, Number, Wind};
 
 /// A hand consists of shapes.
 /// A tenpai hand has (usually) only 1 incomplete shape.
@@ -17,7 +17,7 @@ pub struct Shape {
 #[derive(Debug, Clone, Copy)]
 pub enum ShapeType {
     Complete(CompleteShape),
-    Incomplete(IncompleteShape)
+    Incomplete(ClosedShape, Tile),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -46,14 +46,6 @@ pub enum OpenShape {
     Kan([Tile; 4]),
 }
 
-// TODO rethink these
-#[derive(Debug, Clone, Copy)]
-pub enum IncompleteShape {
-    TwoDifferent([Tile; 2]),
-    Shanpon([Tile; 2]),
-    Tanki(Tile)
-}
-
 impl Shape {
     pub fn new(shape_type: ShapeType, tile_count: u8, is_open: bool) -> Shape {
         Shape {
@@ -72,53 +64,81 @@ impl Shape {
     }
 
     pub fn to_string(&self) -> String {
-        return match &self.shape_type {
-            ShapeType::Complete(cs) => {
-                match cs {
-                    CompleteShape::Closed(closed) => {
-                        match closed {
-                            ClosedShape::Shuntsu(tiles) | ClosedShape::Koutsu(tiles)
-                                => String::from(format!("{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string())),
-                            ClosedShape::Kantsu(tiles) => String::from(format!("{}{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string(), tiles[3].to_string())),
-                            ClosedShape::Toitsu(tiles) => String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string())),
-                            ClosedShape::Single(tile) => tile.to_string(),
-                        }
-                    },
-                    CompleteShape::Open(open) => {
-                        match open {
-                            OpenShape::Chi(tiles) | OpenShape::Pon(tiles)
-                                => String::from(format!("{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string())),
-                            OpenShape::Kan(tiles)
-                                => String::from(format!("{}{}{}{}", tiles[0].to_string(), tiles[1].to_string(), tiles[2].to_string(), tiles[3].to_string())),
-                        }
-                    }
-                }
-            },
-            ShapeType::Incomplete(is) => {
-                match is {
-                    IncompleteShape::TwoDifferent(tiles) | IncompleteShape::Shanpon(tiles)
-                        => String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string())),
-                    IncompleteShape::Tanki(tile) => tile.to_string()
-                }
+        let closed_to_string = |closed| match closed {
+            ClosedShape::Shuntsu(tiles) | ClosedShape::Koutsu(tiles) => String::from(format!(
+                "{}{}{}",
+                tiles[0].to_string(),
+                tiles[1].to_string(),
+                tiles[2].to_string()
+            )),
+            ClosedShape::Kantsu(tiles) => String::from(format!(
+                "{}{}{}{}",
+                tiles[0].to_string(),
+                tiles[1].to_string(),
+                tiles[2].to_string(),
+                tiles[3].to_string()
+            )),
+            ClosedShape::Toitsu(tiles) => {
+                String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string()))
             }
-        }
+            ClosedShape::Single(tile) => tile.to_string(),
+        };
+        return match &self.shape_type {
+            ShapeType::Complete(cs) => match cs {
+                CompleteShape::Closed(closed) => closed_to_string(*closed),
+                CompleteShape::Open(open) => match open {
+                    OpenShape::Chi(tiles) | OpenShape::Pon(tiles) => String::from(format!(
+                        "{}{}{}",
+                        tiles[0].to_string(),
+                        tiles[1].to_string(),
+                        tiles[2].to_string()
+                    )),
+                    OpenShape::Kan(tiles) => String::from(format!(
+                        "{}{}{}{}",
+                        tiles[0].to_string(),
+                        tiles[1].to_string(),
+                        tiles[2].to_string(),
+                        tiles[3].to_string()
+                    )),
+                },
+            },
+            ShapeType::Incomplete(closed, missing) => String::from(format!(
+                "{}{}",
+                closed_to_string(*closed),
+                missing.to_string()
+            )),
+        };
     }
 
     /// Creates a shape from the given tiles.
     /// TODO incomplete shapes
-    pub fn from_tiles(tiles: &Vec<Tile>, is_open: bool, only_complete: bool) -> Result<Shape, RiichiError> {
+    pub fn from_tiles(
+        tiles: &Vec<Tile>,
+        is_open: bool,
+        only_complete: bool,
+    ) -> Result<Shape, RiichiError> {
         let shape_type: ShapeType;
         let tile_count: u8 = tiles.iter().count() as u8;
 
-        if tile_count < 1 || tile_count > 4 { // 4 = kan?
-            return Err(RiichiError::new(120, "Not a valid shape - wrong tile count"));
+        if tile_count < 1 || tile_count > 4 {
+            // 4 = kan?
+            return Err(RiichiError::new(
+                120,
+                "Not a valid shape - wrong tile count",
+            ));
         }
 
         // is this a valid shape?
         for i in 0..tile_count as usize {
             if i < tile_count as usize - 1 {
-                if !Shape::are_in_shape(tiles.get(i).unwrap().to_id(), tiles.get(i + 1).unwrap().to_id()) {
-                    return Err(RiichiError::new(121, "Not a valid shape - tiles are not relevant to each other"));
+                if !Shape::are_in_shape(
+                    tiles.get(i).unwrap().to_id(),
+                    tiles.get(i + 1).unwrap().to_id(),
+                ) {
+                    return Err(RiichiError::new(
+                        121,
+                        "Not a valid shape - tiles are not relevant to each other",
+                    ));
                 }
             } else {
                 break;
@@ -133,45 +153,33 @@ impl Shape {
             let tile_3 = tiles.get(2).unwrap();
 
             return match tile_1.tile_type {
-                Number(_value, _) => {
-                    match tile_1.next(false) {
-                        None => {
-                            Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
-                        },
-                        Some(next_1) => {
-                            match tile_2.next(false) {
-                                None => {
-                                    Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
-                                },
-                                Some(next_2) => {
-                                    if tile_2.eq(&next_1) &&
-                                        tile_3.eq(&next_2) {
-                                        if is_open {
-                                            shape_type = ShapeType::Complete(CompleteShape::Open(OpenShape::Chi([
-                                                *tile_1, *tile_2, *tile_3
-                                            ])));
-                                        } else {
-                                            shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Shuntsu([
-                                                *tile_1, *tile_2, *tile_3
-                                            ])));
-                                        }
+                Number(_value, _) => match tile_1.next(false) {
+                    None => Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open),
+                    Some(next_1) => match tile_2.next(false) {
+                        None => Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open),
+                        Some(next_2) => {
+                            if tile_2.eq(&next_1) && tile_3.eq(&next_2) {
+                                if is_open {
+                                    shape_type =
+                                        ShapeType::Complete(CompleteShape::Open(OpenShape::Chi([
+                                            *tile_1, *tile_2, *tile_3,
+                                        ])));
+                                } else {
+                                    shape_type = ShapeType::Complete(CompleteShape::Closed(
+                                        ClosedShape::Shuntsu([*tile_1, *tile_2, *tile_3]),
+                                    ));
+                                }
 
-                                        Result::Ok(Shape::new(shape_type, tile_count, is_open))
-                                    } else {
-                                        Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
-                                    }
-                                },
+                                Result::Ok(Shape::new(shape_type, tile_count, is_open))
+                            } else {
+                                Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
                             }
-                        },
-                    }
-                }
-                Wind(_value) => {
-                    Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
-                }
-                Dragon(_value) => {
-                    Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open)
-                }
-            }
+                        }
+                    },
+                },
+                Wind(_value) => Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open),
+                Dragon(_value) => Shape::_koutsu_shape_type(tile_1, tile_2, tile_3, is_open),
+            };
         } else if tile_count == 2 && !is_open {
             let tile_1 = tiles.get(0).unwrap();
             let tile_2 = tiles.get(1).unwrap();
@@ -179,7 +187,7 @@ impl Shape {
             if tile_1.eq(tile_2) {
                 if only_complete {
                     shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Toitsu([
-                        *tile_1, *tile_2
+                        *tile_1, *tile_2,
                     ])));
                     return Result::Ok(Shape::new(shape_type, tile_count, is_open));
                 }
@@ -187,25 +195,31 @@ impl Shape {
         } else if tile_count == 1 && !is_open {
             let tile_1 = tiles.get(0).unwrap();
             if only_complete {
-                shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Single(*tile_1)));
+                shape_type =
+                    ShapeType::Complete(CompleteShape::Closed(ClosedShape::Single(*tile_1)));
                 return Result::Ok(Shape::new(shape_type, tile_count, is_open));
             }
         }
 
         return Err(RiichiError::new(124, "No suitable shape found"));
-//        Result::Ok(Shape::new(shape_type, tile_count))
+        //        Result::Ok(Shape::new(shape_type, tile_count))
     }
 
-    fn _koutsu_shape_type(tile_1: &Tile, tile_2: &Tile, tile_3: &Tile, is_open: bool) -> Result<Shape, RiichiError> {
+    fn _koutsu_shape_type(
+        tile_1: &Tile,
+        tile_2: &Tile,
+        tile_3: &Tile,
+        is_open: bool,
+    ) -> Result<Shape, RiichiError> {
         if tile_1.eq(tile_2) && tile_2.eq(tile_3) {
             let shape_type;
             if is_open {
                 shape_type = ShapeType::Complete(CompleteShape::Open(OpenShape::Pon([
-                    *tile_1, *tile_2, *tile_3
+                    *tile_1, *tile_2, *tile_3,
                 ])));
             } else {
                 shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Koutsu([
-                    *tile_1, *tile_2, *tile_3
+                    *tile_1, *tile_2, *tile_3,
                 ])));
             }
 
@@ -216,7 +230,7 @@ impl Shape {
     }
 
     /// Are these two tiles in a shape together?
-    pub fn are_in_shape(first_tile_id : u8, second_tile_id : u8) -> bool {
+    pub fn are_in_shape(first_tile_id: u8, second_tile_id: u8) -> bool {
         if first_tile_id < 1 || first_tile_id > 34 || second_tile_id < 1 || second_tile_id > 34 {
             panic!("Wrong tile IDs");
         }
@@ -270,8 +284,8 @@ impl Shape {
 
 #[cfg(test)]
 mod tests {
-    use crate::riichi::tile::Tile;
     use crate::riichi::shapes::Shape;
+    use crate::riichi::tile::Tile;
 
     #[test]
     fn from_ones() {
