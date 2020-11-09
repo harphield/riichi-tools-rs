@@ -707,7 +707,7 @@ impl Hand {
 
         self.reset_shanten();
 
-        // imp_tiles.sort_by(|a, b| count_total_ukeire(&(b.1)).cmp(&count_total_ukeire(&(a.1))));
+        imp_tiles.sort_by(|a, b| b.2.cmp(&a.2));
         imp_tiles
     }
 
