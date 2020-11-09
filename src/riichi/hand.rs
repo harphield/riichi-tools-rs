@@ -648,8 +648,10 @@ impl Hand {
     pub fn find_shanten_improving_tiles(
         &mut self,
         visible_tiles: Option<&[u8; 34]>,
-    ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>)> {
+    ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>, u8)> {
         let mut imp_tiles = vec![];
+        let count_total_ukeire =
+            |ukeires: &Vec<(Tile, u8)>| ukeires.iter().map(|u| u.1).sum::<u8>();
 
         let current_shanten = self.shanten();
 
@@ -660,7 +662,7 @@ impl Hand {
             let mut result = self.get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
 
             result.sort();
-            imp_tiles.push((None, result));
+            imp_tiles.push((None, result.clone(), count_total_ukeire(&result)));
         } else if hand_count == 14 {
             // finished hand has no improving tiles
             if current_shanten < 0 {
@@ -689,7 +691,11 @@ impl Hand {
                             let mut result = self
                                 .get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
                             result.sort();
-                            imp_tiles.push((Some(t.clone()), result));
+                            imp_tiles.push((
+                                Some(t.clone()),
+                                result.clone(),
+                                count_total_ukeire(&result),
+                            ));
                         }
 
                         self.add_tile(*t);
@@ -701,9 +707,7 @@ impl Hand {
 
         self.reset_shanten();
 
-        let count_total_ukeire =
-            |ukeires: &Vec<(Tile, u8)>| ukeires.iter().map(|u| u.1).sum::<u8>();
-        imp_tiles.sort_by(|a, b| count_total_ukeire(&(b.1)).cmp(&count_total_ukeire(&(a.1))));
+        // imp_tiles.sort_by(|a, b| count_total_ukeire(&(b.1)).cmp(&count_total_ukeire(&(a.1))));
         imp_tiles
     }
 
@@ -958,8 +962,6 @@ mod tests {
 
         let tiles = hand.find_shanten_improving_tiles(None);
 
-        println!("{:#?}", tiles);
-
         assert_eq!(tiles.get(0).unwrap().1.len(), 6);
     }
 
@@ -975,38 +977,27 @@ mod tests {
             match row.0 {
                 Some(tile) => {
                     if tile.to_string() == "7m" {
-                        println!(
-                            "tajl: {} count: {}",
-                            tile.to_string(),
-                            row.1.iter().map(|u| u.1).sum::<u8>()
-                        );
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
                         //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "1s" {
-                        println!(
-                            "tajl: {} count: {}",
-                            tile.to_string(),
-                            row.1.iter().map(|u| u.1).sum::<u8>()
-                        );
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
                         //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "1z" {
-                        println!(
-                            "tajl: {} count: {}",
-                            tile.to_string(),
-                            row.1.iter().map(|u| u.1).sum::<u8>()
-                        );
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
                         //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 6);
                     } else if tile.to_string() == "4s" {
-                        println!(
-                            "tajl: {} count: {}",
-                            tile.to_string(),
-                            row.1.iter().map(|u| u.1).sum::<u8>()
-                        );
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
                         //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 5);
-                        assert_eq!(row.1.iter().map(|u| u.1).sum::<u8>(), 20);
+                        assert_eq!(row.1[0].1, 4);
+                        assert_eq!(row.1[1].1, 4);
+                        assert_eq!(row.1[2].1, 4);
+                        assert_eq!(row.1[3].1, 4);
+                        assert_eq!(row.1[4].1, 4);
+                        assert_eq!(row.2, 20);
                     } else {
                         panic!("Test failed: wrong tiles found");
                     }

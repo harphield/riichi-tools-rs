@@ -461,8 +461,8 @@ impl Table {
             if no_kan_improving_tiles.is_empty() || kan_improving_tiles.is_empty() {
                 return None;
             } else {
-                let (_to, no_kan_ukeire) = no_kan_improving_tiles.get(0).unwrap();
-                let (_to, kan_ukeire) = kan_improving_tiles.get(0).unwrap();
+                let (_to, no_kan_ukeire, _total_count) = no_kan_improving_tiles.get(0).unwrap();
+                let (_to, kan_ukeire, _total_count) = kan_improving_tiles.get(0).unwrap();
 
                 if no_kan_ukeire.eq(kan_ukeire) {
                     return Some(vec![drawn_tile]);
