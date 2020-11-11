@@ -1,11 +1,11 @@
 use crate::riichi::hand::Hand;
-use crate::riichi::tile::Tile;
-use crate::riichi::shapes::Shape;
-use serde_json::{Map, Value};
 use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::yaku::{YakuFinder, Yaku};
-use crate::riichi::scores::Score;
 use crate::riichi::rules::Rules;
+use crate::riichi::scores::Score;
+use crate::riichi::shapes::Shape;
+use crate::riichi::tile::Tile;
+use crate::riichi::yaku::{Yaku, YakuFinder};
+use serde_json::{Map, Value};
 
 /// Representation of the game state
 pub struct Table {
@@ -41,7 +41,7 @@ pub struct Table {
     // 1 = east, 2 = south, 3 = west, 4 = north
     prevalent_wind: Option<u8>,
     my_seat_wind: Option<u8>,
-    wind_round: Option<u8>,
+    my_initial_seat_wind: Option<u8>,
     total_round: Option<u8>,
     tiles_remaining: Option<u8>,
 
@@ -83,7 +83,7 @@ impl Table {
             riichi_declaring_player: None,
             prevalent_wind: None,
             my_seat_wind: None,
-            wind_round: None,
+            my_initial_seat_wind: None,
             total_round: None,
             tiles_remaining: None,
             riichi_sticks_in_pot: None,
@@ -96,50 +96,47 @@ impl Table {
         for (index, value) in params {
             if index.eq(&String::from("my_hand")) {
                 match value {
-                    Value::String(s) => {
-                        match Hand::from_text(s, false) {
-                            Ok(hand) => t.my_hand = Some(hand),
-                            Err(error) => return Err(error)
-                        }
-
+                    Value::String(s) => match Hand::from_text(s, false) {
+                        Ok(hand) => t.my_hand = Some(hand),
+                        Err(error) => return Err(error),
                     },
-                    _ => ()
+                    _ => (),
                 }
             } else if index.eq(&String::from("my_riichi")) {
                 match value {
                     Value::Bool(b) => {
                         t.my_riichi = Some(*b);
-                    },
-                    _ => ()
+                    }
+                    _ => (),
                 }
             } else if index.eq(&String::from("my_tsumo")) {
                 match value {
                     Value::Bool(b) => {
                         t.my_tsumo = Some(*b);
-                    },
-                    _ => ()
+                    }
+                    _ => (),
                 }
             } else if index.eq(&String::from("prevalent_wind")) {
                 match value {
                     Value::Number(v) => {
                         t.prevalent_wind = Some(v.as_u64().unwrap() as u8);
-                    },
+                    }
                     Value::String(v) => {
                         let number: u8 = v.parse().unwrap();
                         t.prevalent_wind = Some(number);
                     }
-                    _ => ()
+                    _ => (),
                 }
             } else if index.eq(&String::from("my_seat_wind")) {
                 match value {
                     Value::Number(v) => {
                         t.my_seat_wind = Some(v.as_u64().unwrap() as u8);
-                    },
+                    }
                     Value::String(v) => {
                         let number: u8 = v.parse().unwrap();
                         t.my_seat_wind = Some(number);
                     }
-                    _ => ()
+                    _ => (),
                 }
             }
         }
@@ -154,9 +151,7 @@ impl Table {
     pub fn am_i_oya(&self) -> bool {
         match self.my_seat_wind {
             None => false,
-            Some(seat) => {
-                seat == 1
-            },
+            Some(seat) => seat == 1,
         }
     }
 
@@ -255,9 +250,7 @@ impl Table {
     pub fn get_my_winning_tile(&self) -> Tile {
         match &self.my_hand {
             None => panic!("No drawn tile in hand!"),
-            Some(hand) => {
-                hand.get_drawn_tile().unwrap().clone()
-            },
+            Some(hand) => hand.get_drawn_tile().unwrap().clone(),
         }
     }
 
@@ -273,10 +266,10 @@ impl Table {
         match self.tiles_remaining {
             None => {
                 self.set_tiles_remaining(0);
-            },
+            }
             Some(value) => {
                 self.set_tiles_remaining(value - 1);
-            },
+            }
         }
     }
 
@@ -288,12 +281,45 @@ impl Table {
         self.my_seat_wind
     }
 
+    pub fn set_my_initial_seat_wind(&mut self, value: u8) {
+        self.my_initial_seat_wind = Some(value);
+    }
+
+    pub fn get_my_initial_seat_wind(&self) -> Option<u8> {
+        self.my_initial_seat_wind
+    }
+
     pub fn set_prevalent_wind(&mut self, value: u8) {
         self.prevalent_wind = Some(value);
     }
 
     pub fn get_prevalent_wind(&self) -> Option<u8> {
         self.prevalent_wind
+    }
+
+    pub fn get_placing(&self) -> u8 {
+        // TODO: account for different tie-breaking rules
+        let initial_seat_winds = match self.my_initial_seat_wind {
+            Some(1) => vec![1, 2, 3, 4],
+            Some(2) => vec![2, 3, 4, 1],
+            Some(3) => vec![3, 4, 1, 2],
+            _ => vec![4, 1, 2, 3],
+        };
+        let points = vec![
+            self.my_points.unwrap_or(25000),
+            self.p1_points.unwrap_or(25000),
+            self.p2_points.unwrap_or(25000),
+            self.p3_points.unwrap_or(25000),
+        ];
+        let mut all_scores: Vec<_> = (points.iter()).zip(initial_seat_winds.iter()).collect();
+        // sort from lowest to hightest
+        all_scores.sort_by(|a, b| b.0.cmp(a.0).then(a.1.cmp(b.1)));
+
+        all_scores
+            .iter()
+            .position(|score| *score.1 == self.my_initial_seat_wind.unwrap_or(4))
+            .unwrap_or(4) as u8
+            + 1
     }
 
     pub fn set_dora_indicators(&mut self, indicators: Vec<Tile>) {
@@ -371,7 +397,7 @@ impl Table {
             1 => self.p1_discards.push(tile),
             2 => self.p2_discards.push(tile),
             3 => self.p3_discards.push(tile),
-            _ => panic!("Invalid player")
+            _ => panic!("Invalid player"),
         }
     }
 
@@ -380,7 +406,7 @@ impl Table {
             1 => self.p1_safe_tiles.push(tile),
             2 => self.p2_safe_tiles.push(tile),
             3 => self.p3_safe_tiles.push(tile),
-            _ => panic!("Invalid player")
+            _ => panic!("Invalid player"),
         }
     }
 
@@ -435,10 +461,10 @@ impl Table {
             if no_kan_improving_tiles.is_empty() || kan_improving_tiles.is_empty() {
                 return None;
             } else {
-                let (_to, no_kan_imp_tiles, _ukeire) = no_kan_improving_tiles.get(0).unwrap();
-                let (_to, kan_imp_tiles, _ukeire) = kan_improving_tiles.get(0).unwrap();
+                let (_to, no_kan_ukeire, _total_count) = no_kan_improving_tiles.get(0).unwrap();
+                let (_to, kan_ukeire, _total_count) = kan_improving_tiles.get(0).unwrap();
 
-                if no_kan_imp_tiles.eq(kan_imp_tiles) {
+                if no_kan_ukeire.eq(kan_ukeire) {
                     return Some(vec![drawn_tile]);
                 }
             }
@@ -451,7 +477,7 @@ impl Table {
             }
 
             Some(kannable_vec)
-        }
+        };
     }
 
     /// How safe is this tile to discard based on this table state?
@@ -469,17 +495,9 @@ impl Table {
             self.tenpai_probability(3),
         ];
 
-        let discards = [
-            &self.p1_discards,
-            &self.p2_discards,
-            &self.p3_discards,
-        ];
+        let discards = [&self.p1_discards, &self.p2_discards, &self.p3_discards];
 
-        let last_discards = [
-            discards[0].last(),
-            discards[1].last(),
-            discards[2].last(),
-        ];
+        let last_discards = [discards[0].last(), discards[1].last(), discards[2].last()];
 
         let safe_tiles = [
             &self.p1_safe_tiles,
@@ -487,11 +505,11 @@ impl Table {
             &self.p3_safe_tiles,
         ];
 
-        let open_tiles = [
-            &self.p1_open_tiles,
-            &self.p2_open_tiles,
-            &self.p3_open_tiles,
-        ];
+        // let open_tiles = [
+        //     &self.p1_open_tiles,
+        //     &self.p2_open_tiles,
+        //     &self.p3_open_tiles,
+        // ];
 
         // percentage of safety against players
         let mut safeties = [
@@ -500,28 +518,28 @@ impl Table {
             0.0, // p3 (shimocha)
         ];
 
-        if discards[0].contains(&tile) ||
-            safe_tiles[0].contains(&tile) ||
-            self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]]) {
+        if discards[0].contains(&tile)
+            || safe_tiles[0].contains(&tile)
+            || self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]])
+        {
             safeties[0] = 1.0;
         } else {
-
         }
 
-        if discards[1].contains(&tile) ||
-            safe_tiles[1].contains(&tile) ||
-            self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]]) {
+        if discards[1].contains(&tile)
+            || safe_tiles[1].contains(&tile)
+            || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]])
+        {
             safeties[1] = 1.0;
         } else {
-
         }
 
-        if discards[2].contains(&tile) ||
-            safe_tiles[2].contains(&tile) ||
-            self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]]) {
+        if discards[2].contains(&tile)
+            || safe_tiles[2].contains(&tile)
+            || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]])
+        {
             safeties[2] = 1.0;
         } else {
-
         }
 
         // weigh safeties by tenpai probability
@@ -535,12 +553,12 @@ impl Table {
     fn is_temporary_furiten(&self, tile: &Tile, last_discards: Vec<&Option<&Tile>>) -> bool {
         for ld_o in last_discards.iter() {
             match ld_o {
-                None => {},
+                None => {}
                 Some(ld) => {
                     if ld.eq(&tile) {
                         return true;
                     }
-                },
+                }
             }
         }
 
@@ -553,10 +571,22 @@ impl Table {
     /// - tiles remaining
     /// - calls
     pub fn tenpai_probability(&self, player: u8) -> f32 {
-        let (open_shapes, discards, riichi) = match player {
-            1 => (&self.p1_open_tiles, &self.p1_discards, self.p1_riichi.unwrap()),
-            2 => (&self.p2_open_tiles, &self.p2_discards, self.p2_riichi.unwrap()),
-            3 => (&self.p3_open_tiles, &self.p3_discards, self.p3_riichi.unwrap()),
+        let (open_shapes, _discards, riichi) = match player {
+            1 => (
+                &self.p1_open_tiles,
+                &self.p1_discards,
+                self.p1_riichi.unwrap(),
+            ),
+            2 => (
+                &self.p2_open_tiles,
+                &self.p2_discards,
+                self.p2_riichi.unwrap(),
+            ),
+            3 => (
+                &self.p3_open_tiles,
+                &self.p3_discards,
+                self.p3_riichi.unwrap(),
+            ),
             _ => panic!("Wrong player ID"),
         };
 
@@ -576,10 +606,22 @@ impl Table {
 }
 
 mod tests {
-    use super::*;
+
+    #[test]
+    fn placing_test() {
+        use super::*;
+        let mut table = Table::from_map(&Map::new()).unwrap();
+        // table.set_my_hand(Hand::from_text("11123m234p456s44z1m", false).unwrap());
+
+        table.my_initial_seat_wind = Some(3);
+        assert!(table.get_placing() == 3);
+        table.my_points = Some(20000);
+        assert!(table.get_placing() == 4);
+    }
 
     #[test]
     fn ankan_test() {
+        use super::*;
         let mut table = Table::from_map(&Map::new()).unwrap();
         table.set_my_hand(Hand::from_text("11123m234p456s44z1m", false).unwrap());
 
@@ -588,6 +630,7 @@ mod tests {
 
     #[test]
     fn bad_ankan_riichi_test() {
+        use super::*;
         let mut table = Table::from_map(&Map::new()).unwrap();
         table.set_my_hand(Hand::from_text("11123m234p456s44z1m", false).unwrap());
         table.set_my_riichi(true);
@@ -597,6 +640,7 @@ mod tests {
 
     #[test]
     fn good_ankan_riichi_test() {
+        use super::*;
         let mut table = Table::from_map(&Map::new()).unwrap();
         table.set_my_hand(Hand::from_text("23666m234p456s44z6m", false).unwrap());
         table.set_my_riichi(true);
@@ -606,6 +650,7 @@ mod tests {
 
     #[test]
     fn safety_riichi() {
+        use super::*;
         let mut table = Table::from_map(&Map::new()).unwrap();
         table.set_my_hand(Hand::from_text("23666m234p456s44z6m", false).unwrap());
 

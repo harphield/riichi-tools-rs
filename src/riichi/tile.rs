@@ -1,7 +1,7 @@
-use std::fmt;
-use std::cmp::Ordering;
 use crate::riichi::riichi_error::RiichiError;
 use serde::Serializer;
+use std::cmp::Ordering;
+use std::fmt;
 
 // '0m', '1m', '2m', '3m', '4m', '5m', '6m', '7m', '8m', '9m',
 // '0p', '1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p',
@@ -15,7 +15,7 @@ use serde::Serializer;
 pub enum TileType {
     Number(u8, TileColor),
     Wind(u8),
-    Dragon(u8)
+    Dragon(u8),
 }
 
 impl TileType {
@@ -23,7 +23,7 @@ impl TileType {
         match &self {
             TileType::Number(_number, color) => color.to_char(),
             TileType::Wind(_number) => 'z',
-            TileType::Dragon(_number) => 'z'
+            TileType::Dragon(_number) => 'z',
         }
     }
 }
@@ -32,16 +32,16 @@ impl TileType {
 pub enum TileColor {
     Manzu,
     Pinzu,
-    Souzu
+    Souzu,
 }
 
 impl TileColor {
-    pub fn from_char(rep : &char) -> Result<TileColor, RiichiError> {
+    pub fn from_char(rep: &char) -> Result<TileColor, RiichiError> {
         match rep {
             'm' => Ok(TileColor::Manzu),
             'p' => Ok(TileColor::Pinzu),
             's' => Ok(TileColor::Souzu),
-            _ => Err(RiichiError::new(106, "Wrong representation of tile color!"))
+            _ => Err(RiichiError::new(106, "Wrong representation of tile color!")),
         }
     }
 
@@ -81,12 +81,12 @@ impl Tile {
                 if *number > 9 {
                     panic!("Numbers can be only up to 9");
                 }
-            },
+            }
             TileType::Wind(number) => {
                 if *number > 4 {
                     panic!("Winds can be only up to 4");
                 }
-            },
+            }
             TileType::Dragon(number) => {
                 if *number < 5 || *number > 7 {
                     panic!("Dragons can be only 5-7");
@@ -111,7 +111,7 @@ impl Tile {
         let mut number = first_char.to_string().parse().unwrap();
 
         if ['m', 'p', 's'].contains(second_char) {
-            let color : TileColor;
+            let color: TileColor;
             if *second_char == 'm' {
                 color = TileColor::Manzu;
             } else if *second_char == 'p' {
@@ -180,15 +180,11 @@ impl Tile {
                 match color {
                     TileColor::Manzu => number + 0, // + dereferences?
                     TileColor::Pinzu => number + 9,
-                    TileColor::Souzu => number + 18
+                    TileColor::Souzu => number + 18,
                 }
-            },
-            TileType::Wind(number) => {
-                number + 27
-            },
-            TileType::Dragon(number) => {
-                number + 27
             }
+            TileType::Wind(number) => number + 27,
+            TileType::Dragon(number) => number + 27,
         }
     }
 
@@ -237,11 +233,13 @@ impl Tile {
 
         // honors
         if dora {
-            if id < 31 - (depth - 1) { // winds
+            if id < 31 - (depth - 1) {
+                // winds
                 return id + depth;
             } else if id == 31 {
                 return 28 + (depth - 1);
-            } else if id < 34 - (depth - 1) { // dragons
+            } else if id < 34 - (depth - 1) {
+                // dragons
                 return id + depth;
             } else if id == 34 {
                 return 31 + (depth - 1);
@@ -326,7 +324,7 @@ impl Tile {
                 } else {
                     None
                 }
-            },
+            }
             TileType::Wind(number) => {
                 if !dora {
                     return None;
@@ -337,7 +335,7 @@ impl Tile {
                 } else {
                     Some(Tile::new(TileType::Wind(1)))
                 }
-            },
+            }
             TileType::Dragon(number) => {
                 if !dora {
                     return None;
@@ -349,7 +347,7 @@ impl Tile {
                     Some(Tile::new(TileType::Dragon(5)))
                 }
             }
-        }
+        };
     }
 
     pub fn prev(&self) -> Option<Tile> {
@@ -363,22 +361,22 @@ impl Tile {
                 } else {
                     None
                 }
-            },
-            _ => None
-        }
+            }
+            _ => None,
+        };
     }
 
     pub fn is_terminal(&self) -> bool {
         match &self.tile_type {
             TileType::Number(number, _color) => *number == 1 || *number == 9,
-            TileType::Wind(_) | TileType::Dragon(_) => false
+            TileType::Wind(_) | TileType::Dragon(_) => false,
         }
     }
 
     pub fn is_honor(&self) -> bool {
         match &self.tile_type {
             TileType::Number(_, _) => false,
-            TileType::Wind(_) | TileType::Dragon(_) => true
+            TileType::Wind(_) | TileType::Dragon(_) => true,
         }
     }
 
@@ -388,15 +386,9 @@ impl Tile {
 
     pub fn to_string(&self) -> String {
         match &self.tile_type {
-            TileType::Number(number, color) => {
-                format!("{}{}", number, color)
-            },
-            TileType::Wind(number) => {
-                format!("{}z", number)
-            },
-            TileType::Dragon(number) => {
-                format!("{}z", number)
-            }
+            TileType::Number(number, color) => format!("{}{}", number, color),
+            TileType::Wind(number) => format!("{}z", number),
+            TileType::Dragon(number) => format!("{}z", number),
         }
     }
 
@@ -404,7 +396,7 @@ impl Tile {
         match &self.tile_type {
             TileType::Number(_number, color) => color.to_char(),
             TileType::Wind(_number) => 'z',
-            TileType::Dragon(_number) => 'z'
+            TileType::Dragon(_number) => 'z',
         }
     }
 
@@ -412,7 +404,7 @@ impl Tile {
         match &self.tile_type {
             TileType::Number(number, _color) => *number,
             TileType::Wind(number) => *number,
-            TileType::Dragon(number) => *number
+            TileType::Dragon(number) => *number,
         }
     }
 
@@ -420,7 +412,7 @@ impl Tile {
     fn get_ordering_values(&self) -> [u8; 3] {
         let self_type;
         let mut self_color = 0;
-        let self_number : u8;
+        let self_number: u8;
 
         match &self.tile_type {
             TileType::Number(number, color) => {
@@ -429,13 +421,13 @@ impl Tile {
                 self_color = match color {
                     TileColor::Manzu => 1,
                     TileColor::Pinzu => 2,
-                    TileColor::Souzu => 3
+                    TileColor::Souzu => 3,
                 };
-            },
+            }
             TileType::Wind(number) => {
                 self_type = 2;
                 self_number = *number;
-            },
+            }
             TileType::Dragon(number) => {
                 self_type = 3;
                 self_number = *number;
@@ -468,7 +460,9 @@ impl PartialEq for Tile {
         let self_ord_values = self.get_ordering_values();
         let other_ord_values = other.get_ordering_values();
 
-        self_ord_values[0] == other_ord_values[0] && self_ord_values[1] == other_ord_values[1] && self_ord_values[2] == other_ord_values[2]
+        self_ord_values[0] == other_ord_values[0]
+            && self_ord_values[1] == other_ord_values[1]
+            && self_ord_values[2] == other_ord_values[2]
     }
 }
 
@@ -491,13 +485,11 @@ impl PartialOrd for Tile {
             Some(Ordering::Greater)
         } else {
             Some(Ordering::Equal)
-        }
+        };
     }
 }
 
-impl Eq for Tile {
-
-}
+impl Eq for Tile {}
 
 impl Ord for Tile {
     fn cmp(&self, other: &Tile) -> Ordering {
@@ -506,8 +498,10 @@ impl Ord for Tile {
 }
 
 impl serde::Serialize for Tile {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
         serializer.serialize_str(&self.to_string()[..])
     }
 }
@@ -591,5 +585,4 @@ mod tests {
 
         assert_eq!(prev, 7);
     }
-
 }
