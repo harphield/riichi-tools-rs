@@ -8,6 +8,7 @@ use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::shapes::{OpenShape, Shape};
 use rand::seq::SliceRandom;
 use rand::Rng;
+use regex::Regex;
 
 #[derive(Clone)]
 pub struct Hand {
@@ -314,8 +315,109 @@ impl Hand {
     /// Parses a hand from its text representation.
     /// force_return: will return even a partial hand
     pub fn from_text(representation: &str, force_return: bool) -> Result<Hand, RiichiError> {
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"(?P<closed>[0-9mspz]+)|\((?P<chi>[0-9]{3}[mspz])\)|\((?P<pon>p[0-9][mspz][1-3])\)|\((?P<kan>k[0-9][mspz][1-3]?)\)").unwrap();
+        }
+
+        let mut closed = vec![];
+        let mut chis = vec![];
+        let mut pons = vec![];
+        let mut kans = vec![];
+        for cap in RE.captures_iter(representation) {
+            match cap.name("closed") {
+                None => {}
+                Some(value) => closed.push(value.as_str())
+            }
+            match cap.name("chi") {
+                None => {}
+                Some(value) => chis.push(value.as_str())
+            }
+            match cap.name("pon") {
+                None => {}
+                Some(value) => pons.push(value.as_str())
+            }
+            match cap.name("kan") {
+                None => {}
+                Some(value) => kans.push(value.as_str())
+            }
+        }
+
+        if closed.len() != 1 {
+            return Err(RiichiError::new(333, "Closed hand not defined correctly"));
+        }
+
+        println!("{:#?}", closed);
+        println!("{:#?}", pons);
+        println!("{:#?}", chis);
+        println!("{:#?}", kans);
+
+        let mut tiles = match Hand::parse_closed_hand(closed.get(0).unwrap()) {
+            Ok(t) => t,
+            Err(e) => return Err(e)
+        };
+
+        // TODO parse pons, chis and kans
+        // TODO add open shapes to the hand
+        let mut pon_tiles_and_shapes = match Hand::parse_pons(&pons) {
+            Ok(t) => t,
+            Err(e) => return Err(e)
+        };
+
+        tiles.append(&mut pon_tiles_and_shapes.0);
+
+        let mut hand = Hand::new(tiles);
+
+        for shape in pon_tiles_and_shapes.1 {
+            hand.add_open_shape(shape);
+        }
+
+        if force_return || hand.validate() {
+            return Result::Ok(hand);
+        }
+
+        Err(RiichiError::new(100, "Couldn't parse hand representation."))
+    }
+
+    /// A pon looks like this:
+    /// (pNCP) where
+    /// p = pon
+    /// N = number 0-9
+    /// C = color (mpsz)
+    /// P = player who was ponned
+    ///
+    /// Only insides of the brackets are in the pons vector.
+    fn parse_pons(pons: &Vec<&str>) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
+        let mut tiles: Vec<Option<Tile>> = Vec::new();
+        let mut shapes: Vec<OpenShape> = Vec::new();
+
+        for pon in pons.iter() {
+            // number
+            let n = pon.chars().nth(1).unwrap();
+            // color
+            let c = pon.chars().nth(2).unwrap();
+            // player
+            let p = pon.chars().nth(3).unwrap();
+
+            let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+            shapes.push(OpenShape::Pon([
+                tile,
+                tile,
+                tile,
+            ]));
+
+            tiles.push(Some(tile));
+            tiles.push(Some(tile));
+
+            tile.called_from = p.to_digit(10).unwrap() as u8;
+            tiles.push(Some(tile));
+        }
+
+        Ok((tiles, shapes))
+    }
+
+    fn parse_closed_hand(closed: &str) -> Result<Vec<Option<Tile>>, RiichiError> {
         // let's read the hand from the back, because colors are written after the numbers
-        let iter = representation.chars().rev();
+        let iter = closed.chars().rev();
         let mut tiles: Vec<Option<Tile>> = Vec::new();
 
         let mut color: char = 'x';
@@ -349,15 +451,7 @@ impl Hand {
             }
         }
 
-        tiles.sort();
-
-        let mut hand = Hand::new(tiles);
-
-        if force_return || hand.validate() {
-            return Result::Ok(hand);
-        }
-
-        Err(RiichiError::new(100, "Couldn't parse hand representation."))
+        Ok(tiles)
     }
 
     /// Adds a tile to this hand
@@ -1153,6 +1247,18 @@ mod tests {
     #[test]
     fn random_complete_hand() {
         let mut hand = Hand::random_complete_hand(true, false);
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), -1);
+    }
+
+    #[test]
+    fn parse_open_hand_two_pons() {
+        let mut hand = Hand::from_text("123456m11p(p7s1)(p4p2)", false).unwrap();
 
         println!("{}", hand.to_string());
         println!("{}", hand.count_tiles());
