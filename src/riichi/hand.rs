@@ -314,6 +314,8 @@ impl Hand {
 
     /// Parses a hand from its text representation.
     /// force_return: will return even a partial/invalid hand
+    /// TODO: closed kan
+    /// TODO: red 5
     pub fn from_text(representation: &str, force_return: bool) -> Result<Hand, RiichiError> {
         lazy_static! {
             static ref RE: Regex = Regex::new(r"(?P<closed>[0-9mspz]+)|\((?P<chi>[0-9]{3}[msp][0-2])\)|\((?P<pon>p[0-9][mspz][1-3])\)|\((?P<kan>k[0-9][mspz][1-3]?)\)").unwrap();
@@ -764,12 +766,47 @@ impl Hand {
         self.open_shapes.is_empty()
     }
 
+    /// Renders the hand as a string representation.
+    /// The notation looks like this:
+    /// Tiles are written as NC (number + color)
+    /// More tiles of the same color can be written consecutively (1234p)
+    /// z = honors - 1-4 = winds, 5-7 = dragons
+    /// 0mps = red 5 (TODO)
+    /// Open shapes are in brackets, (123s2) (p1s1) (k2p3) etc. See parse_* functions for more info
     pub fn to_string(&self) -> String {
         let mut out = String::new();
         let mut color = 'x';
         let mut last_tile: Option<String> = Option::None;
 
-        for tile in self.tiles.iter() {
+        // TODO remove open shape tiles from closed tile vector
+        let mut tiles = self.tiles.clone();
+
+        for open_shape in self.open_shapes.iter() {
+            match open_shape {
+                OpenShape::Chi(chi) => {
+                    for chi_tile in chi.iter() {
+                        let mut index = 0;
+                        for (i, tile) in tiles.iter().enumerate() {
+                            match tile {
+                                None => {}
+                                Some(t) => {
+                                    if t.eq(chi_tile) {
+                                        index = i;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        tiles.remove(index);
+                    }
+                }
+                OpenShape::Pon(pon) => {}
+                OpenShape::Kan(kan) => {}
+            }
+        }
+
+        for tile in tiles.iter() {
             match &tile {
                 Option::Some(some_tile) => {
                     if color != some_tile.get_type_char() {

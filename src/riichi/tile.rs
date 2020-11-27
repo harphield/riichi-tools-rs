@@ -410,6 +410,7 @@ impl Tile {
     }
 
     /// Returns an array of 3 values: type, color and number for this tile
+    /// TODO red 5s
     fn get_ordering_values(&self) -> [u8; 3] {
         let self_type;
         let mut self_color = 0;
@@ -486,7 +487,24 @@ impl PartialOrd for Tile {
         } else if self_ord_values[2] > other_ord_values[2] {
             Some(Ordering::Greater)
         } else {
-            Some(Ordering::Equal)
+            // if ID 136 is set, compare those
+            return match self.id_136 {
+                None => Some(Ordering::Equal),
+                Some(id_136) => {
+                    match other.id_136 {
+                        None => Some(Ordering::Equal),
+                        Some(other_id_136) => {
+                            if id_136 > other_id_136 {
+                                Some(Ordering::Greater)
+                            } else if id_136 < other_id_136 {
+                                Some(Ordering::Less)
+                            } else {
+                                Some(Ordering::Equal)
+                            }
+                        }
+                    }
+                }
+            }
         };
     }
 }
