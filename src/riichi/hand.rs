@@ -5,7 +5,7 @@ use super::tile::Tile;
 use super::tile::TileColor;
 use super::tile::TileType;
 use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::shapes::{OpenShape, Shape, ClosedShape, CompleteShape};
+use crate::riichi::shapes::{OpenShape, Shape, ClosedShape, CompleteShape, ShapeType};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
@@ -468,6 +468,9 @@ impl Hand {
             let p = pon.chars().nth(3).unwrap();
 
             let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+
+            // TODO maybe sometimes specify exactly which one was called with id_136?
+            tile.called_from = p.to_digit(10).unwrap() as u8;
             shapes.push(OpenShape::Pon([
                 tile,
                 tile,
@@ -476,8 +479,6 @@ impl Hand {
 
             tiles.push(Some(tile));
             tiles.push(Some(tile));
-
-            tile.called_from = p.to_digit(10).unwrap() as u8;
             tiles.push(Some(tile));
         }
 
@@ -783,26 +784,12 @@ impl Hand {
 
         for open_shape in self.open_shapes.iter() {
             match open_shape {
-                OpenShape::Chi(chi) => {
-                    for chi_tile in chi.iter() {
-                        let mut index = 0;
-                        for (i, tile) in tiles.iter().enumerate() {
-                            match tile {
-                                None => {}
-                                Some(t) => {
-                                    if t.eq(chi_tile) {
-                                        index = i;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        tiles.remove(index);
-                    }
+                OpenShape::Chi(tls) | OpenShape::Pon(tls) => {
+                    self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
+                },
+                OpenShape::Kan(tls) => {
+                    self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
                 }
-                OpenShape::Pon(pon) => {}
-                OpenShape::Kan(kan) => {}
             }
         }
 
@@ -833,7 +820,35 @@ impl Hand {
             Option::None => (),
         }
 
+        for open_shape in self.open_shapes.iter() {
+            match open_shape {
+                OpenShape::Chi(tls) => out.push_str(&Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Chi(*tls))), 3, true).to_string()[..]),
+                OpenShape::Pon(tls) => out.push_str(&Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Pon(*tls))), 3, true).to_string()[..]),
+                OpenShape::Kan(tls) => out.push_str(&Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Kan(*tls))), 4, true).to_string()[..]),
+            }
+
+        }
+
         out
+    }
+
+    fn remove_meld_from_tiles(&self, meld_tiles: &Vec<Tile>, tiles: &mut Vec<Option<Tile>>) {
+        for meld_tile in meld_tiles.iter() {
+            let mut index = 0;
+            for (i, tile) in tiles.iter().enumerate() {
+                match tile {
+                    None => {}
+                    Some(t) => {
+                        if t.eq(meld_tile) {
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            tiles.remove(index);
+        }
     }
 
     pub fn to_vec_of_strings(&self) -> Vec<String> {
@@ -1119,9 +1134,11 @@ mod tests {
         let rep = "123m123p12345s2z2z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
+        let mut called_tile = Tile::from_text("2m").unwrap();
+        called_tile.called_from = 3; // always called from 3
         hand.add_open_shape(OpenShape::Chi([
             Tile::from_text("1m").unwrap(),
-            Tile::from_text("2m").unwrap(),
+            called_tile,
             Tile::from_text("3m").unwrap(),
         ]));
 
@@ -1138,7 +1155,7 @@ mod tests {
         }
 
         let rep2 = hand.to_string();
-        assert_eq!(rep2, rep);
+        assert_eq!(rep2, "123p12345s2z2z(123m1)");
 
         assert_eq!(open_tiles_count, 3);
 
@@ -1150,10 +1167,12 @@ mod tests {
         let rep = "444m123p12345s2z2z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
+        let mut tile = Tile::from_text("4m").unwrap();
+        tile.called_from = 1;
         hand.add_open_shape(OpenShape::Pon([
-            Tile::from_text("4m").unwrap(),
-            Tile::from_text("4m").unwrap(),
-            Tile::from_text("4m").unwrap(),
+            tile,
+            tile,
+            tile,
         ]));
 
         let mut open_tiles_count = 0u8;
@@ -1169,7 +1188,7 @@ mod tests {
         }
 
         let rep2 = hand.to_string();
-        assert_eq!(rep2, rep);
+        assert_eq!(rep2, "123p12345s2z2z(p4m1)");
 
         assert_eq!(open_tiles_count, 3);
 
@@ -1433,6 +1452,7 @@ mod tests {
         println!("{}", hand.to_string());
         println!("{}", hand.count_tiles());
 
+        assert_eq!(hand.to_string(), "123456m1p1p(123s0)(345s1)");
         assert!(hand.validate());
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), -1);

@@ -87,19 +87,69 @@ impl Shape {
             ShapeType::Complete(cs) => match cs {
                 CompleteShape::Closed(closed) => closed_to_string(*closed),
                 CompleteShape::Open(open) => match open {
-                    OpenShape::Chi(tiles) | OpenShape::Pon(tiles) => String::from(format!(
-                        "{}{}{}",
-                        tiles[0].to_string(),
-                        tiles[1].to_string(),
-                        tiles[2].to_string()
-                    )),
-                    OpenShape::Kan(tiles) => String::from(format!(
-                        "{}{}{}{}",
-                        tiles[0].to_string(),
-                        tiles[1].to_string(),
-                        tiles[2].to_string(),
-                        tiles[3].to_string()
-                    )),
+                    OpenShape::Chi(tiles) => {
+                        let color = tiles[0].get_type_char();
+
+                        let mut called_tile = 99;
+                        for (i, t) in tiles.iter().enumerate() {
+                            if t.called_from > 0 {
+                                called_tile = i;
+                                break;
+                            }
+                        }
+
+                        if called_tile == 99 {
+                            panic!("Invalid chi - which tile did we call?");
+                        }
+
+                        String::from(format!(
+                            "({}{}{}{}{})",
+                            tiles[0].get_value(),
+                            tiles[1].get_value(),
+                            tiles[2].get_value(),
+                            color,
+                            called_tile
+                        ))
+                    },
+                    OpenShape::Pon(tiles) => {
+                        let mut called_from = 0;
+                        println!("{:#?}", tiles);
+                        for t in tiles.iter() {
+                            if t.called_from > 0 {
+                                called_from = t.called_from;
+                                break;
+                            }
+                        }
+
+                        if called_from == 0 {
+                            panic!("Invalid pon - who did we call it from?");
+                        }
+
+                        String::from(format!(
+                            "(p{}{})",
+                            tiles[0].to_string(),
+                            called_from
+                        ))
+                    },
+                    OpenShape::Kan(tiles) => {
+                        let mut called_from = 0;
+                        for t in tiles.iter() {
+                            if t.called_from > 0 {
+                                called_from = t.called_from;
+                                break;
+                            }
+                        }
+
+                        if called_from == 0 {
+                            panic!("Invalid kan - who did we call it from?");
+                        }
+
+                        String::from(format!(
+                            "(k{}{})",
+                            tiles[0].to_string(),
+                            called_from,
+                        ))
+                    },
                 },
             },
             ShapeType::Incomplete(closed, missing) => String::from(format!(

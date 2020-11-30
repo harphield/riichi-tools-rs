@@ -487,24 +487,7 @@ impl PartialOrd for Tile {
         } else if self_ord_values[2] > other_ord_values[2] {
             Some(Ordering::Greater)
         } else {
-            // if ID 136 is set, compare those
-            return match self.id_136 {
-                None => Some(Ordering::Equal),
-                Some(id_136) => {
-                    match other.id_136 {
-                        None => Some(Ordering::Equal),
-                        Some(other_id_136) => {
-                            if id_136 > other_id_136 {
-                                Some(Ordering::Greater)
-                            } else if id_136 < other_id_136 {
-                                Some(Ordering::Less)
-                            } else {
-                                Some(Ordering::Equal)
-                            }
-                        }
-                    }
-                }
-            }
+            Some(Ordering::Equal)
         };
     }
 }
