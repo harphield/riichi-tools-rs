@@ -17,6 +17,7 @@ pub struct Hand {
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
     open_shapes: Vec<OpenShape>,
+    closed_kans: Vec<ClosedShape>,
     array_34: Option<[u8; 34]>,
     shapes: Option<Vec<Shape>>,
     shanten: i8,
@@ -716,6 +717,37 @@ impl Hand {
         self.open_shapes.push(shape);
     }
 
+    pub fn add_closed_kan(&mut self, kan: ClosedShape) {
+        match kan {
+            ClosedShape::Kantsu(tiles) => {
+                for tile in tiles.iter() {
+                    let mut found = false;
+                    for (i, t) in self.tiles.iter().enumerate() {
+                        match t {
+                            None => {}
+                            Some(mut hand_tile) => {
+                                if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
+                                    hand_tile.is_open = false;
+                                    hand_tile.is_kan = true;
+                                    self.tiles[i] = Some(hand_tile);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if !found {
+                        panic!("Invalid tiles in open shape");
+                    }
+                }
+
+                self.closed_kans.push(kan)
+            },
+            _ => panic!("This is not a kan")
+        }
+    }
+
     /// Returns the size of a hand - usually 13 or 14 tiles, depending on the situation.
     pub fn count_tiles(&self) -> usize {
         let mut hand_size = 0;
@@ -1103,6 +1135,7 @@ impl Default for Hand {
         Hand {
             tiles: vec![],
             open_shapes: vec![],
+            closed_kans: vec![],
             array_34: None,
             shapes: None,
             shanten: 99,
