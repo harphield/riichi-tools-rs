@@ -2,6 +2,7 @@ use crate::riichi::riichi_error::RiichiError;
 use serde::Serializer;
 use std::cmp::Ordering;
 use std::fmt;
+use wasm_bindgen::__rt::core::fmt::{Display, Formatter};
 
 // '0m', '1m', '2m', '3m', '4m', '5m', '6m', '7m', '8m', '9m',
 // '0p', '1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p',
@@ -60,7 +61,7 @@ impl fmt::Display for TileColor {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash)]
+#[derive(Debug, Clone, Copy)]
 pub struct Tile {
     pub tile_type: TileType,
     pub is_red: bool,
@@ -179,7 +180,7 @@ impl Tile {
         match &self.tile_type {
             TileType::Number(number, color) => {
                 match color {
-                    TileColor::Manzu => number + 0, // + dereferences?
+                    TileColor::Manzu => *number,
                     TileColor::Pinzu => number + 9,
                     TileColor::Souzu => number + 18,
                 }
@@ -317,7 +318,7 @@ impl Tile {
 
         return match &self.tile_type {
             TileType::Number(number, color) => {
-                new_color = color.clone();
+                new_color = *color;
                 if *number < 9 {
                     Some(Tile::new(TileType::Number(number + 1, new_color)))
                 } else if dora {
@@ -356,7 +357,7 @@ impl Tile {
 
         return match &self.tile_type {
             TileType::Number(number, color) => {
-                new_color = color.clone();
+                new_color = *color;
                 if *number > 1 {
                     Some(Tile::new(TileType::Number(number - 1, new_color)))
                 } else {
@@ -383,14 +384,6 @@ impl Tile {
 
     pub fn is_terminal_or_honor(&self) -> bool {
         self.is_terminal() || self.is_honor()
-    }
-
-    pub fn to_string(&self) -> String {
-        match &self.tile_type {
-            TileType::Number(number, color) => format!("{}{}", number, color),
-            TileType::Wind(number) => format!("{}z", number),
-            TileType::Dragon(number) => format!("{}z", number),
-        }
     }
 
     pub fn get_type_char(&self) -> char {
@@ -437,6 +430,16 @@ impl Tile {
         };
 
         [self_type, self_color, self_number]
+    }
+}
+
+impl Display for Tile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", match &self.tile_type {
+            TileType::Number(number, color) => format!("{}{}", number, color),
+            TileType::Wind(number) => format!("{}z", number),
+            TileType::Dragon(number) => format!("{}z", number),
+        })
     }
 }
 
