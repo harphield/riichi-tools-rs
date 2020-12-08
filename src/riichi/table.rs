@@ -95,26 +95,19 @@ impl Table {
 
         for (index, value) in params {
             if index.eq(&String::from("my_hand")) {
-                match value {
-                    Value::String(s) => match Hand::from_text(s, false) {
+                if let Value::String(s) = value {
+                    match Hand::from_text(s, false) {
                         Ok(hand) => t.my_hand = Some(hand),
                         Err(error) => return Err(error),
-                    },
-                    _ => (),
+                    }
                 }
             } else if index.eq(&String::from("my_riichi")) {
-                match value {
-                    Value::Bool(b) => {
-                        t.my_riichi = Some(*b);
-                    }
-                    _ => (),
+                if let Value::Bool(b) = value {
+                    t.my_riichi = Some(*b);
                 }
             } else if index.eq(&String::from("my_tsumo")) {
-                match value {
-                    Value::Bool(b) => {
-                        t.my_tsumo = Some(*b);
-                    }
-                    _ => (),
+                if let Value::Bool(b) = value {
+                    t.my_tsumo = Some(*b);
                 }
             } else if index.eq(&String::from("prevalent_wind")) {
                 match value {
@@ -250,7 +243,7 @@ impl Table {
     pub fn get_my_winning_tile(&self) -> Tile {
         match &self.my_hand {
             None => panic!("No drawn tile in hand!"),
-            Some(hand) => hand.get_drawn_tile().unwrap().clone(),
+            Some(hand) => *hand.get_drawn_tile().unwrap(),
         }
     }
 
@@ -441,7 +434,7 @@ impl Table {
         return if self.did_i_riichi() {
             // I can only kan with tiles that won't change my hand structure
             // I can also only kan with the drawn tile
-            let mut drawn_tile = hand.get_drawn_tile().unwrap().clone();
+            let mut drawn_tile = *hand.get_drawn_tile().unwrap();
             let drawn_tile_id = drawn_tile.to_id();
 
             if !kannable_tiles.contains(&drawn_tile_id) {
