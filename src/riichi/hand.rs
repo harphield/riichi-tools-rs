@@ -2,8 +2,6 @@ use std::fmt;
 
 use super::shanten::ShantenFinder;
 use super::tile::Tile;
-use super::tile::TileColor;
-use super::tile::TileType;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::shapes::{OpenShape, Shape, ClosedShape, CompleteShape, ShapeType};
 use rand::seq::SliceRandom;
@@ -57,6 +55,10 @@ impl Hand {
 
     pub fn get_tiles(&self) -> &Vec<Option<Tile>> {
         &self.tiles
+    }
+
+    pub fn get_shapes(&self) -> &Vec<CompleteShape> {
+        &self.shapes
     }
 
     /// Returns a vector of OpenShape from shapes that we have identified in the hand.

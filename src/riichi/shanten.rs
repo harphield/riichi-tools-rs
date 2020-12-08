@@ -594,4 +594,13 @@ mod tests {
 
         assert_eq!(shanten, 0);
     }
+
+    #[test]
+    fn with_14_open_hand_chi_tenpai_parsed() {
+        let rep = "123459m11p(123s0)(345s1)";
+        let mut hand = Hand::from_text(rep, false).unwrap();
+        let shanten = hand.shanten();
+
+        assert_eq!(shanten, 0);
+    }
 }
