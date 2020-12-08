@@ -72,11 +72,8 @@ impl Shape {
                 tiles[2].to_string()
             )),
             ClosedShape::Kantsu(tiles) => String::from(format!(
-                "{}{}{}{}",
+                "(k{})",
                 tiles[0].to_string(),
-                tiles[1].to_string(),
-                tiles[2].to_string(),
-                tiles[3].to_string()
             )),
             ClosedShape::Toitsu(tiles) => {
                 String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string()))
