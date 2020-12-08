@@ -236,7 +236,6 @@ impl YakuFinder {
                                 }
 
                                 CompleteShape::Open(open) => {
-                                    // TODO open shapes
                                     match open {
                                         OpenShape::Chi(_) => {}
                                         OpenShape::Pon(tiles) => match tiles[0].tile_type {
@@ -970,6 +969,8 @@ impl Yaku {
                 }
             }
             Yaku::SanshokuDoukou => {
+                println!("{:#?}", variant);
+
                 let mut combos: HashMap<String, [bool; 3]> = HashMap::new();
 
                 for shape in variant.iter() {
@@ -1893,7 +1894,7 @@ mod tests {
     }
 
     #[test]
-    fn find_white_dragons() {
+    fn find_white_dragons_closed() {
         let mut map = Map::new();
         map.insert("my_hand".to_string(), Value::from("123m234s67888p555z"));
 
@@ -1906,7 +1907,20 @@ mod tests {
     }
 
     #[test]
-    fn find_sanshoku_doujun() {
+    fn find_white_dragons_open() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("123m234s67888p(p5z1)"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::WhiteDragons => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_sanshoku_doujun_closed() {
         let mut map = Map::new();
         map.insert("my_hand".to_string(), Value::from("234m234567s23499p"));
 
@@ -1919,22 +1933,48 @@ mod tests {
     }
 
     #[test]
-    fn find_sanshoku_doukou() {
+    fn find_sanshoku_doujun_open() {
         let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("222m222567s22299p"));
+        map.insert("my_hand".to_string(), Value::from("234m234567s99p(234p2)"));
 
         let mut table = Table::from_map(&map).unwrap();
         let res = table.yaku().unwrap();
-        assert!(match res.0.get(1).unwrap() {
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::SanshokuDoujun => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_sanshoku_doukou() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("222m222567s99p(p2p1)"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
             Yaku::SanshokuDoukou => true,
             _ => false,
         });
     }
 
     #[test]
-    fn find_ittsu() {
+    fn find_ittsu_closed() {
         let mut map = Map::new();
         map.insert("my_hand".to_string(), Value::from("11m123456789s444p"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Ittsu => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_ittsu_open() {
+        let mut map = Map::new();
+        map.insert("my_hand".to_string(), Value::from("11m123456s444p(789s0)"));
 
         let mut table = Table::from_map(&map).unwrap();
         let res = table.yaku().unwrap();
@@ -1977,7 +2017,7 @@ mod tests {
     }
 
     #[test]
-    fn find_toitoi_sanshoku() {
+    fn find_toitoi_sanankou_sanshoku() {
         let mut map = Map::new();
         // wins on a shanpon wait
         map.insert("my_hand".to_string(), Value::from("111m11155p111s22z5p"));
@@ -1993,6 +2033,24 @@ mod tests {
             _ => false,
         });
         assert!(match res.0.get(2).unwrap() {
+            Yaku::SanshokuDoukou => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_toitoi_sanshoku() {
+        let mut map = Map::new();
+        // wins on a shanpon wait
+        map.insert("my_hand".to_string(), Value::from("111m11155p22z5p(p1s3)"));
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Toitoi => true,
+            _ => false,
+        });
+        assert!(match res.0.get(1).unwrap() {
             Yaku::SanshokuDoukou => true,
             _ => false,
         });
@@ -2140,6 +2198,22 @@ mod tests {
         let res = table.yaku().unwrap();
         assert!(match res.0.get(0).unwrap() {
             Yaku::Chuuren => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn find_open_tanyao() {
+        let mut map = Map::new();
+        map.insert(
+            "my_hand".to_string(),
+            Value::from("234s22555p(p2m2)(345m1)"),
+        );
+
+        let mut table = Table::from_map(&map).unwrap();
+        let res = table.yaku().unwrap();
+        assert!(match res.0.get(0).unwrap() {
+            Yaku::Tanyao => true,
             _ => false,
         });
     }

@@ -2,12 +2,11 @@ use std::fmt;
 
 use super::shanten::ShantenFinder;
 use super::tile::Tile;
-use super::tile::TileColor;
-use super::tile::TileType;
 use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::shapes::{OpenShape, Shape};
+use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenShape, Shape, ShapeType};
 use rand::seq::SliceRandom;
 use rand::Rng;
+use regex::Regex;
 
 #[derive(Clone)]
 pub struct Hand {
@@ -15,9 +14,8 @@ pub struct Hand {
     /// it can also have kan, which are groups of 4 tiles that behave as 3 tiles
     /// so we should have a vector with 13 100% present tiles and 5 optional (4 from possible kans and 1 possible draw)
     tiles: Vec<Option<Tile>>,
-    open_shapes: Vec<OpenShape>,
     array_34: Option<[u8; 34]>,
-    shapes: Option<Vec<Shape>>,
+    shapes: Vec<CompleteShape>,
     shanten: i8,
 }
 
@@ -59,8 +57,22 @@ impl Hand {
         &self.tiles
     }
 
-    pub fn get_open_shapes(&self) -> &Vec<OpenShape> {
-        &self.open_shapes
+    pub fn get_shapes(&self) -> &Vec<CompleteShape> {
+        &self.shapes
+    }
+
+    /// Returns a vector of OpenShape from shapes that we have identified in the hand.
+    pub fn get_open_shapes(&self) -> Vec<OpenShape> {
+        let mut open_shapes = vec![];
+
+        for complete_shape in self.shapes.iter() {
+            match complete_shape {
+                CompleteShape::Closed(_) => {}
+                CompleteShape::Open(open_shape) => open_shapes.push(*open_shape),
+            }
+        }
+
+        open_shapes
     }
 
     /// Converts our tiles vector to an array of 34 counts, since riichi has 34 different tiles.
@@ -79,19 +91,9 @@ impl Hand {
         array_34
     }
 
-    /// TODO
-    pub fn random_hand(count: u8) -> Hand {
-        if count < 13 || count > 14 {
-            panic!("Only 13 or 14 tile hands allowed");
-        } else {
-            Hand::new(vec![Option::Some(Tile::new(TileType::Number(
-                1,
-                TileColor::Manzu,
-            )))])
-        }
-    }
-
     /// Generate a 14 tile hand that is complete
+    /// TODO fix kan generation
+    /// TODO add open hand generation
     pub fn random_complete_hand(closed: bool, kans: bool) -> Hand {
         // we are looking to generate 4 shapes + 1 pair, so 5 shapes
         // ignoring kokushi and chiitoitsu for now
@@ -312,10 +314,218 @@ impl Hand {
     }
 
     /// Parses a hand from its text representation.
-    /// force_return: will return even a partial hand
+    /// force_return: will return even a partial/invalid hand
+    /// TODO: red 5
     pub fn from_text(representation: &str, force_return: bool) -> Result<Hand, RiichiError> {
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"(?P<closed>[0-9mspz]+)|\((?P<chi>[0-9]{3}[msp][0-2])\)|\((?P<pon>p[0-9][mspz][1-3])\)|\((?P<kan>k[0-9][mspz][1-3]?)\)").unwrap();
+        }
+
+        let mut closed = vec![];
+        let mut chis = vec![];
+        let mut pons = vec![];
+        let mut kans = vec![];
+        for cap in RE.captures_iter(representation) {
+            match cap.name("closed") {
+                None => {}
+                Some(value) => closed.push(value.as_str()),
+            }
+            match cap.name("chi") {
+                None => {}
+                Some(value) => chis.push(value.as_str()),
+            }
+            match cap.name("pon") {
+                None => {}
+                Some(value) => pons.push(value.as_str()),
+            }
+            match cap.name("kan") {
+                None => {}
+                Some(value) => kans.push(value.as_str()),
+            }
+        }
+
+        if closed.len() != 1 {
+            return Err(RiichiError::new(333, "Closed hand not defined correctly"));
+        }
+
+        let mut tiles = match Hand::parse_closed_hand(closed.get(0).unwrap()) {
+            Ok(t) => t,
+            Err(e) => return Err(e),
+        };
+
+        let mut chi_tiles_and_shapes = match Hand::parse_chis(&chis) {
+            Ok(t) => t,
+            Err(e) => return Err(e),
+        };
+
+        let mut pon_tiles_and_shapes = match Hand::parse_pons(&pons) {
+            Ok(t) => t,
+            Err(e) => return Err(e),
+        };
+
+        let mut kan_tiles_and_shapes = match Hand::parse_kans(&kans) {
+            Ok(t) => t,
+            Err(e) => return Err(e),
+        };
+
+        tiles.append(&mut chi_tiles_and_shapes.0);
+        tiles.append(&mut pon_tiles_and_shapes.0);
+        tiles.append(&mut kan_tiles_and_shapes.0);
+
+        let mut hand = Hand::new(tiles);
+
+        for shape in chi_tiles_and_shapes.1 {
+            hand.add_open_shape(shape);
+        }
+
+        for shape in pon_tiles_and_shapes.1 {
+            hand.add_open_shape(shape);
+        }
+
+        for shape in kan_tiles_and_shapes.1 {
+            match shape {
+                CompleteShape::Closed(closed_kan) => {
+                    hand.add_closed_kan(closed_kan);
+                }
+                CompleteShape::Open(open_shape) => {
+                    hand.add_open_shape(open_shape);
+                }
+            }
+        }
+
+        if force_return || hand.validate() {
+            return Result::Ok(hand);
+        }
+
+        Err(RiichiError::new(100, "Couldn't parse hand representation."))
+    }
+
+    /// A chi looks like this:
+    /// (XYZCN) where
+    /// X, Y, Z: consecutive tile numbers (0-9) * 3
+    /// C = color (msp)
+    /// N = which tile has been called? Index 0-2
+    ///
+    /// Only insides of the brackets are in the chis vector.
+    fn parse_chis(chis: &Vec<&str>) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
+        let mut tiles: Vec<Option<Tile>> = Vec::new();
+        let mut shapes: Vec<OpenShape> = Vec::new();
+
+        for chi in chis.iter() {
+            let c = chi.chars().nth(3).unwrap();
+            let n = chi.chars().nth(4).unwrap();
+
+            let mut tile_1 =
+                Tile::from_text(&format!("{}{}", chi.chars().nth(0).unwrap(), c)[..]).unwrap();
+            if n.eq(&'0') {
+                tile_1.called_from = 3;
+            }
+            let mut tile_2 =
+                Tile::from_text(&format!("{}{}", chi.chars().nth(1).unwrap(), c)[..]).unwrap();
+            if n.eq(&'1') {
+                tile_2.called_from = 3;
+            }
+            let mut tile_3 =
+                Tile::from_text(&format!("{}{}", chi.chars().nth(2).unwrap(), c)[..]).unwrap();
+            if n.eq(&'2') {
+                tile_3.called_from = 3;
+            }
+
+            tiles.push(Some(tile_1));
+            tiles.push(Some(tile_2));
+            tiles.push(Some(tile_3));
+
+            shapes.push(OpenShape::Chi([tile_1, tile_2, tile_3]))
+        }
+
+        Ok((tiles, shapes))
+    }
+
+    /// A pon looks like this:
+    /// (pNCP) where
+    /// p = pon
+    /// N = number 0-9
+    /// C = color (mpsz)
+    /// P = player who was ponned
+    ///
+    /// Only insides of the brackets are in the pons vector.
+    fn parse_pons(pons: &Vec<&str>) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
+        let mut tiles: Vec<Option<Tile>> = Vec::new();
+        let mut shapes: Vec<OpenShape> = Vec::new();
+
+        for pon in pons.iter() {
+            // number
+            let n = pon.chars().nth(1).unwrap();
+            // color
+            let c = pon.chars().nth(2).unwrap();
+            // player
+            let p = pon.chars().nth(3).unwrap();
+
+            let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+
+            // TODO maybe sometimes specify exactly which one was called with id_136?
+            tile.called_from = p.to_digit(10).unwrap() as u8;
+            shapes.push(OpenShape::Pon([tile, tile, tile]));
+
+            tiles.push(Some(tile));
+            tiles.push(Some(tile));
+            tiles.push(Some(tile));
+        }
+
+        Ok((tiles, shapes))
+    }
+
+    /// A kan looks like this:
+    /// (kNCP) where
+    /// k = kan
+    /// N = number 0-9
+    /// C = color (mpsz)
+    /// P = player who was kanned (or ponned originally, if the kan is upgraded from pon). Optional - closed kans don't have this.
+    ///
+    /// Only insides of the brackets are in the kans vector.
+    fn parse_kans(
+        kans: &Vec<&str>,
+    ) -> Result<(Vec<Option<Tile>>, Vec<CompleteShape>), RiichiError> {
+        let mut tiles: Vec<Option<Tile>> = Vec::new();
+        let mut shapes: Vec<CompleteShape> = Vec::new();
+
+        for kan in kans.iter() {
+            // number
+            let n = kan.chars().nth(1).unwrap();
+            // color
+            let c = kan.chars().nth(2).unwrap();
+            // player
+            let p = match kan.chars().nth(3) {
+                None => 0,
+                Some(value) => value.to_digit(10).unwrap() as u8,
+            } as u8;
+
+            let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+
+            tiles.push(Some(tile));
+            tiles.push(Some(tile));
+            tiles.push(Some(tile));
+
+            if p > 0 {
+                tile.called_from = p;
+                shapes.push(CompleteShape::Open(OpenShape::Kan([
+                    tile, tile, tile, tile,
+                ])));
+            } else {
+                shapes.push(CompleteShape::Closed(ClosedShape::Kantsu([
+                    tile, tile, tile, tile,
+                ])));
+            }
+            tiles.push(Some(tile));
+        }
+
+        Ok((tiles, shapes))
+    }
+
+    /// Closed part of the hand (or the whole hand, if we have no open tiles / kans)
+    fn parse_closed_hand(closed: &str) -> Result<Vec<Option<Tile>>, RiichiError> {
         // let's read the hand from the back, because colors are written after the numbers
-        let iter = representation.chars().rev();
+        let iter = closed.chars().rev();
         let mut tiles: Vec<Option<Tile>> = Vec::new();
 
         let mut color: char = 'x';
@@ -349,15 +559,7 @@ impl Hand {
             }
         }
 
-        tiles.sort();
-
-        let mut hand = Hand::new(tiles);
-
-        if force_return || hand.validate() {
-            return Result::Ok(hand);
-        }
-
-        Err(RiichiError::new(100, "Couldn't parse hand representation."))
+        Ok(tiles)
     }
 
     /// Adds a tile to this hand
@@ -421,8 +623,8 @@ impl Hand {
         self.add_tile(tile);
     }
 
+    /// Goes through the tiles and dedicates them to an open shape
     pub fn add_open_shape(&mut self, shape: OpenShape) {
-        // TODO change the drawn tile to a different one if we removed all of them
         match shape {
             OpenShape::Chi(tiles) => {
                 for tile in tiles.iter() {
@@ -495,7 +697,38 @@ impl Hand {
             }
         }
 
-        self.open_shapes.push(shape);
+        self.shapes.push(CompleteShape::Open(shape));
+    }
+
+    pub fn add_closed_kan(&mut self, kan: ClosedShape) {
+        match kan {
+            ClosedShape::Kantsu(tiles) => {
+                for tile in tiles.iter() {
+                    let mut found = false;
+                    for (i, t) in self.tiles.iter().enumerate() {
+                        match t {
+                            None => {}
+                            Some(mut hand_tile) => {
+                                if hand_tile.eq(tile) && !hand_tile.is_open && !hand_tile.is_kan {
+                                    hand_tile.is_open = false;
+                                    hand_tile.is_kan = true;
+                                    self.tiles[i] = Some(hand_tile);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if !found {
+                        panic!("Invalid tiles in open shape");
+                    }
+                }
+
+                self.shapes.push(CompleteShape::Closed(kan))
+            }
+            _ => panic!("This is not a kan"),
+        }
     }
 
     /// Returns the size of a hand - usually 13 or 14 tiles, depending on the situation.
@@ -546,15 +779,43 @@ impl Hand {
     }
 
     pub fn is_closed(&self) -> bool {
-        self.open_shapes.is_empty()
+        self.get_open_shapes().is_empty()
     }
 
+    /// Renders the hand as a string representation.
+    /// The notation looks like this:
+    /// Tiles are written as NC (number + color)
+    /// More tiles of the same color can be written consecutively (1234p)
+    /// z = honors - 1-4 = winds, 5-7 = dragons
+    /// 0mps = red 5 (TODO)
+    /// Open shapes are in brackets, (123s2) (p1s1) (k2p3) etc. See parse_* functions for more info
     pub fn to_string(&self) -> String {
         let mut out = String::new();
         let mut color = 'x';
-        let mut last_tile: Option<String> = Option::None;
+        let mut last_tile: Option<&Tile> = Option::None;
 
-        for tile in self.tiles.iter() {
+        let mut tiles = self.tiles.clone();
+
+        for complete_shape in self.shapes.iter() {
+            match complete_shape {
+                CompleteShape::Closed(closed_shape) => match closed_shape {
+                    ClosedShape::Kantsu(closed_kan) => {
+                        self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
+                    }
+                    _ => {}
+                },
+                CompleteShape::Open(open_shape) => match open_shape {
+                    OpenShape::Chi(tls) | OpenShape::Pon(tls) => {
+                        self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
+                    }
+                    OpenShape::Kan(tls) => {
+                        self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
+                    }
+                },
+            }
+        }
+
+        for tile in tiles.iter() {
             match &tile {
                 Option::Some(some_tile) => {
                     if color != some_tile.get_type_char() {
@@ -565,7 +826,7 @@ impl Hand {
                     }
 
                     if some_tile.is_draw {
-                        last_tile = Option::Some(some_tile.to_string());
+                        last_tile = Option::Some(some_tile);
                     } else {
                         out.push_str(&some_tile.get_value().to_string()[..]);
                     }
@@ -574,14 +835,83 @@ impl Hand {
             }
         }
 
-        out.push_str(&color.to_string()[..]);
-
         match last_tile {
-            Option::Some(tile_repr) => out.push_str(&tile_repr[..]),
-            Option::None => (),
+            Option::Some(ltt) => {
+                if ltt.get_type_char() == color {
+                    out.push_str(&ltt.get_value().to_string()[..]);
+                    out.push_str(&color.to_string()[..]);
+                } else {
+                    out.push_str(&color.to_string()[..]);
+                    out.push_str(&ltt.to_string());
+                }
+            }
+            Option::None => out.push_str(&color.to_string()[..]),
+        }
+
+        for complete_shape in self.shapes.iter() {
+            match complete_shape {
+                CompleteShape::Closed(closed_shape) => match closed_shape {
+                    ClosedShape::Kantsu(closed_kan) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(
+                                *closed_kan,
+                            ))),
+                            4,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                    _ => {}
+                },
+                CompleteShape::Open(open_shape) => match open_shape {
+                    OpenShape::Chi(tls) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Open(OpenShape::Chi(*tls))),
+                            3,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                    OpenShape::Pon(tls) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Open(OpenShape::Pon(*tls))),
+                            3,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                    OpenShape::Kan(tls) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Open(OpenShape::Kan(*tls))),
+                            4,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                },
+            }
         }
 
         out
+    }
+
+    fn remove_meld_from_tiles(&self, meld_tiles: &Vec<Tile>, tiles: &mut Vec<Option<Tile>>) {
+        for meld_tile in meld_tiles.iter() {
+            let mut index = 0;
+            for (i, tile) in tiles.iter().enumerate() {
+                match tile {
+                    None => {}
+                    Some(t) => {
+                        if t.eq(meld_tile) {
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            tiles.remove(index);
+        }
     }
 
     pub fn to_vec_of_strings(&self) -> Vec<String> {
@@ -835,9 +1165,8 @@ impl Default for Hand {
     fn default() -> Hand {
         Hand {
             tiles: vec![],
-            open_shapes: vec![],
             array_34: None,
-            shapes: None,
+            shapes: vec![],
             shanten: 99,
         }
     }
@@ -855,7 +1184,7 @@ mod tests {
 
     #[test]
     fn from_text_hand() {
-        let rep = "123m123p12345s2z2z";
+        let rep = "123m123p12345s22z";
         let hand = Hand::from_text(rep, false).unwrap();
 
         let rep2 = hand.to_string();
@@ -864,12 +1193,14 @@ mod tests {
 
     #[test]
     fn from_text_hand_add_chi() {
-        let rep = "123m123p12345s2z2z";
+        let rep = "123m123p12345s22z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
+        let mut called_tile = Tile::from_text("2m").unwrap();
+        called_tile.called_from = 3; // always called from 3
         hand.add_open_shape(OpenShape::Chi([
             Tile::from_text("1m").unwrap(),
-            Tile::from_text("2m").unwrap(),
+            called_tile,
             Tile::from_text("3m").unwrap(),
         ]));
 
@@ -886,7 +1217,7 @@ mod tests {
         }
 
         let rep2 = hand.to_string();
-        assert_eq!(rep2, rep);
+        assert_eq!(rep2, "123p12345s22z(123m1)");
 
         assert_eq!(open_tiles_count, 3);
 
@@ -895,14 +1226,12 @@ mod tests {
 
     #[test]
     fn from_text_hand_add_pon() {
-        let rep = "444m123p12345s2z2z";
+        let rep = "444m123p12345s22z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
-        hand.add_open_shape(OpenShape::Pon([
-            Tile::from_text("4m").unwrap(),
-            Tile::from_text("4m").unwrap(),
-            Tile::from_text("4m").unwrap(),
-        ]));
+        let mut tile = Tile::from_text("4m").unwrap();
+        tile.called_from = 1;
+        hand.add_open_shape(OpenShape::Pon([tile, tile, tile]));
 
         let mut open_tiles_count = 0u8;
         for rt in hand.get_tiles().iter() {
@@ -917,7 +1246,7 @@ mod tests {
         }
 
         let rep2 = hand.to_string();
-        assert_eq!(rep2, rep);
+        assert_eq!(rep2, "123p12345s22z(p4m1)");
 
         assert_eq!(open_tiles_count, 3);
 
@@ -1157,6 +1486,44 @@ mod tests {
         println!("{}", hand.to_string());
         println!("{}", hand.count_tiles());
 
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), -1);
+    }
+
+    #[test]
+    fn parse_open_hand_two_pons() {
+        let mut hand = Hand::from_text("123456m11p(p7s1)(p4p2)", false).unwrap();
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), -1);
+    }
+
+    #[test]
+    fn parse_open_hand_two_chis() {
+        let mut hand = Hand::from_text("123456m11p(123s0)(345s1)", false).unwrap();
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert_eq!(hand.to_string(), "123456m11p(123s0)(345s1)");
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), -1);
+    }
+
+    #[test]
+    fn parse_open_hand_kans() {
+        let mut hand = Hand::from_text("123456m11p(k1s)(k2s1)", false).unwrap();
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert_eq!(hand.to_string(), "123456m11p(k1s)(k2s1)");
         assert!(hand.validate());
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), -1);

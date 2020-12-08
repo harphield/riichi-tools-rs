@@ -68,6 +68,7 @@ pub struct Tile {
     pub is_draw: bool,
     pub is_chi: bool,
     pub is_pon: bool,
+    pub called_from: u8,
     pub is_kan: bool,
     pub is_riichi: bool,
     pub is_tsumogiri: bool,
@@ -409,6 +410,7 @@ impl Tile {
     }
 
     /// Returns an array of 3 values: type, color and number for this tile
+    /// TODO red 5s
     fn get_ordering_values(&self) -> [u8; 3] {
         let self_type;
         let mut self_color = 0;
@@ -447,6 +449,7 @@ impl Default for Tile {
             is_open: false,
             is_chi: false,
             is_pon: false,
+            called_from: 0,
             is_kan: false,
             is_riichi: false,
             is_tsumogiri: false,

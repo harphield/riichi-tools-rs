@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.62
+v0.0.63
 
 [![Build Status](https://travis-ci.org/harphield/riichi-tools-rs.png?branch=master)](https://travis-ci.org/harphield/riichi-tools-rs)
 
@@ -18,8 +18,8 @@ Showcase / frontend of this library can be found at https://riichi.harphield.com
     - Shanten for 14 tiles with complete hand indication [DONE]
     - Ukeire, tile acceptance [DONE]    
     - Hand value + yaku for complete hand (14 tiles) [DONE]
-    - Hand value + yaku for tenpai hand with possible outcomes
-    - All of the above also for hands with calls
+    - Hand value + yaku for tenpai hand with possible outcomes [DONE]
+    - All of the above also for hands with calls [DONE]
     - Rule variants (Tenhou vs WRC vs MahjongSoul etc.)
 - Table analysis
     - Safe tiles
