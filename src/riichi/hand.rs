@@ -59,6 +59,7 @@ impl Hand {
         &self.tiles
     }
 
+    /// Returns a vector of OpenShape from shapes that we have identified in the hand.
     pub fn get_open_shapes(&self) -> Vec<OpenShape> {
         let mut open_shapes = vec![];
 
@@ -88,19 +89,9 @@ impl Hand {
         array_34
     }
 
-    /// TODO
-    pub fn random_hand(count: u8) -> Hand {
-        if count < 13 || count > 14 {
-            panic!("Only 13 or 14 tile hands allowed");
-        } else {
-            Hand::new(vec![Option::Some(Tile::new(TileType::Number(
-                1,
-                TileColor::Manzu,
-            )))])
-        }
-    }
-
     /// Generate a 14 tile hand that is complete
+    /// TODO fix kan generation
+    /// TODO add open hand generation
     pub fn random_complete_hand(closed: bool, kans: bool) -> Hand {
         // we are looking to generate 4 shapes + 1 pair, so 5 shapes
         // ignoring kokushi and chiitoitsu for now
@@ -322,7 +313,6 @@ impl Hand {
 
     /// Parses a hand from its text representation.
     /// force_return: will return even a partial/invalid hand
-    /// TODO: closed kan
     /// TODO: red 5
     pub fn from_text(representation: &str, force_return: bool) -> Result<Hand, RiichiError> {
         lazy_static! {
@@ -355,11 +345,6 @@ impl Hand {
         if closed.len() != 1 {
             return Err(RiichiError::new(333, "Closed hand not defined correctly"));
         }
-
-        // println!("{:#?}", closed);
-        // println!("{:#?}", pons);
-        // println!("{:#?}", chis);
-        // println!("{:#?}", kans);
 
         let mut tiles = match Hand::parse_closed_hand(closed.get(0).unwrap()) {
             Ok(t) => t,
@@ -546,6 +531,7 @@ impl Hand {
         Ok((tiles, shapes))
     }
 
+    /// Closed part of the hand (or the whole hand, if we have no open tiles / kans)
     fn parse_closed_hand(closed: &str) -> Result<Vec<Option<Tile>>, RiichiError> {
         // let's read the hand from the back, because colors are written after the numbers
         let iter = closed.chars().rev();
@@ -646,8 +632,8 @@ impl Hand {
         self.add_tile(tile);
     }
 
+    /// Goes through the tiles and dedicates them to an open shape
     pub fn add_open_shape(&mut self, shape: OpenShape) {
-        // TODO change the drawn tile to a different one if we removed all of them
         match shape {
             OpenShape::Chi(tiles) => {
                 for tile in tiles.iter() {
