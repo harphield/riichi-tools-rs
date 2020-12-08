@@ -1,7 +1,7 @@
 use crate::riichi::hand::Hand;
-use crate::riichi::shapes::{CompleteShape, OpenShape};
 use crate::riichi::shapes::ShapeType;
 use crate::riichi::shapes::{ClosedShape, Shape};
+use crate::riichi::shapes::{CompleteShape, OpenShape};
 use crate::riichi::tile::Tile;
 
 pub struct ShapeFinder {
@@ -27,19 +27,31 @@ impl ShapeFinder {
         let mut shapes = vec![];
         for shape in complete_shapes.iter() {
             match shape {
-                CompleteShape::Closed(closed) => {
-                    match closed {
-                        ClosedShape::Kantsu(tiles) => shapes.push(Shape::new(ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(*tiles))), 4, false)),
-                        _ => {}
-                    }
-                }
-                CompleteShape::Open(open) => {
-                    match open {
-                        OpenShape::Chi(tiles) => shapes.push(Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Chi(*tiles))), 3, true)),
-                        OpenShape::Pon(tiles) => shapes.push(Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Pon(*tiles))), 3, true)),
-                        OpenShape::Kan(tiles) => shapes.push(Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Kan(*tiles))), 4, true)),
-                    }
-                }
+                CompleteShape::Closed(closed) => match closed {
+                    ClosedShape::Kantsu(tiles) => shapes.push(Shape::new(
+                        ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(*tiles))),
+                        4,
+                        false,
+                    )),
+                    _ => {}
+                },
+                CompleteShape::Open(open) => match open {
+                    OpenShape::Chi(tiles) => shapes.push(Shape::new(
+                        ShapeType::Complete(CompleteShape::Open(OpenShape::Chi(*tiles))),
+                        3,
+                        true,
+                    )),
+                    OpenShape::Pon(tiles) => shapes.push(Shape::new(
+                        ShapeType::Complete(CompleteShape::Open(OpenShape::Pon(*tiles))),
+                        3,
+                        true,
+                    )),
+                    OpenShape::Kan(tiles) => shapes.push(Shape::new(
+                        ShapeType::Complete(CompleteShape::Open(OpenShape::Kan(*tiles))),
+                        4,
+                        true,
+                    )),
+                },
             }
         }
         self.search(&mut array_34, 0, &mut shapes);

@@ -3,7 +3,7 @@ use std::fmt;
 use super::shanten::ShantenFinder;
 use super::tile::Tile;
 use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::shapes::{OpenShape, Shape, ClosedShape, CompleteShape, ShapeType};
+use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenShape, Shape, ShapeType};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
@@ -68,7 +68,7 @@ impl Hand {
         for complete_shape in self.shapes.iter() {
             match complete_shape {
                 CompleteShape::Closed(_) => {}
-                CompleteShape::Open(open_shape) => open_shapes.push(*open_shape)
+                CompleteShape::Open(open_shape) => open_shapes.push(*open_shape),
             }
         }
 
@@ -328,19 +328,19 @@ impl Hand {
         for cap in RE.captures_iter(representation) {
             match cap.name("closed") {
                 None => {}
-                Some(value) => closed.push(value.as_str())
+                Some(value) => closed.push(value.as_str()),
             }
             match cap.name("chi") {
                 None => {}
-                Some(value) => chis.push(value.as_str())
+                Some(value) => chis.push(value.as_str()),
             }
             match cap.name("pon") {
                 None => {}
-                Some(value) => pons.push(value.as_str())
+                Some(value) => pons.push(value.as_str()),
             }
             match cap.name("kan") {
                 None => {}
-                Some(value) => kans.push(value.as_str())
+                Some(value) => kans.push(value.as_str()),
             }
         }
 
@@ -350,22 +350,22 @@ impl Hand {
 
         let mut tiles = match Hand::parse_closed_hand(closed.get(0).unwrap()) {
             Ok(t) => t,
-            Err(e) => return Err(e)
+            Err(e) => return Err(e),
         };
 
         let mut chi_tiles_and_shapes = match Hand::parse_chis(&chis) {
             Ok(t) => t,
-            Err(e) => return Err(e)
+            Err(e) => return Err(e),
         };
 
         let mut pon_tiles_and_shapes = match Hand::parse_pons(&pons) {
             Ok(t) => t,
-            Err(e) => return Err(e)
+            Err(e) => return Err(e),
         };
 
         let mut kan_tiles_and_shapes = match Hand::parse_kans(&kans) {
             Ok(t) => t,
-            Err(e) => return Err(e)
+            Err(e) => return Err(e),
         };
 
         tiles.append(&mut chi_tiles_and_shapes.0);
@@ -415,15 +415,18 @@ impl Hand {
             let c = chi.chars().nth(3).unwrap();
             let n = chi.chars().nth(4).unwrap();
 
-            let mut tile_1 = Tile::from_text(&format!("{}{}", chi.chars().nth(0).unwrap(), c)[..]).unwrap();
+            let mut tile_1 =
+                Tile::from_text(&format!("{}{}", chi.chars().nth(0).unwrap(), c)[..]).unwrap();
             if n.eq(&'0') {
                 tile_1.called_from = 3;
             }
-            let mut tile_2 = Tile::from_text(&format!("{}{}", chi.chars().nth(1).unwrap(), c)[..]).unwrap();
+            let mut tile_2 =
+                Tile::from_text(&format!("{}{}", chi.chars().nth(1).unwrap(), c)[..]).unwrap();
             if n.eq(&'1') {
                 tile_2.called_from = 3;
             }
-            let mut tile_3 = Tile::from_text(&format!("{}{}", chi.chars().nth(2).unwrap(), c)[..]).unwrap();
+            let mut tile_3 =
+                Tile::from_text(&format!("{}{}", chi.chars().nth(2).unwrap(), c)[..]).unwrap();
             if n.eq(&'2') {
                 tile_3.called_from = 3;
             }
@@ -432,11 +435,7 @@ impl Hand {
             tiles.push(Some(tile_2));
             tiles.push(Some(tile_3));
 
-            shapes.push(OpenShape::Chi([
-                tile_1,
-                tile_2,
-                tile_3,
-            ]))
+            shapes.push(OpenShape::Chi([tile_1, tile_2, tile_3]))
         }
 
         Ok((tiles, shapes))
@@ -466,11 +465,7 @@ impl Hand {
 
             // TODO maybe sometimes specify exactly which one was called with id_136?
             tile.called_from = p.to_digit(10).unwrap() as u8;
-            shapes.push(OpenShape::Pon([
-                tile,
-                tile,
-                tile,
-            ]));
+            shapes.push(OpenShape::Pon([tile, tile, tile]));
 
             tiles.push(Some(tile));
             tiles.push(Some(tile));
@@ -488,7 +483,9 @@ impl Hand {
     /// P = player who was kanned (or ponned originally, if the kan is upgraded from pon). Optional - closed kans don't have this.
     ///
     /// Only insides of the brackets are in the kans vector.
-    fn parse_kans(kans: &Vec<&str>) -> Result<(Vec<Option<Tile>>, Vec<CompleteShape>), RiichiError> {
+    fn parse_kans(
+        kans: &Vec<&str>,
+    ) -> Result<(Vec<Option<Tile>>, Vec<CompleteShape>), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
         let mut shapes: Vec<CompleteShape> = Vec::new();
 
@@ -500,7 +497,7 @@ impl Hand {
             // player
             let p = match kan.chars().nth(3) {
                 None => 0,
-                Some(value) => value.to_digit(10).unwrap() as u8
+                Some(value) => value.to_digit(10).unwrap() as u8,
             } as u8;
 
             let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
@@ -512,20 +509,12 @@ impl Hand {
             if p > 0 {
                 tile.called_from = p;
                 shapes.push(CompleteShape::Open(OpenShape::Kan([
-                        tile,
-                        tile,
-                        tile,
-                        tile,
-                    ]))
-                );
+                    tile, tile, tile, tile,
+                ])));
             } else {
                 shapes.push(CompleteShape::Closed(ClosedShape::Kantsu([
-                        tile,
-                        tile,
-                        tile,
-                        tile,
-                    ]))
-                );
+                    tile, tile, tile, tile,
+                ])));
             }
             tiles.push(Some(tile));
         }
@@ -737,8 +726,8 @@ impl Hand {
                 }
 
                 self.shapes.push(CompleteShape::Closed(kan))
-            },
-            _ => panic!("This is not a kan")
+            }
+            _ => panic!("This is not a kan"),
         }
     }
 
@@ -809,24 +798,20 @@ impl Hand {
 
         for complete_shape in self.shapes.iter() {
             match complete_shape {
-                CompleteShape::Closed(closed_shape) => {
-                    match closed_shape {
-                        ClosedShape::Kantsu(closed_kan) => {
-                            self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
-                        }
-                        _ => {}
+                CompleteShape::Closed(closed_shape) => match closed_shape {
+                    ClosedShape::Kantsu(closed_kan) => {
+                        self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
                     }
-                }
-                CompleteShape::Open(open_shape) => {
-                    match open_shape {
-                        OpenShape::Chi(tls) | OpenShape::Pon(tls) => {
-                            self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
-                        },
-                        OpenShape::Kan(tls) => {
-                            self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
-                        }
+                    _ => {}
+                },
+                CompleteShape::Open(open_shape) => match open_shape {
+                    OpenShape::Chi(tls) | OpenShape::Pon(tls) => {
+                        self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
                     }
-                }
+                    OpenShape::Kan(tls) => {
+                        self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
+                    }
+                },
             }
         }
 
@@ -859,25 +844,51 @@ impl Hand {
                     out.push_str(&color.to_string()[..]);
                     out.push_str(&ltt.to_string());
                 }
-            },
+            }
             Option::None => out.push_str(&color.to_string()[..]),
         }
 
         for complete_shape in self.shapes.iter() {
             match complete_shape {
-                CompleteShape::Closed(closed_shape) => {
-                    match closed_shape {
-                        ClosedShape::Kantsu(closed_kan) => out.push_str(&Shape::new(ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(*closed_kan))), 4, true).to_string()[..]),
-                        _ => {}
-                    }
-                }
-                CompleteShape::Open(open_shape) => {
-                    match open_shape {
-                        OpenShape::Chi(tls) => out.push_str(&Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Chi(*tls))), 3, true).to_string()[..]),
-                        OpenShape::Pon(tls) => out.push_str(&Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Pon(*tls))), 3, true).to_string()[..]),
-                        OpenShape::Kan(tls) => out.push_str(&Shape::new(ShapeType::Complete(CompleteShape::Open(OpenShape::Kan(*tls))), 4, true).to_string()[..]),
-                    }
-                }
+                CompleteShape::Closed(closed_shape) => match closed_shape {
+                    ClosedShape::Kantsu(closed_kan) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(
+                                *closed_kan,
+                            ))),
+                            4,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                    _ => {}
+                },
+                CompleteShape::Open(open_shape) => match open_shape {
+                    OpenShape::Chi(tls) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Open(OpenShape::Chi(*tls))),
+                            3,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                    OpenShape::Pon(tls) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Open(OpenShape::Pon(*tls))),
+                            3,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                    OpenShape::Kan(tls) => out.push_str(
+                        &Shape::new(
+                            ShapeType::Complete(CompleteShape::Open(OpenShape::Kan(*tls))),
+                            4,
+                            true,
+                        )
+                        .to_string()[..],
+                    ),
+                },
             }
         }
 
@@ -1220,11 +1231,7 @@ mod tests {
 
         let mut tile = Tile::from_text("4m").unwrap();
         tile.called_from = 1;
-        hand.add_open_shape(OpenShape::Pon([
-            tile,
-            tile,
-            tile,
-        ]));
+        hand.add_open_shape(OpenShape::Pon([tile, tile, tile]));
 
         let mut open_tiles_count = 0u8;
         for rt in hand.get_tiles().iter() {

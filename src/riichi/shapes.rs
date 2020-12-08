@@ -71,10 +71,7 @@ impl Shape {
                 tiles[1].to_string(),
                 tiles[2].to_string()
             )),
-            ClosedShape::Kantsu(tiles) => String::from(format!(
-                "(k{})",
-                tiles[0].to_string(),
-            )),
+            ClosedShape::Kantsu(tiles) => String::from(format!("(k{})", tiles[0].to_string(),)),
             ClosedShape::Toitsu(tiles) => {
                 String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string()))
             }
@@ -107,7 +104,7 @@ impl Shape {
                             color,
                             called_tile
                         ))
-                    },
+                    }
                     OpenShape::Pon(tiles) => {
                         let mut called_from = 0;
                         println!("{:#?}", tiles);
@@ -122,12 +119,8 @@ impl Shape {
                             panic!("Invalid pon - who did we call it from?");
                         }
 
-                        String::from(format!(
-                            "(p{}{})",
-                            tiles[0].to_string(),
-                            called_from
-                        ))
-                    },
+                        String::from(format!("(p{}{})", tiles[0].to_string(), called_from))
+                    }
                     OpenShape::Kan(tiles) => {
                         let mut called_from = 0;
                         for t in tiles.iter() {
@@ -141,12 +134,8 @@ impl Shape {
                             panic!("Invalid kan - who did we call it from?");
                         }
 
-                        String::from(format!(
-                            "(k{}{})",
-                            tiles[0].to_string(),
-                            called_from,
-                        ))
-                    },
+                        String::from(format!("(k{}{})", tiles[0].to_string(), called_from,))
+                    }
                 },
             },
             ShapeType::Incomplete(closed, missing) => String::from(format!(

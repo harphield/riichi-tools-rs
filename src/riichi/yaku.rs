@@ -236,7 +236,6 @@ impl YakuFinder {
                                 }
 
                                 CompleteShape::Open(open) => {
-                                    // TODO open shapes
                                     match open {
                                         OpenShape::Chi(_) => {}
                                         OpenShape::Pon(tiles) => match tiles[0].tile_type {
@@ -2167,7 +2166,10 @@ mod tests {
     #[test]
     fn find_open_tanyao() {
         let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("234s22555p(p2m2)(345m1)"));
+        map.insert(
+            "my_hand".to_string(),
+            Value::from("234s22555p(p2m2)(345m1)"),
+        );
 
         let mut table = Table::from_map(&map).unwrap();
         let res = table.yaku().unwrap();
