@@ -90,7 +90,7 @@ impl Score {
 
                     loop {
                         han += 1;
-                        fu = fu / 2;
+                        fu /= 2;
                         if fu >= 20 && (fu == 25 || fu as f32 % 10f32 == 0f32) {
                             // fu 20 can only be achieved with a tsumo
                             if fu == 20 && !tsumo {
@@ -187,19 +187,17 @@ impl Score {
             } else {
                 32000
             }
-        } else {
-            if self.oya {
-                if self.tsumo {
-                    ((((base_points * 2) as f32 / 100f32).ceil() * 100f32) * 3f32) as u32
-                } else {
-                    (((base_points * 6) as f32 / 100f32).ceil() * 100f32) as u32
-                }
-            } else if self.tsumo {
-                ((((base_points as f32 / 100f32).ceil() * 100f32) * 2f32)
-                    + (((base_points * 2) as f32 / 100f32).ceil() * 100f32)) as u32
+        } else if self.oya {
+            if self.tsumo {
+                ((((base_points * 2) as f32 / 100f32).ceil() * 100f32) * 3f32) as u32
             } else {
-                (((base_points * 4) as f32 / 100f32).ceil() * 100f32) as u32
+                (((base_points * 6) as f32 / 100f32).ceil() * 100f32) as u32
             }
+        } else if self.tsumo {
+            ((((base_points as f32 / 100f32).ceil() * 100f32) * 2f32)
+                + (((base_points * 2) as f32 / 100f32).ceil() * 100f32)) as u32
+        } else {
+            (((base_points * 4) as f32 / 100f32).ceil() * 100f32) as u32
         }
     }
 

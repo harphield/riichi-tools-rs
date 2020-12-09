@@ -231,27 +231,21 @@ impl ShantenFinder {
         };
         let second = tile.next(false);
 
-        match second {
-            Some(t2) => {
-                if array_34[(t2.to_id() - 1) as usize] > 0 {
-                    let third = t2.next(false);
-                    match third {
-                        Some(t3) => {
-                            if array_34[(t3.to_id() - 1) as usize] > 0 {
-                                // found a complete meld!
-                                array_34[depth] -= 1;
-                                array_34[depth + 1] -= 1;
-                                array_34[depth + 2] -= 1;
-                                self.complete_melds += 1;
+        if let Some(t2) = second {
+            if array_34[(t2.to_id() - 1) as usize] > 0 {
+                let third = t2.next(false);
+                if let Some(t3) = third {
+                    if array_34[(t3.to_id() - 1) as usize] > 0 {
+                        // found a complete meld!
+                        array_34[depth] -= 1;
+                        array_34[depth + 1] -= 1;
+                        array_34[depth + 2] -= 1;
+                        self.complete_melds += 1;
 
-                                return true;
-                            }
-                        }
-                        None => (),
+                        return true;
                     }
                 }
             }
-            None => (),
         }
 
         false
@@ -275,18 +269,15 @@ impl ShantenFinder {
 
         let second = tile.next(false);
 
-        match second {
-            Some(t2) => {
-                if array_34[(t2.to_id() - 1) as usize] > 0 {
-                    // found an incomplete meld!
-                    array_34[depth] -= 1;
-                    array_34[depth + 1] -= 1;
-                    self.incomplete_melds += 1;
+        if let Some(t2) = second {
+            if array_34[(t2.to_id() - 1) as usize] > 0 {
+                // found an incomplete meld!
+                array_34[depth] -= 1;
+                array_34[depth + 1] -= 1;
+                self.incomplete_melds += 1;
 
-                    return true;
-                }
+                return true;
             }
-            None => (),
         }
 
         false
@@ -307,23 +298,17 @@ impl ShantenFinder {
         }
         let second = tile.next(false);
 
-        match second {
-            Some(t2) => {
-                let third = t2.next(false);
-                match third {
-                    Some(t3) => {
-                        if array_34[(t3.to_id() - 1) as usize] > 0 {
-                            // found an incomplete meld!
-                            array_34[depth] -= 1;
-                            array_34[depth + 2] -= 1;
-                            self.incomplete_melds += 1;
-                            return true;
-                        }
-                    }
-                    None => (),
+        if let Some(t2) = second {
+            let third = t2.next(false);
+            if let Some(t3) = third {
+                if array_34[(t3.to_id() - 1) as usize] > 0 {
+                    // found an incomplete meld!
+                    array_34[depth] -= 1;
+                    array_34[depth + 2] -= 1;
+                    self.incomplete_melds += 1;
+                    return true;
                 }
             }
-            None => (),
         }
 
         false

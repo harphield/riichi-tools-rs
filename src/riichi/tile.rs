@@ -2,6 +2,7 @@ use crate::riichi::riichi_error::RiichiError;
 use serde::Serializer;
 use std::cmp::Ordering;
 use std::fmt;
+use wasm_bindgen::__rt::core::fmt::{Display, Formatter};
 
 // '0m', '1m', '2m', '3m', '4m', '5m', '6m', '7m', '8m', '9m',
 // '0p', '1p', '2p', '3p', '4p', '5p', '6p', '7p', '8p', '9p',
@@ -60,7 +61,7 @@ impl fmt::Display for TileColor {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash)]
+#[derive(Debug, Clone, Copy)]
 pub struct Tile {
     pub tile_type: TileType,
     pub is_red: bool,
@@ -136,15 +137,15 @@ impl Tile {
         } else if *second_char == 'z' {
             if number > 0 && number <= 4 {
                 // winds
-                return Ok(Tile::new(TileType::Wind(number)));
+                Ok(Tile::new(TileType::Wind(number)))
             } else if number > 4 && number <= 7 {
                 // dragons
-                return Ok(Tile::new(TileType::Dragon(number)));
+                Ok(Tile::new(TileType::Dragon(number)))
             } else {
-                return Err(RiichiError::new(103, "Wrong number for honors!"));
+                Err(RiichiError::new(103, "Wrong number for honors!"))
             }
         } else {
-            return Err(RiichiError::new(104, "Invalid tile definition"));
+            Err(RiichiError::new(104, "Invalid tile definition"))
         }
     }
 
@@ -171,19 +172,17 @@ impl Tile {
             return Ok(Tile::new(TileType::Wind(id - 27)));
         }
 
-        return Ok(Tile::new(TileType::Dragon(id - 27)));
+        Ok(Tile::new(TileType::Dragon(id - 27)))
     }
 
     /// Gets the id of this tile based on its type
     pub fn to_id(&self) -> u8 {
         match &self.tile_type {
-            TileType::Number(number, color) => {
-                match color {
-                    TileColor::Manzu => number + 0, // + dereferences?
-                    TileColor::Pinzu => number + 9,
-                    TileColor::Souzu => number + 18,
-                }
-            }
+            TileType::Number(number, color) => match color {
+                TileColor::Manzu => *number,
+                TileColor::Pinzu => number + 9,
+                TileColor::Souzu => number + 18,
+            },
             TileType::Wind(number) => number + 27,
             TileType::Dragon(number) => number + 27,
         }
@@ -247,7 +246,7 @@ impl Tile {
             }
         }
 
-        return 0;
+        0
     }
 
     /// Returns an ID of the previous tile in order.
@@ -306,7 +305,7 @@ impl Tile {
             }
         }
 
-        return 0;
+        0
     }
 
     /// 1-8 returns the next number
@@ -315,9 +314,9 @@ impl Tile {
     pub fn next(&self, dora: bool) -> Option<Tile> {
         let new_color;
 
-        return match &self.tile_type {
+        match &self.tile_type {
             TileType::Number(number, color) => {
-                new_color = color.clone();
+                new_color = *color;
                 if *number < 9 {
                     Some(Tile::new(TileType::Number(number + 1, new_color)))
                 } else if dora {
@@ -348,15 +347,15 @@ impl Tile {
                     Some(Tile::new(TileType::Dragon(5)))
                 }
             }
-        };
+        }
     }
 
     pub fn prev(&self) -> Option<Tile> {
         let new_color;
 
-        return match &self.tile_type {
+        match &self.tile_type {
             TileType::Number(number, color) => {
-                new_color = color.clone();
+                new_color = *color;
                 if *number > 1 {
                     Some(Tile::new(TileType::Number(number - 1, new_color)))
                 } else {
@@ -364,7 +363,7 @@ impl Tile {
                 }
             }
             _ => None,
-        };
+        }
     }
 
     pub fn is_terminal(&self) -> bool {
@@ -383,14 +382,6 @@ impl Tile {
 
     pub fn is_terminal_or_honor(&self) -> bool {
         self.is_terminal() || self.is_honor()
-    }
-
-    pub fn to_string(&self) -> String {
-        match &self.tile_type {
-            TileType::Number(number, color) => format!("{}{}", number, color),
-            TileType::Wind(number) => format!("{}z", number),
-            TileType::Dragon(number) => format!("{}z", number),
-        }
     }
 
     pub fn get_type_char(&self) -> char {
@@ -440,6 +431,20 @@ impl Tile {
     }
 }
 
+impl Display for Tile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match &self.tile_type {
+                TileType::Number(number, color) => format!("{}{}", number, color),
+                TileType::Wind(number) => format!("{}z", number),
+                TileType::Dragon(number) => format!("{}z", number),
+            }
+        )
+    }
+}
+
 impl Default for Tile {
     fn default() -> Tile {
         Tile {
@@ -474,7 +479,7 @@ impl PartialOrd for Tile {
         let self_ord_values = self.get_ordering_values();
         let other_ord_values = other.get_ordering_values();
 
-        return if self_ord_values[0] < other_ord_values[0] {
+        if self_ord_values[0] < other_ord_values[0] {
             Some(Ordering::Less)
         } else if self_ord_values[0] > other_ord_values[0] {
             Some(Ordering::Greater)
@@ -488,7 +493,7 @@ impl PartialOrd for Tile {
             Some(Ordering::Greater)
         } else {
             Some(Ordering::Equal)
-        };
+        }
     }
 }
 

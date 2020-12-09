@@ -5,6 +5,7 @@ use crate::riichi::table::Table;
 use crate::riichi::tile::{Tile, TileType};
 use enum_iterator::IntoEnumIterator;
 use std::collections::HashMap;
+use wasm_bindgen::__rt::std::collections::hash_map::Entry;
 
 #[derive(IntoEnumIterator, Debug, Clone)]
 pub enum Yaku {
@@ -69,9 +70,7 @@ pub struct YakuFinder {}
 
 impl YakuFinder {
     pub fn new() -> YakuFinder {
-        YakuFinder {
-            ..Default::default()
-        }
+        YakuFinder {}
     }
 
     /// Finds the best variant of the hand + its score
@@ -235,35 +234,33 @@ impl YakuFinder {
                                     }
                                 }
 
-                                CompleteShape::Open(open) => {
-                                    match open {
-                                        OpenShape::Chi(_) => {}
-                                        OpenShape::Pon(tiles) => match tiles[0].tile_type {
-                                            TileType::Number(value, _) => {
-                                                if value == 1 || value == 9 {
-                                                    fu += 4;
-                                                } else {
-                                                    fu += 2;
-                                                }
+                                CompleteShape::Open(open) => match open {
+                                    OpenShape::Chi(_) => {}
+                                    OpenShape::Pon(tiles) => match tiles[0].tile_type {
+                                        TileType::Number(value, _) => {
+                                            if value == 1 || value == 9 {
+                                                fu += 4;
+                                            } else {
+                                                fu += 2;
                                             }
-                                            TileType::Wind(_) | TileType::Dragon(_) => {
+                                        }
+                                        TileType::Wind(_) | TileType::Dragon(_) => {
+                                            fu += 4;
+                                        }
+                                    },
+                                    OpenShape::Kan(tiles) => match tiles[0].tile_type {
+                                        TileType::Number(value, _) => {
+                                            if value == 1 || value == 9 {
+                                                fu += 8;
+                                            } else {
                                                 fu += 4;
                                             }
-                                        },
-                                        OpenShape::Kan(tiles) => match tiles[0].tile_type {
-                                            TileType::Number(value, _) => {
-                                                if value == 1 || value == 9 {
-                                                    fu += 8;
-                                                } else {
-                                                    fu += 4;
-                                                }
-                                            }
-                                            TileType::Wind(_) | TileType::Dragon(_) => {
-                                                fu += 8;
-                                            }
-                                        },
-                                    }
-                                }
+                                        }
+                                        TileType::Wind(_) | TileType::Dragon(_) => {
+                                            fu += 8;
+                                        }
+                                    },
+                                },
                             }
                         }
                         ShapeType::Incomplete(..) => {}
@@ -276,12 +273,8 @@ impl YakuFinder {
             }
 
             let score = Score::new(han, fu, table.am_i_oya(), table.did_i_tsumo());
-            if i == 0 {
+            if i == 0 || score.total_points() > best_variant.1.total_points() {
                 best_variant = (yakus, score);
-            } else {
-                if score.total_points() > best_variant.1.total_points() {
-                    best_variant = (yakus, score);
-                }
             }
         }
 
@@ -448,7 +441,7 @@ impl Yaku {
     }
 
     /// Check if this Yaku exists in this shape variant
-    fn is_in_hand(&self, table: &mut Table, variant: &Vec<Shape>) -> bool {
+    fn is_in_hand(&self, table: &mut Table, variant: &[Shape]) -> bool {
         match self {
             Yaku::MenzenTsumo => return table.get_my_hand().is_closed() && table.did_i_tsumo(),
             Yaku::Riichi => return table.get_my_hand().is_closed() && table.did_i_riichi(),
@@ -482,11 +475,10 @@ impl Yaku {
                                         if tiles[2].eq(&winning_tile) {
                                             has_ryanmen_wait = true;
                                         }
-                                    } else {
-                                        if tiles[0].eq(&winning_tile) || tiles[2].eq(&winning_tile)
-                                        {
-                                            has_ryanmen_wait = true;
-                                        }
+                                    } else if tiles[0].eq(&winning_tile)
+                                        || tiles[2].eq(&winning_tile)
+                                    {
+                                        has_ryanmen_wait = true;
                                     }
                                 }
                                 ClosedShape::Koutsu(_)
@@ -735,8 +727,8 @@ impl Yaku {
                     match shape.get_shape_type() {
                         ShapeType::Complete(cs) => match cs {
                             CompleteShape::Closed(closed) => match closed {
-                                ClosedShape::Shuntsu(tiles) => match tiles[0].tile_type {
-                                    TileType::Number(value, suit) => {
+                                ClosedShape::Shuntsu(tiles) => {
+                                    if let TileType::Number(value, suit) = tiles[0].tile_type {
                                         let key = format!("{}{}{}", value, value + 1, value + 2);
                                         let mut info;
                                         if combos.contains_key(&key[..]) {
@@ -760,14 +752,13 @@ impl Yaku {
 
                                         combos.insert(key, info);
                                     }
-                                    _ => (),
-                                },
+                                }
                                 ClosedShape::Single(_) => return false,
                                 _ => (),
                             },
-                            CompleteShape::Open(open) => match open {
-                                OpenShape::Chi(tiles) => match tiles[0].tile_type {
-                                    TileType::Number(value, suit) => {
+                            CompleteShape::Open(open) => {
+                                if let OpenShape::Chi(tiles) = open {
+                                    if let TileType::Number(value, suit) = tiles[0].tile_type {
                                         let key = format!("{}{}{}", value, value + 1, value + 2);
                                         let mut info;
                                         if combos.contains_key(&key[..]) {
@@ -791,10 +782,8 @@ impl Yaku {
 
                                         combos.insert(key, info);
                                     }
-                                    _ => (),
-                                },
-                                _ => (),
-                            },
+                                }
+                            }
                         },
                         ShapeType::Incomplete(..) => return false,
                     }
@@ -807,8 +796,8 @@ impl Yaku {
                     match shape.get_shape_type() {
                         ShapeType::Complete(cs) => match cs {
                             CompleteShape::Closed(closed) => match closed {
-                                ClosedShape::Shuntsu(tiles) => match tiles[0].tile_type {
-                                    TileType::Number(value, color) => {
+                                ClosedShape::Shuntsu(tiles) => {
+                                    if let TileType::Number(value, color) = tiles[0].tile_type {
                                         if value == 1 {
                                             if color.to_char() == 'm' && parts[0] == 0 {
                                                 parts[0] = 1;
@@ -835,14 +824,13 @@ impl Yaku {
                                             }
                                         }
                                     }
-                                    _ => (),
-                                },
+                                }
                                 ClosedShape::Single(_) => return false,
                                 _ => (),
                             },
-                            CompleteShape::Open(open) => match open {
-                                OpenShape::Chi(tiles) => match tiles[0].tile_type {
-                                    TileType::Number(value, color) => {
+                            CompleteShape::Open(open) => {
+                                if let OpenShape::Chi(tiles) = open {
+                                    if let TileType::Number(value, color) = tiles[0].tile_type {
                                         if value == 1 {
                                             if color.to_char() == 'm' && parts[0] == 0 {
                                                 parts[0] = 1;
@@ -869,10 +857,8 @@ impl Yaku {
                                             }
                                         }
                                     }
-                                    _ => (),
-                                },
-                                _ => (),
-                            },
+                                }
+                            }
                         },
                         ShapeType::Incomplete(..) => return false,
                     }
@@ -902,10 +888,11 @@ impl Yaku {
                                         }
                                     }
                                 }
-                                CompleteShape::Open(open) => match open {
-                                    OpenShape::Chi(_) => return false,
-                                    _ => (),
-                                },
+                                CompleteShape::Open(open) => {
+                                    if let OpenShape::Chi(_) = open {
+                                        return false;
+                                    }
+                                }
                             }
                         }
                         ShapeType::Incomplete(..) => return false,
@@ -1111,12 +1098,11 @@ impl Yaku {
                                         return false;
                                     }
                                 }
-                                ClosedShape::Toitsu(tiles) => match tiles[0].tile_type {
-                                    TileType::Dragon(_) => {
+                                ClosedShape::Toitsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
                                         has_dragon_pair = true;
                                     }
-                                    _ => (),
-                                },
+                                }
                                 ClosedShape::Single(_) => return false,
                                 _ => (),
                             },
@@ -1319,41 +1305,36 @@ impl Yaku {
                     match shape.get_shape_type() {
                         ShapeType::Complete(cs) => match cs {
                             CompleteShape::Closed(closed) => match closed {
-                                ClosedShape::Koutsu(tiles) => match tiles[0].tile_type {
-                                    TileType::Dragon(_) => {
+                                ClosedShape::Koutsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
                                         dragon_pons += 1;
                                     }
-                                    _ => (),
-                                },
-                                ClosedShape::Kantsu(tiles) => match tiles[0].tile_type {
-                                    TileType::Dragon(_) => {
+                                }
+                                ClosedShape::Kantsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
                                         dragon_pons += 1;
                                     }
-                                    _ => (),
-                                },
-                                ClosedShape::Toitsu(tiles) => match tiles[0].tile_type {
-                                    TileType::Dragon(_) => {
+                                }
+                                ClosedShape::Toitsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
                                         return false;
                                     }
-                                    _ => (),
-                                },
+                                }
                                 ClosedShape::Single(_) => return false,
                                 _ => (),
                             },
                             CompleteShape::Open(open) => match open {
                                 OpenShape::Chi(_) => {}
-                                OpenShape::Pon(tiles) => match tiles[0].tile_type {
-                                    TileType::Dragon(_) => {
+                                OpenShape::Pon(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
                                         dragon_pons += 1;
                                     }
-                                    _ => (),
-                                },
-                                OpenShape::Kan(tiles) => match tiles[0].tile_type {
-                                    TileType::Dragon(_) => {
+                                }
+                                OpenShape::Kan(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
                                         dragon_pons += 1;
                                     }
-                                    _ => (),
-                                },
+                                }
                             },
                         },
                         ShapeType::Incomplete(..) => return false,
@@ -1392,15 +1373,12 @@ impl Yaku {
                                         return false;
                                     }
 
-                                    match tiles[0].tile_type {
-                                        TileType::Wind(_) => {
-                                            if has_wind_pair {
-                                                return false;
-                                            }
-
-                                            has_wind_pair = true;
+                                    if let TileType::Wind(_) = tiles[0].tile_type {
+                                        if has_wind_pair {
+                                            return false;
                                         }
-                                        _ => (),
+
+                                        has_wind_pair = true;
                                     }
                                 }
                                 ClosedShape::Single(_) => return false,
@@ -1455,11 +1433,8 @@ impl Yaku {
                                         return false;
                                     }
 
-                                    match tiles[0].tile_type {
-                                        TileType::Wind(_) => {
-                                            return false;
-                                        }
-                                        _ => (),
+                                    if let TileType::Wind(_) = tiles[0].tile_type {
+                                        return false;
                                     }
                                 }
                                 _ => return false,
@@ -1649,24 +1624,28 @@ impl Yaku {
     }
 
     pub fn is_yakuman(&self) -> bool {
-        match self {
+        if matches!(
+            self,
             Yaku::Kokushi
-            | Yaku::Suuankou
-            | Yaku::Daisangen
-            | Yaku::Shousuushii
-            | Yaku::Daisuushii
-            | Yaku::Tsuuiisou
-            | Yaku::Chinroutou
-            | Yaku::Ryuuiisou
-            | Yaku::Chuuren
-            | Yaku::Suukantsu
-            | Yaku::Tenhou
-            | Yaku::Chiihou => true,
-            _ => false,
+                | Yaku::Suuankou
+                | Yaku::Daisangen
+                | Yaku::Shousuushii
+                | Yaku::Daisuushii
+                | Yaku::Tsuuiisou
+                | Yaku::Chinroutou
+                | Yaku::Ryuuiisou
+                | Yaku::Chuuren
+                | Yaku::Suukantsu
+                | Yaku::Tenhou
+                | Yaku::Chiihou
+        ) {
+            return true;
         }
+
+        false
     }
 
-    fn find_yakuhai(&self, variant: &Vec<Shape>, tile_id: u8) -> bool {
+    fn find_yakuhai(&self, variant: &[Shape], tile_id: u8) -> bool {
         for shape in variant.iter() {
             match shape.get_shape_type() {
                 ShapeType::Complete(cs) => match cs {
@@ -1701,10 +1680,10 @@ impl Yaku {
             }
         }
 
-        return false;
+        false
     }
 
-    fn find_peikou(&self, variant: &Vec<Shape>) -> u8 {
+    fn find_peikou(&self, variant: &[Shape]) -> u8 {
         let mut map: HashMap<String, u8> = HashMap::new();
         let mut count = 0;
 
@@ -1719,17 +1698,33 @@ impl Yaku {
                                 tiles[1].to_string(),
                                 tiles[2].to_string()
                             );
-                            if map.contains_key(&key) {
-                                let v = *map.get(&key).unwrap();
-                                map.remove(&key);
-                                map.insert(key, v + 1);
 
-                                if v == 1 {
-                                    count += 1;
+                            match map.entry(key.clone()) {
+                                Entry::Occupied(occupied) => {
+                                    let v = *occupied.get();
+                                    map.remove(&key);
+                                    map.insert(key, v + 1);
+
+                                    if v == 1 {
+                                        count += 1;
+                                    }
                                 }
-                            } else {
-                                map.insert(key, 1);
-                            }
+                                Entry::Vacant(_) => {
+                                    map.insert(key, 1);
+                                }
+                            };
+
+                            // if map.contains_key(&key) {
+                            //     let v = *map.get(&key).unwrap();
+                            //     map.remove(&key);
+                            //     map.insert(key, v + 1);
+                            //
+                            //     if v == 1 {
+                            //         count += 1;
+                            //     }
+                            // } else {
+                            //     map.insert(key, 1);
+                            // }
                         }
                         ClosedShape::Single(_) => return 0,
                         _ => (),
@@ -1745,32 +1740,29 @@ impl Yaku {
 
     /// Sanshoku doukou evaluation function
     fn ssdk_eval(&self, tile: &Tile, combos: &mut HashMap<String, [bool; 3]>) -> bool {
-        match tile.tile_type {
-            TileType::Number(value, suit) => {
-                let key = format!("{}", value);
-                let mut info;
-                if combos.contains_key(&key[..]) {
-                    info = combos[&key];
-                    combos.remove(&key);
-                } else {
-                    info = [false, false, false];
-                }
-
-                if suit.to_char() == 'm' {
-                    info[0] = true;
-                } else if suit.to_char() == 'p' {
-                    info[1] = true;
-                } else if suit.to_char() == 's' {
-                    info[2] = true;
-                }
-
-                if info[0] && info[1] && info[2] {
-                    return true;
-                }
-
-                combos.insert(key, info);
+        if let TileType::Number(value, suit) = tile.tile_type {
+            let key = format!("{}", value);
+            let mut info;
+            if combos.contains_key(&key[..]) {
+                info = combos[&key];
+                combos.remove(&key);
+            } else {
+                info = [false, false, false];
             }
-            _ => (),
+
+            if suit.to_char() == 'm' {
+                info[0] = true;
+            } else if suit.to_char() == 'p' {
+                info[1] = true;
+            } else if suit.to_char() == 's' {
+                info[2] = true;
+            }
+
+            if info[0] && info[1] && info[2] {
+                return true;
+            }
+
+            combos.insert(key, info);
         }
 
         false
@@ -1791,16 +1783,13 @@ impl Yaku {
     }
 
     fn shousangen_eval(&self, tile: &Tile, dragon_pons: &mut u8) -> bool {
-        match tile.tile_type {
-            TileType::Dragon(_) => {
-                *dragon_pons += 1;
+        if let TileType::Dragon(_) = tile.tile_type {
+            *dragon_pons += 1;
 
-                if *dragon_pons > 2u8 {
-                    // daisangen
-                    return false;
-                }
+            if *dragon_pons > 2u8 {
+                // daisangen
+                return false;
             }
-            _ => (),
         }
 
         true

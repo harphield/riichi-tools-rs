@@ -1,6 +1,9 @@
 use super::tile::Tile;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::tile::TileType::{Dragon, Number, Wind};
+use core::fmt;
+use std::fmt::Display;
+use wasm_bindgen::__rt::core::fmt::Formatter;
 
 /// A hand consists of shapes.
 /// A tenpai hand has (usually) only 1 incomplete shape.
@@ -56,100 +59,17 @@ impl Shape {
     }
 
     pub fn get_shape_type(&self) -> &ShapeType {
-        return &self.shape_type;
+        &self.shape_type
     }
 
     pub fn is_open(&self) -> bool {
         self.is_open
     }
 
-    pub fn to_string(&self) -> String {
-        let closed_to_string = |closed| match closed {
-            ClosedShape::Shuntsu(tiles) | ClosedShape::Koutsu(tiles) => String::from(format!(
-                "{}{}{}",
-                tiles[0].to_string(),
-                tiles[1].to_string(),
-                tiles[2].to_string()
-            )),
-            ClosedShape::Kantsu(tiles) => String::from(format!("(k{})", tiles[0].to_string(),)),
-            ClosedShape::Toitsu(tiles) => {
-                String::from(format!("{}{}", tiles[0].to_string(), tiles[1].to_string()))
-            }
-            ClosedShape::Single(tile) => tile.to_string(),
-        };
-        return match &self.shape_type {
-            ShapeType::Complete(cs) => match cs {
-                CompleteShape::Closed(closed) => closed_to_string(*closed),
-                CompleteShape::Open(open) => match open {
-                    OpenShape::Chi(tiles) => {
-                        let color = tiles[0].get_type_char();
-
-                        let mut called_tile = 99;
-                        for (i, t) in tiles.iter().enumerate() {
-                            if t.called_from > 0 {
-                                called_tile = i;
-                                break;
-                            }
-                        }
-
-                        if called_tile == 99 {
-                            panic!("Invalid chi - which tile did we call?");
-                        }
-
-                        String::from(format!(
-                            "({}{}{}{}{})",
-                            tiles[0].get_value(),
-                            tiles[1].get_value(),
-                            tiles[2].get_value(),
-                            color,
-                            called_tile
-                        ))
-                    }
-                    OpenShape::Pon(tiles) => {
-                        let mut called_from = 0;
-                        println!("{:#?}", tiles);
-                        for t in tiles.iter() {
-                            if t.called_from > 0 {
-                                called_from = t.called_from;
-                                break;
-                            }
-                        }
-
-                        if called_from == 0 {
-                            panic!("Invalid pon - who did we call it from?");
-                        }
-
-                        String::from(format!("(p{}{})", tiles[0].to_string(), called_from))
-                    }
-                    OpenShape::Kan(tiles) => {
-                        let mut called_from = 0;
-                        for t in tiles.iter() {
-                            if t.called_from > 0 {
-                                called_from = t.called_from;
-                                break;
-                            }
-                        }
-
-                        if called_from == 0 {
-                            panic!("Invalid kan - who did we call it from?");
-                        }
-
-                        String::from(format!("(k{}{})", tiles[0].to_string(), called_from,))
-                    }
-                },
-            },
-            ShapeType::Incomplete(closed, missing) => String::from(format!(
-                "{}{}",
-                closed_to_string(*closed),
-                missing.to_string()
-            )),
-        };
-    }
-
     /// Creates a shape from the given tiles.
     /// TODO incomplete shapes
     pub fn from_tiles(
-        tiles: &Vec<Tile>,
+        tiles: &[Tile],
         is_open: bool,
         only_complete: bool,
     ) -> Result<Shape, RiichiError> {
@@ -220,13 +140,11 @@ impl Shape {
             let tile_1 = tiles.get(0).unwrap();
             let tile_2 = tiles.get(1).unwrap();
 
-            if tile_1.eq(tile_2) {
-                if only_complete {
-                    shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Toitsu([
-                        *tile_1, *tile_2,
-                    ])));
-                    return Result::Ok(Shape::new(shape_type, tile_count, is_open));
-                }
+            if tile_1.eq(tile_2) && only_complete {
+                shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Toitsu([
+                    *tile_1, *tile_2,
+                ])));
+                return Result::Ok(Shape::new(shape_type, tile_count, is_open));
             }
         } else if tile_count == 1 && !is_open {
             let tile_1 = tiles.get(0).unwrap();
@@ -237,8 +155,7 @@ impl Shape {
             }
         }
 
-        return Err(RiichiError::new(124, "No suitable shape found"));
-        //        Result::Ok(Shape::new(shape_type, tile_count))
+        Err(RiichiError::new(124, "No suitable shape found"))
     }
 
     fn _koutsu_shape_type(
@@ -262,7 +179,7 @@ impl Shape {
             return Result::Ok(Shape::new(shape_type, 3, is_open));
         }
 
-        return Err(RiichiError::new(122, "Bad shape"));
+        Err(RiichiError::new(122, "Bad shape"))
     }
 
     /// Are these two tiles in a shape together?
@@ -315,6 +232,92 @@ impl Shape {
         }
 
         true
+    }
+}
+
+impl Display for Shape {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let closed_to_string = |closed| match closed {
+            ClosedShape::Shuntsu(tiles) | ClosedShape::Koutsu(tiles) => format!(
+                "{}{}{}",
+                tiles[0].to_string(),
+                tiles[1].to_string(),
+                tiles[2].to_string()
+            ),
+            ClosedShape::Kantsu(tiles) => format!("(k{})", tiles[0].to_string(),),
+            ClosedShape::Toitsu(tiles) => {
+                format!("{}{}", tiles[0].to_string(), tiles[1].to_string())
+            }
+            ClosedShape::Single(tile) => tile.to_string(),
+        };
+        return write!(
+            f,
+            "{}",
+            match &self.shape_type {
+                ShapeType::Complete(cs) => match cs {
+                    CompleteShape::Closed(closed) => closed_to_string(*closed),
+                    CompleteShape::Open(open) => match open {
+                        OpenShape::Chi(tiles) => {
+                            let color = tiles[0].get_type_char();
+
+                            let mut called_tile = 99;
+                            for (i, t) in tiles.iter().enumerate() {
+                                if t.called_from > 0 {
+                                    called_tile = i;
+                                    break;
+                                }
+                            }
+
+                            if called_tile == 99 {
+                                panic!("Invalid chi - which tile did we call?");
+                            }
+
+                            format!(
+                                "({}{}{}{}{})",
+                                tiles[0].get_value(),
+                                tiles[1].get_value(),
+                                tiles[2].get_value(),
+                                color,
+                                called_tile
+                            )
+                        }
+                        OpenShape::Pon(tiles) => {
+                            let mut called_from = 0;
+                            println!("{:#?}", tiles);
+                            for t in tiles.iter() {
+                                if t.called_from > 0 {
+                                    called_from = t.called_from;
+                                    break;
+                                }
+                            }
+
+                            if called_from == 0 {
+                                panic!("Invalid pon - who did we call it from?");
+                            }
+
+                            format!("(p{}{})", tiles[0].to_string(), called_from)
+                        }
+                        OpenShape::Kan(tiles) => {
+                            let mut called_from = 0;
+                            for t in tiles.iter() {
+                                if t.called_from > 0 {
+                                    called_from = t.called_from;
+                                    break;
+                                }
+                            }
+
+                            if called_from == 0 {
+                                panic!("Invalid kan - who did we call it from?");
+                            }
+
+                            format!("(k{}{})", tiles[0].to_string(), called_from,)
+                        }
+                    },
+                },
+                ShapeType::Incomplete(closed, missing) =>
+                    format!("{}{}", closed_to_string(*closed), missing.to_string()),
+            }
+        );
     }
 }
 
