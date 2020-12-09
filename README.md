@@ -46,3 +46,8 @@ Showcase / frontend of this library can be found at https://riichi.harphield.com
     - **(XYZCI)** is chi, where XYZ are consecutive numbers, C is the color (m, p, s) and I is the index of the called tile (0-2).
     - **(pXCI)** is pon, where X is 0-9, C is the color (m, p, s, z) and I is the index of the player from who we called (1 = shimocha, 2 = toimen, 3 = kamicha). In case the pon has a red 5, the representation will use `0` - for example **(p0m2)**.
     - **(kXCI)** is kan. Same rules as pon apply, but **I** is optional - if not available, the kan is considered closed.
+  
+Some examples:
+- `123m44456888s678p`
+- `456s11133z(456m1)(456p0)`
+- `4z(p1z1)(k2z)(k3z3)(p6z2)`
