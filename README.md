@@ -43,6 +43,6 @@ Showcase / frontend of this library can be found at https://riichi.harphield.com
     - 6 = green dragon
     - 7 = red dragon
 - Open shapes
-    - **(XYZCI)** is chi, where XYZ are consecutive numbers, C is the color (m, p, s) and I is the index of the called tile (0-2)
-    - **(pXCI)** is pon, where X is 0-9, C is the color (m, p, s, z) and I is the index of the player from who we called (1 = shimocha, 2 = toimen, 3 = kamicha)
-    - **(kXCI)** is kan. Same rules as pon apply, but I is optional - if not available, this is a closed kan
+    - **(XYZCI)** is chi, where XYZ are consecutive numbers, C is the color (m, p, s) and I is the index of the called tile (0-2).
+    - **(pXCI)** is pon, where X is 0-9, C is the color (m, p, s, z) and I is the index of the player from who we called (1 = shimocha, 2 = toimen, 3 = kamicha). In case the pon has a red 5, the representation will use `0` - for example **(p0m2)**.
+    - **(kXCI)** is kan. Same rules as pon apply, but **I** is optional - if not available, the kan is considered closed.
