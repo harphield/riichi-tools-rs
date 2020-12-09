@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use std::fmt;
 
 use super::shanten::ShantenFinder;
@@ -895,7 +897,7 @@ impl Hand {
         out
     }
 
-    fn remove_meld_from_tiles(&self, meld_tiles: &Vec<Tile>, tiles: &mut Vec<Option<Tile>>) {
+    fn remove_meld_from_tiles(&self, meld_tiles: &[Tile], tiles: &mut Vec<Option<Tile>>) {
         for meld_tile in meld_tiles.iter() {
             let mut index = 0;
             for (i, tile) in tiles.iter().enumerate() {
@@ -1022,7 +1024,7 @@ impl Hand {
                                 .get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
                             result.sort();
                             imp_tiles.push((
-                                Some(t.clone()),
+                                Some(*t),
                                 result.clone(),
                                 count_total_ukeire(&result),
                             ));

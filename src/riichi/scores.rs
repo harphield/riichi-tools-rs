@@ -90,7 +90,7 @@ impl Score {
 
                     loop {
                         han += 1;
-                        fu = fu / 2;
+                        fu /= 2;
                         if fu >= 20 && (fu == 25 || fu as f32 % 10f32 == 0f32) {
                             // fu 20 can only be achieved with a tsumo
                             if fu == 20 && !tsumo {
