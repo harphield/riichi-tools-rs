@@ -27,13 +27,12 @@ impl ShapeFinder {
         let mut shapes = vec![];
         for shape in complete_shapes.iter() {
             match shape {
-                CompleteShape::Closed(closed) => match closed {
-                    ClosedShape::Kantsu(tiles) => shapes.push(Shape::new(
+                CompleteShape::Closed(closed) => if let ClosedShape::Kantsu(tiles) = closed {
+                    shapes.push(Shape::new(
                         ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(*tiles))),
                         4,
                         false,
-                    )),
-                    _ => {}
+                    ));
                 },
                 CompleteShape::Open(open) => match open {
                     OpenShape::Chi(tiles) => shapes.push(Shape::new(
@@ -68,7 +67,7 @@ impl ShapeFinder {
                 let mut repr = String::from("");
                 for s in self.current_variant.iter() {
                     repr.push_str(&s.to_string()[..]);
-                    repr.push_str(" ");
+                    repr.push(' ');
                 }
 
                 // println!("{}", repr);
@@ -119,27 +118,21 @@ impl ShapeFinder {
             }
 
             // shuntsu
-            match current_tile.next(false) {
-                Some(t) => {
-                    if array_34[(t.to_id() - 1) as usize] > 0 {
-                        match t.next(false) {
-                            Some(t2) => {
-                                if array_34[(t2.to_id() - 1) as usize] > 0 {
-                                    // found it!
-                                    self.add_shape(vec![current_tile, t, t2], array_34);
-                                    if array_34[depth] > 0 {
-                                        self.search(array_34, depth, &mut add_shapes);
-                                    } else {
-                                        self.search(array_34, depth + 1, &mut add_shapes);
-                                    }
-                                    self.remove_shape(vec![current_tile, t, t2], array_34);
-                                }
+            if let Some(t) = current_tile.next(false) {
+                if array_34[(t.to_id() - 1) as usize] > 0 {
+                    if let Some(t2) = t.next(false) {
+                        if array_34[(t2.to_id() - 1) as usize] > 0 {
+                            // found it!
+                            self.add_shape(vec![current_tile, t, t2], array_34);
+                            if array_34[depth] > 0 {
+                                self.search(array_34, depth, &mut add_shapes);
+                            } else {
+                                self.search(array_34, depth + 1, &mut add_shapes);
                             }
-                            None => (),
+                            self.remove_shape(vec![current_tile, t, t2], array_34);
                         }
                     }
                 }
-                None => (),
             }
         } else {
             self.search(array_34, depth + 1, &mut add_shapes);
@@ -186,54 +179,51 @@ impl ShapeFinder {
         for shape in self.current_variant.iter() {
             match shape.get_shape_type() {
                 ShapeType::Complete(ct) => {
-                    match ct {
-                        CompleteShape::Closed(closed) => {
-                            match closed {
-                                ClosedShape::Single(_tile) => {
-                                    // we can only have single tiles in kokushi, so no melds and no more than 1 pair
-                                    if has_koutsu || has_shuntsu || toitsu_count > 1 {
-                                        return false;
-                                    }
-
-                                    has_single = true;
+                    if let CompleteShape::Closed(closed) = ct {
+                        match closed {
+                            ClosedShape::Single(_tile) => {
+                                // we can only have single tiles in kokushi, so no melds and no more than 1 pair
+                                if has_koutsu || has_shuntsu || toitsu_count > 1 {
+                                    return false;
                                 }
-                                ClosedShape::Toitsu(_tiles) => {
-                                    // we can have more than 1 pair only in chiitoitsu, so no melds and singles there
-                                    if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single)
-                                    {
-                                        return false;
-                                    }
 
-                                    toitsu_count += 1;
+                                has_single = true;
+                            }
+                            ClosedShape::Toitsu(_tiles) => {
+                                // we can have more than 1 pair only in chiitoitsu, so no melds and singles there
+                                if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single)
+                                {
+                                    return false;
                                 }
-                                ClosedShape::Koutsu(_tiles) => {
-                                    // we can't have singles or more than 1 pair with melds
-                                    if toitsu_count > 1 || has_single {
-                                        return false;
-                                    }
 
-                                    has_koutsu = true;
+                                toitsu_count += 1;
+                            }
+                            ClosedShape::Koutsu(_tiles) => {
+                                // we can't have singles or more than 1 pair with melds
+                                if toitsu_count > 1 || has_single {
+                                    return false;
                                 }
-                                ClosedShape::Kantsu(_tiles) => {
-                                    // we can't have singles or more than 1 pair with melds
-                                    if toitsu_count > 1 || has_single {
-                                        return false;
-                                    }
 
-                                    // kan = koutsu anyway
-                                    has_koutsu = true;
+                                has_koutsu = true;
+                            }
+                            ClosedShape::Kantsu(_tiles) => {
+                                // we can't have singles or more than 1 pair with melds
+                                if toitsu_count > 1 || has_single {
+                                    return false;
                                 }
-                                ClosedShape::Shuntsu(_tiles) => {
-                                    // we can't have singles or more than 1 pair with melds
-                                    if toitsu_count > 1 || has_single {
-                                        return false;
-                                    }
 
-                                    has_shuntsu = true;
+                                // kan = koutsu anyway
+                                has_koutsu = true;
+                            }
+                            ClosedShape::Shuntsu(_tiles) => {
+                                // we can't have singles or more than 1 pair with melds
+                                if toitsu_count > 1 || has_single {
+                                    return false;
                                 }
+
+                                has_shuntsu = true;
                             }
                         }
-                        _ => (),
                     }
                 }
                 ShapeType::Incomplete(..) => {
@@ -265,7 +255,7 @@ impl ShapeFinder {
 
         for s in current_strings.iter() {
             current_repr.push_str(&s.to_string()[..]);
-            current_repr.push_str(" ");
+            current_repr.push(' ');
         }
 
         for v in &self.variants {
@@ -277,7 +267,7 @@ impl ShapeFinder {
 
             for s in v_strings.iter() {
                 v_repr.push_str(&s.to_string()[..]);
-                v_repr.push_str(" ");
+                v_repr.push(' ');
             }
 
             if current_repr == v_repr {
