@@ -1609,8 +1609,7 @@ impl Yaku {
     }
 
     pub fn is_yakuman(&self) -> bool {
-        match self {
-            Yaku::Kokushi
+        if matches!(self, Yaku::Kokushi
             | Yaku::Suuankou
             | Yaku::Daisangen
             | Yaku::Shousuushii
@@ -1621,9 +1620,11 @@ impl Yaku {
             | Yaku::Chuuren
             | Yaku::Suukantsu
             | Yaku::Tenhou
-            | Yaku::Chiihou => true,
-            _ => false,
+            | Yaku::Chiihou) {
+            return true;
         }
+
+        false
     }
 
     fn find_yakuhai(&self, variant: &[Shape], tile_id: u8) -> bool {
@@ -1661,7 +1662,7 @@ impl Yaku {
             }
         }
 
-        return false;
+        false
     }
 
     fn find_peikou(&self, variant: &[Shape]) -> u8 {
