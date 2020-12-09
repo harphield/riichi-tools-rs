@@ -28,3 +28,21 @@ Showcase / frontend of this library can be found at https://riichi.harphield.com
     - Tenhou replay parsing
     - Majsoul replay parsing
     - Discard rating
+
+## Hand representation parsing
+`Hand::from_text()` method accepts a string representation in the following format:
+
+- **1-9 m, s or p** for manzu, souzu and pinzu tiles
+- **0 m, s or p** are red 5 (support is mostly WIP at the moment)
+- **1-7 z** for honor tiles, where
+    - 1 = east
+    - 2 = south
+    - 3 = west
+    - 4 = north
+    - 5 = white dragon
+    - 6 = green dragon
+    - 7 = red dragon
+- Open shapes
+    - **(XYZCI)** is chi, where XYZ are consecutive numbers, C is the color (m, p, s) and I is the index of the called tile (0-2)
+    - **(pXCI)** is pon, where X is 0-9, C is the color (m, p, s, z) and I is the index of the player from who we called (1 = shimocha, 2 = toimen, 3 = kamicha)
+    - **(kXCI)** is kan. Same rules as pon apply, but I is optional - if not available, this is a closed kan
