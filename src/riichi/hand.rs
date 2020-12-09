@@ -485,9 +485,7 @@ impl Hand {
     /// P = player who was kanned (or ponned originally, if the kan is upgraded from pon). Optional - closed kans don't have this.
     ///
     /// Only insides of the brackets are in the kans vector.
-    fn parse_kans(
-        kans: &[&str],
-    ) -> Result<(Vec<Option<Tile>>, Vec<CompleteShape>), RiichiError> {
+    fn parse_kans(kans: &[&str]) -> Result<(Vec<Option<Tile>>, Vec<CompleteShape>), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
         let mut shapes: Vec<CompleteShape> = Vec::new();
 
@@ -800,9 +798,11 @@ impl Hand {
 
         for complete_shape in self.shapes.iter() {
             match complete_shape {
-                CompleteShape::Closed(closed_shape) => if let ClosedShape::Kantsu(closed_kan) = closed_shape {
-                    self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
-                },
+                CompleteShape::Closed(closed_shape) => {
+                    if let ClosedShape::Kantsu(closed_kan) = closed_shape {
+                        self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
+                    }
+                }
                 CompleteShape::Open(open_shape) => match open_shape {
                     OpenShape::Chi(tls) | OpenShape::Pon(tls) => {
                         self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
@@ -849,18 +849,20 @@ impl Hand {
 
         for complete_shape in self.shapes.iter() {
             match complete_shape {
-                CompleteShape::Closed(closed_shape) => if let ClosedShape::Kantsu(closed_kan) = closed_shape {
-                    out.push_str(
-                        &Shape::new(
-                            ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(
-                                *closed_kan,
-                            ))),
-                            4,
-                            true,
-                        )
-                        .to_string()[..],
-                    );
-                },
+                CompleteShape::Closed(closed_shape) => {
+                    if let ClosedShape::Kantsu(closed_kan) = closed_shape {
+                        out.push_str(
+                            &Shape::new(
+                                ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(
+                                    *closed_kan,
+                                ))),
+                                4,
+                                true,
+                            )
+                            .to_string()[..],
+                        );
+                    }
+                }
                 CompleteShape::Open(open_shape) => match open_shape {
                     OpenShape::Chi(tls) => out.push_str(
                         &Shape::new(
@@ -1019,11 +1021,7 @@ impl Hand {
                             let mut result = self
                                 .get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
                             result.sort();
-                            imp_tiles.push((
-                                Some(*t),
-                                result.clone(),
-                                count_total_ukeire(&result),
-                            ));
+                            imp_tiles.push((Some(*t), result.clone(), count_total_ukeire(&result)));
                         }
 
                         self.add_tile(*t);

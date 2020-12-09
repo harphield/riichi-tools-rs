@@ -178,13 +178,11 @@ impl Tile {
     /// Gets the id of this tile based on its type
     pub fn to_id(&self) -> u8 {
         match &self.tile_type {
-            TileType::Number(number, color) => {
-                match color {
-                    TileColor::Manzu => *number,
-                    TileColor::Pinzu => number + 9,
-                    TileColor::Souzu => number + 18,
-                }
-            }
+            TileType::Number(number, color) => match color {
+                TileColor::Manzu => *number,
+                TileColor::Pinzu => number + 9,
+                TileColor::Souzu => number + 18,
+            },
             TileType::Wind(number) => number + 27,
             TileType::Dragon(number) => number + 27,
         }
@@ -435,11 +433,15 @@ impl Tile {
 
 impl Display for Tile {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", match &self.tile_type {
-            TileType::Number(number, color) => format!("{}{}", number, color),
-            TileType::Wind(number) => format!("{}z", number),
-            TileType::Dragon(number) => format!("{}z", number),
-        })
+        write!(
+            f,
+            "{}",
+            match &self.tile_type {
+                TileType::Number(number, color) => format!("{}{}", number, color),
+                TileType::Wind(number) => format!("{}z", number),
+                TileType::Dragon(number) => format!("{}z", number),
+            }
+        )
     }
 }
 

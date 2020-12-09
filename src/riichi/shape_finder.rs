@@ -27,13 +27,15 @@ impl ShapeFinder {
         let mut shapes = vec![];
         for shape in complete_shapes.iter() {
             match shape {
-                CompleteShape::Closed(closed) => if let ClosedShape::Kantsu(tiles) = closed {
-                    shapes.push(Shape::new(
-                        ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(*tiles))),
-                        4,
-                        false,
-                    ));
-                },
+                CompleteShape::Closed(closed) => {
+                    if let ClosedShape::Kantsu(tiles) = closed {
+                        shapes.push(Shape::new(
+                            ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(*tiles))),
+                            4,
+                            false,
+                        ));
+                    }
+                }
                 CompleteShape::Open(open) => match open {
                     OpenShape::Chi(tiles) => shapes.push(Shape::new(
                         ShapeType::Complete(CompleteShape::Open(OpenShape::Chi(*tiles))),
@@ -191,8 +193,7 @@ impl ShapeFinder {
                             }
                             ClosedShape::Toitsu(_tiles) => {
                                 // we can have more than 1 pair only in chiitoitsu, so no melds and singles there
-                                if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single)
-                                {
+                                if toitsu_count > 1 && (has_koutsu || has_shuntsu || has_single) {
                                     return false;
                                 }
 

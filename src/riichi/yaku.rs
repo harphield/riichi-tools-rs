@@ -234,35 +234,33 @@ impl YakuFinder {
                                     }
                                 }
 
-                                CompleteShape::Open(open) => {
-                                    match open {
-                                        OpenShape::Chi(_) => {}
-                                        OpenShape::Pon(tiles) => match tiles[0].tile_type {
-                                            TileType::Number(value, _) => {
-                                                if value == 1 || value == 9 {
-                                                    fu += 4;
-                                                } else {
-                                                    fu += 2;
-                                                }
+                                CompleteShape::Open(open) => match open {
+                                    OpenShape::Chi(_) => {}
+                                    OpenShape::Pon(tiles) => match tiles[0].tile_type {
+                                        TileType::Number(value, _) => {
+                                            if value == 1 || value == 9 {
+                                                fu += 4;
+                                            } else {
+                                                fu += 2;
                                             }
-                                            TileType::Wind(_) | TileType::Dragon(_) => {
+                                        }
+                                        TileType::Wind(_) | TileType::Dragon(_) => {
+                                            fu += 4;
+                                        }
+                                    },
+                                    OpenShape::Kan(tiles) => match tiles[0].tile_type {
+                                        TileType::Number(value, _) => {
+                                            if value == 1 || value == 9 {
+                                                fu += 8;
+                                            } else {
                                                 fu += 4;
                                             }
-                                        },
-                                        OpenShape::Kan(tiles) => match tiles[0].tile_type {
-                                            TileType::Number(value, _) => {
-                                                if value == 1 || value == 9 {
-                                                    fu += 8;
-                                                } else {
-                                                    fu += 4;
-                                                }
-                                            }
-                                            TileType::Wind(_) | TileType::Dragon(_) => {
-                                                fu += 8;
-                                            }
-                                        },
-                                    }
-                                }
+                                        }
+                                        TileType::Wind(_) | TileType::Dragon(_) => {
+                                            fu += 8;
+                                        }
+                                    },
+                                },
                             }
                         }
                         ShapeType::Incomplete(..) => {}
@@ -477,7 +475,9 @@ impl Yaku {
                                         if tiles[2].eq(&winning_tile) {
                                             has_ryanmen_wait = true;
                                         }
-                                    } else if tiles[0].eq(&winning_tile) || tiles[2].eq(&winning_tile) {
+                                    } else if tiles[0].eq(&winning_tile)
+                                        || tiles[2].eq(&winning_tile)
+                                    {
                                         has_ryanmen_wait = true;
                                     }
                                 }
@@ -727,59 +727,63 @@ impl Yaku {
                     match shape.get_shape_type() {
                         ShapeType::Complete(cs) => match cs {
                             CompleteShape::Closed(closed) => match closed {
-                                ClosedShape::Shuntsu(tiles) => if let TileType::Number(value, suit) = tiles[0].tile_type {
-                                    let key = format!("{}{}{}", value, value + 1, value + 2);
-                                    let mut info;
-                                    if combos.contains_key(&key[..]) {
-                                        info = combos[&key];
-                                        combos.remove(&key);
-                                    } else {
-                                        info = [false, false, false];
-                                    }
+                                ClosedShape::Shuntsu(tiles) => {
+                                    if let TileType::Number(value, suit) = tiles[0].tile_type {
+                                        let key = format!("{}{}{}", value, value + 1, value + 2);
+                                        let mut info;
+                                        if combos.contains_key(&key[..]) {
+                                            info = combos[&key];
+                                            combos.remove(&key);
+                                        } else {
+                                            info = [false, false, false];
+                                        }
 
-                                    if suit.to_char() == 'm' {
-                                        info[0] = true;
-                                    } else if suit.to_char() == 'p' {
-                                        info[1] = true;
-                                    } else if suit.to_char() == 's' {
-                                        info[2] = true;
-                                    }
+                                        if suit.to_char() == 'm' {
+                                            info[0] = true;
+                                        } else if suit.to_char() == 'p' {
+                                            info[1] = true;
+                                        } else if suit.to_char() == 's' {
+                                            info[2] = true;
+                                        }
 
-                                    if info[0] && info[1] && info[2] {
-                                        return true;
-                                    }
+                                        if info[0] && info[1] && info[2] {
+                                            return true;
+                                        }
 
-                                    combos.insert(key, info);
-                                },
+                                        combos.insert(key, info);
+                                    }
+                                }
                                 ClosedShape::Single(_) => return false,
                                 _ => (),
                             },
-                            CompleteShape::Open(open) => if let OpenShape::Chi(tiles) = open {
-                                if let TileType::Number(value, suit) = tiles[0].tile_type {
-                                    let key = format!("{}{}{}", value, value + 1, value + 2);
-                                    let mut info;
-                                    if combos.contains_key(&key[..]) {
-                                        info = combos[&key];
-                                        combos.remove(&key);
-                                    } else {
-                                        info = [false, false, false];
-                                    }
+                            CompleteShape::Open(open) => {
+                                if let OpenShape::Chi(tiles) = open {
+                                    if let TileType::Number(value, suit) = tiles[0].tile_type {
+                                        let key = format!("{}{}{}", value, value + 1, value + 2);
+                                        let mut info;
+                                        if combos.contains_key(&key[..]) {
+                                            info = combos[&key];
+                                            combos.remove(&key);
+                                        } else {
+                                            info = [false, false, false];
+                                        }
 
-                                    if suit.to_char() == 'm' {
-                                        info[0] = true;
-                                    } else if suit.to_char() == 'p' {
-                                        info[1] = true;
-                                    } else if suit.to_char() == 's' {
-                                        info[2] = true;
-                                    }
+                                        if suit.to_char() == 'm' {
+                                            info[0] = true;
+                                        } else if suit.to_char() == 'p' {
+                                            info[1] = true;
+                                        } else if suit.to_char() == 's' {
+                                            info[2] = true;
+                                        }
 
-                                    if info[0] && info[1] && info[2] {
-                                        return true;
-                                    }
+                                        if info[0] && info[1] && info[2] {
+                                            return true;
+                                        }
 
-                                    combos.insert(key, info);
+                                        combos.insert(key, info);
+                                    }
                                 }
-                            },
+                            }
                         },
                         ShapeType::Incomplete(..) => return false,
                     }
@@ -792,65 +796,69 @@ impl Yaku {
                     match shape.get_shape_type() {
                         ShapeType::Complete(cs) => match cs {
                             CompleteShape::Closed(closed) => match closed {
-                                ClosedShape::Shuntsu(tiles) => if let TileType::Number(value, color) = tiles[0].tile_type {
-                                    if value == 1 {
-                                        if color.to_char() == 'm' && parts[0] == 0 {
-                                            parts[0] = 1;
-                                        } else if color.to_char() == 'p' && parts[1] == 0 {
-                                            parts[1] = 1;
-                                        } else if color.to_char() == 's' && parts[2] == 0 {
-                                            parts[2] = 1;
-                                        }
-                                    } else if value == 4 {
-                                        if color.to_char() == 'm' && parts[0] == 1 {
-                                            parts[0] = 2;
-                                        } else if color.to_char() == 'p' && parts[1] == 1 {
-                                            parts[1] = 2;
-                                        } else if color.to_char() == 's' && parts[2] == 1 {
-                                            parts[2] = 2;
-                                        }
-                                    } else if value == 7 {
-                                        if color.to_char() == 'm' && parts[0] == 2 {
-                                            parts[0] = 3;
-                                        } else if color.to_char() == 'p' && parts[1] == 2 {
-                                            parts[1] = 3;
-                                        } else if color.to_char() == 's' && parts[2] == 2 {
-                                            parts[2] = 3;
-                                        }
-                                    }
-                                },
-                                ClosedShape::Single(_) => return false,
-                                _ => (),
-                            },
-                            CompleteShape::Open(open) => if let OpenShape::Chi(tiles) = open {
-                                 if let TileType::Number(value, color) = tiles[0].tile_type {
-                                    if value == 1 {
-                                        if color.to_char() == 'm' && parts[0] == 0 {
-                                            parts[0] = 1;
-                                        } else if color.to_char() == 'p' && parts[1] == 0 {
-                                            parts[1] = 1;
-                                        } else if color.to_char() == 's' && parts[2] == 0 {
-                                            parts[2] = 1;
-                                        }
-                                    } else if value == 4 {
-                                        if color.to_char() == 'm' && parts[0] == 1 {
-                                            parts[0] = 2;
-                                        } else if color.to_char() == 'p' && parts[1] == 1 {
-                                            parts[1] = 2;
-                                        } else if color.to_char() == 's' && parts[2] == 1 {
-                                            parts[2] = 2;
-                                        }
-                                    } else if value == 7 {
-                                        if color.to_char() == 'm' && parts[0] == 2 {
-                                            parts[0] = 3;
-                                        } else if color.to_char() == 'p' && parts[1] == 2 {
-                                            parts[1] = 3;
-                                        } else if color.to_char() == 's' && parts[2] == 2 {
-                                            parts[2] = 3;
+                                ClosedShape::Shuntsu(tiles) => {
+                                    if let TileType::Number(value, color) = tiles[0].tile_type {
+                                        if value == 1 {
+                                            if color.to_char() == 'm' && parts[0] == 0 {
+                                                parts[0] = 1;
+                                            } else if color.to_char() == 'p' && parts[1] == 0 {
+                                                parts[1] = 1;
+                                            } else if color.to_char() == 's' && parts[2] == 0 {
+                                                parts[2] = 1;
+                                            }
+                                        } else if value == 4 {
+                                            if color.to_char() == 'm' && parts[0] == 1 {
+                                                parts[0] = 2;
+                                            } else if color.to_char() == 'p' && parts[1] == 1 {
+                                                parts[1] = 2;
+                                            } else if color.to_char() == 's' && parts[2] == 1 {
+                                                parts[2] = 2;
+                                            }
+                                        } else if value == 7 {
+                                            if color.to_char() == 'm' && parts[0] == 2 {
+                                                parts[0] = 3;
+                                            } else if color.to_char() == 'p' && parts[1] == 2 {
+                                                parts[1] = 3;
+                                            } else if color.to_char() == 's' && parts[2] == 2 {
+                                                parts[2] = 3;
+                                            }
                                         }
                                     }
                                 }
+                                ClosedShape::Single(_) => return false,
+                                _ => (),
                             },
+                            CompleteShape::Open(open) => {
+                                if let OpenShape::Chi(tiles) = open {
+                                    if let TileType::Number(value, color) = tiles[0].tile_type {
+                                        if value == 1 {
+                                            if color.to_char() == 'm' && parts[0] == 0 {
+                                                parts[0] = 1;
+                                            } else if color.to_char() == 'p' && parts[1] == 0 {
+                                                parts[1] = 1;
+                                            } else if color.to_char() == 's' && parts[2] == 0 {
+                                                parts[2] = 1;
+                                            }
+                                        } else if value == 4 {
+                                            if color.to_char() == 'm' && parts[0] == 1 {
+                                                parts[0] = 2;
+                                            } else if color.to_char() == 'p' && parts[1] == 1 {
+                                                parts[1] = 2;
+                                            } else if color.to_char() == 's' && parts[2] == 1 {
+                                                parts[2] = 2;
+                                            }
+                                        } else if value == 7 {
+                                            if color.to_char() == 'm' && parts[0] == 2 {
+                                                parts[0] = 3;
+                                            } else if color.to_char() == 'p' && parts[1] == 2 {
+                                                parts[1] = 3;
+                                            } else if color.to_char() == 's' && parts[2] == 2 {
+                                                parts[2] = 3;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         },
                         ShapeType::Incomplete(..) => return false,
                     }
@@ -880,8 +888,10 @@ impl Yaku {
                                         }
                                     }
                                 }
-                                CompleteShape::Open(open) => if let OpenShape::Chi(_) = open {
-                                    return false;
+                                CompleteShape::Open(open) => {
+                                    if let OpenShape::Chi(_) = open {
+                                        return false;
+                                    }
                                 }
                             }
                         }
@@ -1088,8 +1098,10 @@ impl Yaku {
                                         return false;
                                     }
                                 }
-                                ClosedShape::Toitsu(tiles) => if let TileType::Dragon(_) = tiles[0].tile_type {
-                                    has_dragon_pair = true;
+                                ClosedShape::Toitsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
+                                        has_dragon_pair = true;
+                                    }
                                 }
                                 ClosedShape::Single(_) => return false,
                                 _ => (),
@@ -1293,25 +1305,35 @@ impl Yaku {
                     match shape.get_shape_type() {
                         ShapeType::Complete(cs) => match cs {
                             CompleteShape::Closed(closed) => match closed {
-                                ClosedShape::Koutsu(tiles) => if let TileType::Dragon(_) = tiles[0].tile_type {
-                                    dragon_pons += 1;
-                                },
-                                ClosedShape::Kantsu(tiles) => if let TileType::Dragon(_) = tiles[0].tile_type {
-                                    dragon_pons += 1;
-                                },
-                                ClosedShape::Toitsu(tiles) => if let TileType::Dragon(_) = tiles[0].tile_type {
-                                    return false;
-                                },
+                                ClosedShape::Koutsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
+                                        dragon_pons += 1;
+                                    }
+                                }
+                                ClosedShape::Kantsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
+                                        dragon_pons += 1;
+                                    }
+                                }
+                                ClosedShape::Toitsu(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
+                                        return false;
+                                    }
+                                }
                                 ClosedShape::Single(_) => return false,
                                 _ => (),
                             },
                             CompleteShape::Open(open) => match open {
                                 OpenShape::Chi(_) => {}
-                                OpenShape::Pon(tiles) => if let TileType::Dragon(_) = tiles[0].tile_type {
-                                    dragon_pons += 1;
-                                },
-                                OpenShape::Kan(tiles) => if let TileType::Dragon(_) = tiles[0].tile_type {
-                                    dragon_pons += 1;
+                                OpenShape::Pon(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
+                                        dragon_pons += 1;
+                                    }
+                                }
+                                OpenShape::Kan(tiles) => {
+                                    if let TileType::Dragon(_) = tiles[0].tile_type {
+                                        dragon_pons += 1;
+                                    }
                                 }
                             },
                         },
@@ -1602,18 +1624,21 @@ impl Yaku {
     }
 
     pub fn is_yakuman(&self) -> bool {
-        if matches!(self, Yaku::Kokushi
-            | Yaku::Suuankou
-            | Yaku::Daisangen
-            | Yaku::Shousuushii
-            | Yaku::Daisuushii
-            | Yaku::Tsuuiisou
-            | Yaku::Chinroutou
-            | Yaku::Ryuuiisou
-            | Yaku::Chuuren
-            | Yaku::Suukantsu
-            | Yaku::Tenhou
-            | Yaku::Chiihou) {
+        if matches!(
+            self,
+            Yaku::Kokushi
+                | Yaku::Suuankou
+                | Yaku::Daisangen
+                | Yaku::Shousuushii
+                | Yaku::Daisuushii
+                | Yaku::Tsuuiisou
+                | Yaku::Chinroutou
+                | Yaku::Ryuuiisou
+                | Yaku::Chuuren
+                | Yaku::Suukantsu
+                | Yaku::Tenhou
+                | Yaku::Chiihou
+        ) {
             return true;
         }
 
