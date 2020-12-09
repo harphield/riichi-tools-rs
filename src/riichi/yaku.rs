@@ -275,12 +275,8 @@ impl YakuFinder {
             }
 
             let score = Score::new(han, fu, table.am_i_oya(), table.did_i_tsumo());
-            if i == 0 {
+            if i == 0 || score.total_points() > best_variant.1.total_points() {
                 best_variant = (yakus, score);
-            } else {
-                if score.total_points() > best_variant.1.total_points() {
-                    best_variant = (yakus, score);
-                }
             }
         }
 
@@ -481,11 +477,8 @@ impl Yaku {
                                         if tiles[2].eq(&winning_tile) {
                                             has_ryanmen_wait = true;
                                         }
-                                    } else {
-                                        if tiles[0].eq(&winning_tile) || tiles[2].eq(&winning_tile)
-                                        {
-                                            has_ryanmen_wait = true;
-                                        }
+                                    } else if tiles[0].eq(&winning_tile) || tiles[2].eq(&winning_tile) {
+                                        has_ryanmen_wait = true;
                                     }
                                 }
                                 ClosedShape::Koutsu(_)

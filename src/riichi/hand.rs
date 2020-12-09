@@ -120,7 +120,7 @@ impl Hand {
                 open_or_closed = false;
             }
 
-            if open_or_closed == true {
+            if open_or_closed {
                 // TODO open
                 let open_shape_type = rng.gen_range(0, 3);
                 match open_shape_type {
@@ -409,7 +409,7 @@ impl Hand {
     /// N = which tile has been called? Index 0-2
     ///
     /// Only insides of the brackets are in the chis vector.
-    fn parse_chis(chis: &Vec<&str>) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
+    fn parse_chis(chis: &[&str]) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
         let mut shapes: Vec<OpenShape> = Vec::new();
 
@@ -418,7 +418,7 @@ impl Hand {
             let n = chi.chars().nth(4).unwrap();
 
             let mut tile_1 =
-                Tile::from_text(&format!("{}{}", chi.chars().nth(0).unwrap(), c)[..]).unwrap();
+                Tile::from_text(&format!("{}{}", chi.chars().next().unwrap(), c)[..]).unwrap();
             if n.eq(&'0') {
                 tile_1.called_from = 3;
             }
@@ -451,7 +451,7 @@ impl Hand {
     /// P = player who was ponned
     ///
     /// Only insides of the brackets are in the pons vector.
-    fn parse_pons(pons: &Vec<&str>) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
+    fn parse_pons(pons: &[&str]) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
         let mut shapes: Vec<OpenShape> = Vec::new();
 
@@ -486,7 +486,7 @@ impl Hand {
     ///
     /// Only insides of the brackets are in the kans vector.
     fn parse_kans(
-        kans: &Vec<&str>,
+        kans: &[&str],
     ) -> Result<(Vec<Option<Tile>>, Vec<CompleteShape>), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
         let mut shapes: Vec<CompleteShape> = Vec::new();
@@ -791,7 +791,7 @@ impl Hand {
     /// z = honors - 1-4 = winds, 5-7 = dragons
     /// 0mps = red 5 (TODO)
     /// Open shapes are in brackets, (123s2) (p1s1) (k2p3) etc. See parse_* functions for more info
-    pub fn to_string(&self) -> String {
+    pub fn convert_to_string(&self) -> String {
         let mut out = String::new();
         let mut color = 'x';
         let mut last_tile: Option<&Tile> = Option::None;
@@ -800,11 +800,8 @@ impl Hand {
 
         for complete_shape in self.shapes.iter() {
             match complete_shape {
-                CompleteShape::Closed(closed_shape) => match closed_shape {
-                    ClosedShape::Kantsu(closed_kan) => {
-                        self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
-                    }
-                    _ => {}
+                CompleteShape::Closed(closed_shape) => if let ClosedShape::Kantsu(closed_kan) = closed_shape {
+                    self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
                 },
                 CompleteShape::Open(open_shape) => match open_shape {
                     OpenShape::Chi(tls) | OpenShape::Pon(tls) => {
@@ -852,8 +849,8 @@ impl Hand {
 
         for complete_shape in self.shapes.iter() {
             match complete_shape {
-                CompleteShape::Closed(closed_shape) => match closed_shape {
-                    ClosedShape::Kantsu(closed_kan) => out.push_str(
+                CompleteShape::Closed(closed_shape) => if let ClosedShape::Kantsu(closed_kan) = closed_shape {
+                    out.push_str(
                         &Shape::new(
                             ShapeType::Complete(CompleteShape::Closed(ClosedShape::Kantsu(
                                 *closed_kan,
@@ -862,8 +859,7 @@ impl Hand {
                             true,
                         )
                         .to_string()[..],
-                    ),
-                    _ => {}
+                    );
                 },
                 CompleteShape::Open(open_shape) => match open_shape {
                     OpenShape::Chi(tls) => out.push_str(
@@ -1176,7 +1172,7 @@ impl Default for Hand {
 
 impl fmt::Display for Hand {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self.convert_to_string())
     }
 }
 

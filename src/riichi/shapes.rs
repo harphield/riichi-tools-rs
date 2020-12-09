@@ -140,13 +140,11 @@ impl Shape {
             let tile_1 = tiles.get(0).unwrap();
             let tile_2 = tiles.get(1).unwrap();
 
-            if tile_1.eq(tile_2) {
-                if only_complete {
-                    shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Toitsu([
-                        *tile_1, *tile_2,
-                    ])));
-                    return Result::Ok(Shape::new(shape_type, tile_count, is_open));
-                }
+            if tile_1.eq(tile_2) && only_complete {
+                shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Toitsu([
+                    *tile_1, *tile_2,
+                ])));
+                return Result::Ok(Shape::new(shape_type, tile_count, is_open));
             }
         } else if tile_count == 1 && !is_open {
             let tile_1 = tiles.get(0).unwrap();
