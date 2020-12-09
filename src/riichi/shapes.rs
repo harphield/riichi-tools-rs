@@ -59,7 +59,7 @@ impl Shape {
     }
 
     pub fn get_shape_type(&self) -> &ShapeType {
-        return &self.shape_type;
+        &self.shape_type
     }
 
     pub fn is_open(&self) -> bool {
@@ -157,8 +157,7 @@ impl Shape {
             }
         }
 
-        return Err(RiichiError::new(124, "No suitable shape found"));
-        //        Result::Ok(Shape::new(shape_type, tile_count))
+        Err(RiichiError::new(124, "No suitable shape found"))
     }
 
     fn _koutsu_shape_type(
@@ -182,7 +181,7 @@ impl Shape {
             return Result::Ok(Shape::new(shape_type, 3, is_open));
         }
 
-        return Err(RiichiError::new(122, "Bad shape"));
+        Err(RiichiError::new(122, "Bad shape"))
     }
 
     /// Are these two tiles in a shape together?

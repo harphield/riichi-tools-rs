@@ -137,15 +137,15 @@ impl Tile {
         } else if *second_char == 'z' {
             if number > 0 && number <= 4 {
                 // winds
-                return Ok(Tile::new(TileType::Wind(number)));
+                Ok(Tile::new(TileType::Wind(number)))
             } else if number > 4 && number <= 7 {
                 // dragons
-                return Ok(Tile::new(TileType::Dragon(number)));
+                Ok(Tile::new(TileType::Dragon(number)))
             } else {
-                return Err(RiichiError::new(103, "Wrong number for honors!"));
+                Err(RiichiError::new(103, "Wrong number for honors!"))
             }
         } else {
-            return Err(RiichiError::new(104, "Invalid tile definition"));
+            Err(RiichiError::new(104, "Invalid tile definition"))
         }
     }
 
@@ -172,7 +172,7 @@ impl Tile {
             return Ok(Tile::new(TileType::Wind(id - 27)));
         }
 
-        return Ok(Tile::new(TileType::Dragon(id - 27)));
+        Ok(Tile::new(TileType::Dragon(id - 27)))
     }
 
     /// Gets the id of this tile based on its type
@@ -248,7 +248,7 @@ impl Tile {
             }
         }
 
-        return 0;
+        0
     }
 
     /// Returns an ID of the previous tile in order.
@@ -307,7 +307,7 @@ impl Tile {
             }
         }
 
-        return 0;
+        0
     }
 
     /// 1-8 returns the next number
@@ -316,7 +316,7 @@ impl Tile {
     pub fn next(&self, dora: bool) -> Option<Tile> {
         let new_color;
 
-        return match &self.tile_type {
+        match &self.tile_type {
             TileType::Number(number, color) => {
                 new_color = *color;
                 if *number < 9 {
@@ -349,13 +349,13 @@ impl Tile {
                     Some(Tile::new(TileType::Dragon(5)))
                 }
             }
-        };
+        }
     }
 
     pub fn prev(&self) -> Option<Tile> {
         let new_color;
 
-        return match &self.tile_type {
+        match &self.tile_type {
             TileType::Number(number, color) => {
                 new_color = *color;
                 if *number > 1 {
@@ -365,7 +365,7 @@ impl Tile {
                 }
             }
             _ => None,
-        };
+        }
     }
 
     pub fn is_terminal(&self) -> bool {
@@ -477,7 +477,7 @@ impl PartialOrd for Tile {
         let self_ord_values = self.get_ordering_values();
         let other_ord_values = other.get_ordering_values();
 
-        return if self_ord_values[0] < other_ord_values[0] {
+        if self_ord_values[0] < other_ord_values[0] {
             Some(Ordering::Less)
         } else if self_ord_values[0] > other_ord_values[0] {
             Some(Ordering::Greater)
@@ -491,7 +491,7 @@ impl PartialOrd for Tile {
             Some(Ordering::Greater)
         } else {
             Some(Ordering::Equal)
-        };
+        }
     }
 }
 
