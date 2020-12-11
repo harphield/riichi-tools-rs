@@ -914,7 +914,9 @@ impl Hand {
         }
     }
 
-    pub fn to_vec_of_strings(&self) -> Vec<String> {
+    /// Returns the tiles of the hand as a vec of their string representations.
+    /// Can be returned without open/closed shapes.
+    pub fn to_vec_of_strings(&self, no_shapes: bool) -> Vec<String> {
         let mut tile_vec = vec![];
         let mut color = 'x';
         let mut last_tile: Option<String> = Option::None;
@@ -922,6 +924,10 @@ impl Hand {
         for tile in self.tiles.iter() {
             match &tile {
                 Option::Some(some_tile) => {
+                    if no_shapes && (some_tile.is_open || some_tile.is_kan) {
+                        continue;
+                    }
+
                     let mut tile_string = String::from("");
                     if color != some_tile.get_type_char() {
                         color = some_tile.get_type_char();
