@@ -1013,6 +1013,10 @@ impl Hand {
             for o_tile in hand_tiles.iter() {
                 match o_tile {
                     Some(t) => {
+                        if t.is_open || t.is_kan {
+                            continue;
+                        }
+
                         if tried.contains(&t.to_id()) {
                             continue;
                         }
@@ -1062,6 +1066,10 @@ impl Hand {
         for o_tile in self.tiles.iter() {
             match o_tile {
                 Some(t) => {
+                    if t.is_open || t.is_kan {
+                        continue;
+                    }
+
                     // get this tile, -1, -2, +1, +2
                     let t_id = t.to_id();
                     if !try_tiles.contains(&t_id) {
@@ -1093,9 +1101,11 @@ impl Hand {
         }
 
         // terminals and honors check
-        for tile_id in [1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34].iter() {
-            if !try_tiles.contains(&tile_id) {
-                try_tiles.push(*tile_id);
+        if self.is_closed() {
+            for tile_id in [1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34].iter() {
+                if !try_tiles.contains(&tile_id) {
+                    try_tiles.push(*tile_id);
+                }
             }
         }
 
@@ -1299,6 +1309,48 @@ mod tests {
     #[test]
     fn find_improving_tiles_2_shanten_14() {
         let mut hand = Hand::from_text("237m13478s45699p1z", false).unwrap();
+
+        let result = hand.find_shanten_improving_tiles(None);
+
+        assert_eq!(result.len(), 4);
+
+        for row in result.iter() {
+            match row.0 {
+                Some(tile) => {
+                    if tile.to_string() == "7m" {
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+                        //                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 6);
+                    } else if tile.to_string() == "1s" {
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+                        //                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 6);
+                    } else if tile.to_string() == "1z" {
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+                        //                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 6);
+                    } else if tile.to_string() == "4s" {
+                        println!("tajl: {} count: {}", tile.to_string(), row.2);
+                        //                        println!("{:#?}", row.1);
+                        assert_eq!(row.1.len(), 5);
+                        assert_eq!(row.1[0].1, 4);
+                        assert_eq!(row.1[1].1, 4);
+                        assert_eq!(row.1[2].1, 4);
+                        assert_eq!(row.1[3].1, 4);
+                        assert_eq!(row.1[4].1, 4);
+                        assert_eq!(row.2, 20);
+                    } else {
+                        panic!("Test failed: wrong tiles found");
+                    }
+                }
+                None => (),
+            }
+        }
+    }
+
+    #[test]
+    fn find_improving_tiles_2_shanten_14_open() {
+        let mut hand = Hand::from_text("237m13478s99p1z(456p0)", false).unwrap();
 
         let result = hand.find_shanten_improving_tiles(None);
 

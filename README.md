@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.63
+v0.0.64
 
 ![Build Status](https://github.com/harphield/riichi-tools-rs/workflows/Build,%20test%20and%20Clippy/badge.svg)
 
