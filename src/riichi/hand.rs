@@ -574,7 +574,7 @@ impl Hand {
         for (i, hand_tile) in self.tiles.iter().enumerate() {
             match hand_tile {
                 Some(t) => {
-                    if t.to_id() == tile.to_id() {
+                    if !t.is_open && !t.is_kan && t.to_id() == tile.to_id() {
                         found = i;
                         break;
                     }
@@ -1304,6 +1304,28 @@ mod tests {
         let tiles = hand.find_shanten_improving_tiles(None);
 
         assert_eq!(tiles.get(0).unwrap().1.len(), 6);
+    }
+
+    #[test]
+    fn find_improving_tiles_tenpai_13_open() {
+        let mut hand = Hand::from_text("4m23334p1m(789s1)(p2m1)", false).unwrap();
+
+        assert_eq!(hand.shanten(), 1);
+
+        let result = hand.find_shanten_improving_tiles(None);
+
+        assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn find_improving_tiles_tenpai_14_open() {
+        let mut hand = Hand::from_text("44m23334p1m(789s1)(p2m1)", false).unwrap();
+
+        assert_eq!(hand.shanten(), 0);
+
+        let result = hand.find_shanten_improving_tiles(None);
+
+        assert_eq!(result.len(), 1);
     }
 
     #[test]
