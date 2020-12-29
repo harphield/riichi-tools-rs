@@ -494,6 +494,8 @@ impl Hand {
         let mut shapes: Vec<CompleteShape> = Vec::new();
 
         for kan in kans.iter() {
+            //type
+            let t = kan.chars().nth(0).unwrap();
             // number
             let n = kan.chars().nth(1).unwrap();
             // color
@@ -512,9 +514,17 @@ impl Hand {
 
             if p > 0 {
                 tile.called_from = p;
-                shapes.push(CompleteShape::Open(OpenShape::Kan(OpenKan::Daiminkan([
-                    tile, tile, tile, tile,
-                ]))));
+                let open_kan_type = if t == 's' {
+                    OpenKan::Shouminkan([
+                        tile, tile, tile, tile,
+                    ])
+                } else {
+                    OpenKan::Daiminkan([
+                        tile, tile, tile, tile,
+                    ])
+                };
+
+                shapes.push(CompleteShape::Open(OpenShape::Kan(open_kan_type)));
             } else {
                 shapes.push(CompleteShape::Closed(ClosedShape::Kantsu([
                     tile, tile, tile, tile,
@@ -1613,6 +1623,19 @@ mod tests {
         println!("{}", hand.count_tiles());
 
         assert_eq!(hand.to_string(), "123456m11p(k1s)(k2s1)");
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), -1);
+    }
+
+    #[test]
+    fn parse_open_hand_kans_shouminkan() {
+        let mut hand = Hand::from_text("123456m11p(k1s)(s2s1)", false).unwrap();
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert_eq!(hand.to_string(), "123456m11p(k1s)(s2s1)");
         assert!(hand.validate());
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), -1);
