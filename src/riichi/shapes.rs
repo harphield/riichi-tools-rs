@@ -46,7 +46,15 @@ pub enum ClosedShape {
 pub enum OpenShape {
     Chi([Tile; 3]),
     Pon([Tile; 3]),
-    Kan([Tile; 4]),
+    Kan(OpenKan),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum OpenKan {
+    // kan opened by a call
+    Daiminkan([Tile; 4]),
+    // kan added to pon
+    Shouminkan([Tile; 4]),
 }
 
 impl Shape {
@@ -297,7 +305,16 @@ impl Display for Shape {
 
                             format!("(p{}{})", tiles[0].to_string(), called_from)
                         }
-                        OpenShape::Kan(tiles) => {
+                        OpenShape::Kan(open_kan) => {
+                            let mut kan_type = 'k';
+                            let tiles = match open_kan {
+                                OpenKan::Daiminkan(tls) => tls,
+                                OpenKan::Shouminkan(tls) => {
+                                    kan_type = 's';
+                                    tls
+                                }
+                            };
+
                             let mut called_from = 0;
                             for t in tiles.iter() {
                                 if t.called_from > 0 {
@@ -310,7 +327,7 @@ impl Display for Shape {
                                 panic!("Invalid kan - who did we call it from?");
                             }
 
-                            format!("(k{}{})", tiles[0].to_string(), called_from,)
+                            format!("({}{}{})", kan_type, tiles[0].to_string(), called_from,)
                         }
                     },
                 },

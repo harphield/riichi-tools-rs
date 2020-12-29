@@ -1,6 +1,6 @@
 use crate::riichi::scores::Score;
 use crate::riichi::shape_finder::ShapeFinder;
-use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenShape, Shape, ShapeType};
+use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenKan, OpenShape, Shape, ShapeType};
 use crate::riichi::table::Table;
 use crate::riichi::tile::{Tile, TileType};
 use enum_iterator::IntoEnumIterator;
@@ -248,18 +248,26 @@ impl YakuFinder {
                                             fu += 4;
                                         }
                                     },
-                                    OpenShape::Kan(tiles) => match tiles[0].tile_type {
-                                        TileType::Number(value, _) => {
-                                            if value == 1 || value == 9 {
+                                    OpenShape::Kan(open_kan) => {
+                                        let tiles = match open_kan {
+                                            OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => {
+                                                tls
+                                            }
+                                        };
+
+                                        match tiles[0].tile_type {
+                                            TileType::Number(value, _) => {
+                                                if value == 1 || value == 9 {
+                                                    fu += 8;
+                                                } else {
+                                                    fu += 4;
+                                                }
+                                            }
+                                            TileType::Wind(_) | TileType::Dragon(_) => {
                                                 fu += 8;
-                                            } else {
-                                                fu += 4;
                                             }
                                         }
-                                        TileType::Wind(_) | TileType::Dragon(_) => {
-                                            fu += 8;
-                                        }
-                                    },
+                                    }
                                 },
                             }
                         }
@@ -701,7 +709,11 @@ impl Yaku {
                                         has_honors = true;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if !tiles[0].is_terminal_or_honor() {
                                         return false;
                                     }
@@ -984,7 +996,11 @@ impl Yaku {
                                         return true;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if self.ssdk_eval(&tiles[0], &mut combos) {
                                         return true;
                                     }
@@ -1063,7 +1079,11 @@ impl Yaku {
                                         return false;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if !self.honroutou_eval(
                                         &tiles[0],
                                         &mut has_terminals,
@@ -1112,7 +1132,11 @@ impl Yaku {
                                         return false;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if !self.shousangen_eval(&tiles[0], &mut dragon_pons) {
                                         return false;
                                     }
@@ -1190,7 +1214,11 @@ impl Yaku {
                                         return false;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if !tiles[0].is_terminal() {
                                         return false;
                                     }
@@ -1330,7 +1358,11 @@ impl Yaku {
                                         dragon_pons += 1;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if let TileType::Dragon(_) = tiles[0].tile_type {
                                         dragon_pons += 1;
                                     }
@@ -1393,12 +1425,18 @@ impl Yaku {
                                         other += 1;
                                     }
                                 },
-                                OpenShape::Kan(tiles) => match tiles[0].tile_type {
-                                    TileType::Wind(_value) => {}
-                                    _ => {
-                                        other += 1;
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
+                                    match tiles[0].tile_type {
+                                        TileType::Wind(_value) => {}
+                                        _ => {
+                                            other += 1;
+                                        }
                                     }
-                                },
+                                }
                             },
                         },
                         ShapeType::Incomplete(..) => return false,
@@ -1447,12 +1485,18 @@ impl Yaku {
                                         other += 1;
                                     }
                                 },
-                                OpenShape::Kan(tiles) => match tiles[0].tile_type {
-                                    TileType::Wind(_value) => {}
-                                    _ => {
-                                        other += 1;
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
+                                    match tiles[0].tile_type {
+                                        TileType::Wind(_value) => {}
+                                        _ => {
+                                            other += 1;
+                                        }
                                     }
-                                },
+                                }
                             },
                         },
                         ShapeType::Incomplete(..) => return false,
@@ -1490,7 +1534,11 @@ impl Yaku {
                                         return false;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if !tiles[0].is_honor() {
                                         return false;
                                     }
@@ -1532,7 +1580,11 @@ impl Yaku {
                                         return false;
                                     }
                                 }
-                                OpenShape::Kan(tiles) => {
+                                OpenShape::Kan(open_kan) => {
+                                    let tiles = match open_kan {
+                                        OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                                    };
+
                                     if !tiles[0].is_terminal() {
                                         return false;
                                     }
@@ -1669,7 +1721,11 @@ impl Yaku {
                                 return true;
                             }
                         }
-                        OpenShape::Kan(tiles) => {
+                        OpenShape::Kan(open_kan) => {
+                            let tiles = match open_kan {
+                                OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
+                            };
+
                             if tiles[0].to_id() == tile_id {
                                 return true;
                             }

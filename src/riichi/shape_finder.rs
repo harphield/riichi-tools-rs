@@ -1,7 +1,7 @@
 use crate::riichi::hand::Hand;
-use crate::riichi::shapes::ShapeType;
 use crate::riichi::shapes::{ClosedShape, Shape};
 use crate::riichi::shapes::{CompleteShape, OpenShape};
+use crate::riichi::shapes::{OpenKan, ShapeType};
 use crate::riichi::tile::Tile;
 
 pub struct ShapeFinder {
@@ -47,11 +47,18 @@ impl ShapeFinder {
                         3,
                         true,
                     )),
-                    OpenShape::Kan(tiles) => shapes.push(Shape::new(
-                        ShapeType::Complete(CompleteShape::Open(OpenShape::Kan(*tiles))),
-                        4,
-                        true,
-                    )),
+                    OpenShape::Kan(open_kan) => {
+                        let shape_type = match open_kan {
+                            OpenKan::Daiminkan(tls) => ShapeType::Complete(CompleteShape::Open(
+                                OpenShape::Kan(OpenKan::Daiminkan(*tls)),
+                            )),
+                            OpenKan::Shouminkan(tls) => ShapeType::Complete(CompleteShape::Open(
+                                OpenShape::Kan(OpenKan::Shouminkan(*tls)),
+                            )),
+                        };
+
+                        shapes.push(Shape::new(shape_type, 4, true))
+                    }
                 },
             }
         }
