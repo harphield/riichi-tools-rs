@@ -324,9 +324,9 @@ impl Hand {
         }
 
         let mut closed = vec![];
-        let mut chis = vec![];
-        let mut pons = vec![];
-        let mut kans = vec![];
+        let mut shapes: Vec<CompleteShape> = vec![];
+        let mut called_tiles = vec![];
+
         for cap in RE.captures_iter(representation) {
             match cap.name("closed") {
                 None => {}
@@ -334,19 +334,43 @@ impl Hand {
             }
             match cap.name("chi") {
                 None => {}
-                Some(value) => chis.push(value.as_str()),
+                Some(chi) => match Hand::parse_chi(chi.as_str()) {
+                    Ok(mut result) => {
+                        called_tiles.append(&mut result.0);
+                        shapes.push(result.1);
+                    }
+                    Err(_) => {}
+                },
             }
             match cap.name("pon") {
                 None => {}
-                Some(value) => pons.push(value.as_str()),
+                Some(pon) => match Hand::parse_pon(pon.as_str()) {
+                    Ok(mut result) => {
+                        called_tiles.append(&mut result.0);
+                        shapes.push(result.1);
+                    }
+                    Err(_) => {}
+                },
             }
             match cap.name("kan") {
                 None => {}
-                Some(value) => kans.push(value.as_str()),
+                Some(value) => match Hand::parse_kan(value.as_str()) {
+                    Ok(mut result) => {
+                        called_tiles.append(&mut result.0);
+                        shapes.push(result.1);
+                    }
+                    Err(_) => {}
+                },
             }
             match cap.name("shouminkan") {
                 None => {}
-                Some(value) => kans.push(value.as_str()),
+                Some(value) => match Hand::parse_kan(value.as_str()) {
+                    Ok(mut result) => {
+                        called_tiles.append(&mut result.0);
+                        shapes.push(result.1);
+                    }
+                    Err(_) => {}
+                },
             }
         }
 
@@ -359,36 +383,11 @@ impl Hand {
             Err(e) => return Err(e),
         };
 
-        let mut chi_tiles_and_shapes = match Hand::parse_chis(&chis) {
-            Ok(t) => t,
-            Err(e) => return Err(e),
-        };
-
-        let mut pon_tiles_and_shapes = match Hand::parse_pons(&pons) {
-            Ok(t) => t,
-            Err(e) => return Err(e),
-        };
-
-        let mut kan_tiles_and_shapes = match Hand::parse_kans(&kans) {
-            Ok(t) => t,
-            Err(e) => return Err(e),
-        };
-
-        tiles.append(&mut chi_tiles_and_shapes.0);
-        tiles.append(&mut pon_tiles_and_shapes.0);
-        tiles.append(&mut kan_tiles_and_shapes.0);
+        tiles.append(&mut called_tiles);
 
         let mut hand = Hand::new(tiles);
 
-        for shape in chi_tiles_and_shapes.1 {
-            hand.add_open_shape(&shape);
-        }
-
-        for shape in pon_tiles_and_shapes.1 {
-            hand.add_open_shape(&shape);
-        }
-
-        for shape in kan_tiles_and_shapes.1 {
+        for shape in shapes {
             match shape {
                 CompleteShape::Closed(closed_kan) => {
                     hand.add_closed_kan(closed_kan);
@@ -413,127 +412,113 @@ impl Hand {
     /// N = which tile has been called? Index 0-2
     ///
     /// Only insides of the brackets are in the chis vector.
-    fn parse_chis(chis: &[&str]) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
+    fn parse_chi(chi: &str) -> Result<(Vec<Option<Tile>>, CompleteShape), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
-        let mut shapes: Vec<OpenShape> = Vec::new();
+        let c = chi.chars().nth(3).unwrap();
+        let n = chi.chars().nth(4).unwrap();
 
-        for chi in chis.iter() {
-            let c = chi.chars().nth(3).unwrap();
-            let n = chi.chars().nth(4).unwrap();
-
-            let mut tile_1 =
-                Tile::from_text(&format!("{}{}", chi.chars().next().unwrap(), c)[..]).unwrap();
-            if n.eq(&'0') {
-                tile_1.called_from = 3;
-            }
-            let mut tile_2 =
-                Tile::from_text(&format!("{}{}", chi.chars().nth(1).unwrap(), c)[..]).unwrap();
-            if n.eq(&'1') {
-                tile_2.called_from = 3;
-            }
-            let mut tile_3 =
-                Tile::from_text(&format!("{}{}", chi.chars().nth(2).unwrap(), c)[..]).unwrap();
-            if n.eq(&'2') {
-                tile_3.called_from = 3;
-            }
-
-            tiles.push(Some(tile_1));
-            tiles.push(Some(tile_2));
-            tiles.push(Some(tile_3));
-
-            shapes.push(OpenShape::Chi([tile_1, tile_2, tile_3]))
+        let mut tile_1 =
+            Tile::from_text(&format!("{}{}", chi.chars().next().unwrap(), c)[..]).unwrap();
+        if n.eq(&'0') {
+            tile_1.called_from = 3;
+        }
+        let mut tile_2 =
+            Tile::from_text(&format!("{}{}", chi.chars().nth(1).unwrap(), c)[..]).unwrap();
+        if n.eq(&'1') {
+            tile_2.called_from = 3;
+        }
+        let mut tile_3 =
+            Tile::from_text(&format!("{}{}", chi.chars().nth(2).unwrap(), c)[..]).unwrap();
+        if n.eq(&'2') {
+            tile_3.called_from = 3;
         }
 
-        Ok((tiles, shapes))
+        tiles.push(Some(tile_1));
+        tiles.push(Some(tile_2));
+        tiles.push(Some(tile_3));
+
+        let shape = CompleteShape::Open(OpenShape::Chi([tile_1, tile_2, tile_3]));
+
+        Ok((tiles, shape))
     }
 
     /// A pon looks like this:
-    /// (pNCP) where
+    /// (pNCPr) where
     /// p = pon
     /// N = number 0-9
     /// C = color (mpsz)
     /// P = player who was ponned
+    /// r = TODO optional: if the pon has a red 5 (0m, 0p, 0s), the r signifies it was the red 5 that was called.
     ///
     /// Only insides of the brackets are in the pons vector.
-    fn parse_pons(pons: &[&str]) -> Result<(Vec<Option<Tile>>, Vec<OpenShape>), RiichiError> {
+    fn parse_pon(pon: &str) -> Result<(Vec<Option<Tile>>, CompleteShape), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
-        let mut shapes: Vec<OpenShape> = Vec::new();
+        // number
+        let n = pon.chars().nth(1).unwrap();
+        // color
+        let c = pon.chars().nth(2).unwrap();
+        // player
+        let p = pon.chars().nth(3).unwrap();
 
-        for pon in pons.iter() {
-            // number
-            let n = pon.chars().nth(1).unwrap();
-            // color
-            let c = pon.chars().nth(2).unwrap();
-            // player
-            let p = pon.chars().nth(3).unwrap();
+        let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
 
-            let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+        // TODO maybe sometimes specify exactly which one was called with id_136?
+        tile.called_from = p.to_digit(10).unwrap() as u8;
+        let shape = CompleteShape::Open(OpenShape::Pon([tile, tile, tile]));
 
-            // TODO maybe sometimes specify exactly which one was called with id_136?
-            tile.called_from = p.to_digit(10).unwrap() as u8;
-            shapes.push(OpenShape::Pon([tile, tile, tile]));
+        tiles.push(Some(tile));
+        tiles.push(Some(tile));
+        tiles.push(Some(tile));
 
-            tiles.push(Some(tile));
-            tiles.push(Some(tile));
-            tiles.push(Some(tile));
-        }
-
-        Ok((tiles, shapes))
+        Ok((tiles, shape))
     }
 
     /// A kan looks like this:
-    /// (kNCP) where
-    /// k = kan
+    /// ([k|s]NCPr) where
+    /// k|s = kan|shouminkan
     /// N = number 0-9
     /// C = color (mpsz)
     /// P = player who was kanned (or ponned originally, if the kan is upgraded from pon). Optional - closed kans don't have this.
+    /// r = TODO optional with open kans: if the kan has a red 5 (0m, 0p, 0s), the r signifies it was the red 5 that was called.
     ///
     /// Only insides of the brackets are in the kans vector.
-    fn parse_kans(kans: &[&str]) -> Result<(Vec<Option<Tile>>, Vec<CompleteShape>), RiichiError> {
+    fn parse_kan(kan: &str) -> Result<(Vec<Option<Tile>>, CompleteShape), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
-        let mut shapes: Vec<CompleteShape> = Vec::new();
 
-        for kan in kans.iter() {
-            //type
-            let t = kan.chars().nth(0).unwrap();
-            // number
-            let n = kan.chars().nth(1).unwrap();
-            // color
-            let c = kan.chars().nth(2).unwrap();
-            // player
-            let p = match kan.chars().nth(3) {
-                None => 0,
-                Some(value) => value.to_digit(10).unwrap() as u8,
-            } as u8;
+        //type
+        let t = kan.chars().nth(0).unwrap();
+        // number
+        let n = kan.chars().nth(1).unwrap();
+        // color
+        let c = kan.chars().nth(2).unwrap();
+        // player
+        let p = match kan.chars().nth(3) {
+            None => 0,
+            Some(value) => value.to_digit(10).unwrap() as u8,
+        } as u8;
 
-            let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+        let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
 
-            tiles.push(Some(tile));
-            tiles.push(Some(tile));
-            tiles.push(Some(tile));
+        tiles.push(Some(tile));
+        tiles.push(Some(tile));
+        tiles.push(Some(tile));
 
-            if p > 0 {
-                tile.called_from = p;
-                let open_kan_type = if t == 's' {
-                    OpenKan::Shouminkan([
-                        tile, tile, tile, tile,
-                    ])
-                } else {
-                    OpenKan::Daiminkan([
-                        tile, tile, tile, tile,
-                    ])
-                };
-
-                shapes.push(CompleteShape::Open(OpenShape::Kan(open_kan_type)));
+        let shape = if p > 0 {
+            tile.called_from = p;
+            let open_kan_type = if t == 's' {
+                OpenKan::Shouminkan([tile, tile, tile, tile])
             } else {
-                shapes.push(CompleteShape::Closed(ClosedShape::Kantsu([
-                    tile, tile, tile, tile,
-                ])));
-            }
-            tiles.push(Some(tile));
-        }
+                OpenKan::Daiminkan([tile, tile, tile, tile])
+            };
 
-        Ok((tiles, shapes))
+            CompleteShape::Open(OpenShape::Kan(open_kan_type))
+        } else {
+            CompleteShape::Closed(ClosedShape::Kantsu([tile, tile, tile, tile]))
+        };
+
+        tiles.push(Some(tile));
+
+        Ok((tiles, shape))
     }
 
     /// Closed part of the hand (or the whole hand, if we have no open tiles / kans)
@@ -1630,12 +1615,12 @@ mod tests {
 
     #[test]
     fn parse_open_hand_kans_shouminkan() {
-        let mut hand = Hand::from_text("123456m11p(k1s)(s2s1)", false).unwrap();
+        let mut hand = Hand::from_text("123456m11p(s2s1)(789p1)", false).unwrap();
 
         println!("{}", hand.to_string());
         println!("{}", hand.count_tiles());
 
-        assert_eq!(hand.to_string(), "123456m11p(k1s)(s2s1)");
+        assert_eq!(hand.to_string(), "123456m11p(s2s1)(789p1)");
         assert!(hand.validate());
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), -1);
