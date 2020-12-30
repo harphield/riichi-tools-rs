@@ -334,43 +334,39 @@ impl Hand {
             }
             match cap.name("chi") {
                 None => {}
-                Some(chi) => match Hand::parse_chi(chi.as_str()) {
-                    Ok(mut result) => {
+                Some(chi) => {
+                    if let Ok(mut result) = Hand::parse_chi(chi.as_str()) {
                         called_tiles.append(&mut result.0);
                         shapes.push(result.1);
                     }
-                    Err(_) => {}
-                },
+                }
             }
             match cap.name("pon") {
                 None => {}
-                Some(pon) => match Hand::parse_pon(pon.as_str()) {
-                    Ok(mut result) => {
+                Some(pon) => {
+                    if let Ok(mut result) = Hand::parse_pon(pon.as_str()) {
                         called_tiles.append(&mut result.0);
                         shapes.push(result.1);
                     }
-                    Err(_) => {}
-                },
+                }
             }
             match cap.name("kan") {
                 None => {}
-                Some(value) => match Hand::parse_kan(value.as_str()) {
-                    Ok(mut result) => {
+                Some(value) => {
+                    if let Ok(mut result) = Hand::parse_kan(value.as_str()) {
                         called_tiles.append(&mut result.0);
                         shapes.push(result.1);
                     }
-                    Err(_) => {}
-                },
+                }
             }
             match cap.name("shouminkan") {
                 None => {}
-                Some(value) => match Hand::parse_kan(value.as_str()) {
-                    Ok(mut result) => {
+                Some(value) => {
+                    if let Ok(mut result) = Hand::parse_kan(value.as_str()) {
                         called_tiles.append(&mut result.0);
                         shapes.push(result.1);
                     }
-                    Err(_) => {}
-                },
+                }
             }
         }
 
@@ -486,7 +482,7 @@ impl Hand {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
 
         //type
-        let t = kan.chars().nth(0).unwrap();
+        let t = kan.chars().next().unwrap();
         // number
         let n = kan.chars().nth(1).unwrap();
         // color
