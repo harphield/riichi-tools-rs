@@ -569,7 +569,7 @@ mod tests {
         let rep = "123m123p12345s222z";
         let mut hand = Hand::from_text(rep, false).unwrap();
 
-        hand.add_open_shape(OpenShape::Chi([
+        hand.add_open_shape(&OpenShape::Chi([
             Tile::from_text("1m").unwrap(),
             Tile::from_text("2m").unwrap(),
             Tile::from_text("3m").unwrap(),
