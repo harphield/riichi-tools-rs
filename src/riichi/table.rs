@@ -162,10 +162,7 @@ impl Table {
     }
 
     pub fn did_i_tsumo(&self) -> bool {
-        match self.my_tsumo {
-            None => false,
-            Some(value) => value,
-        }
+        self.my_tsumo.unwrap_or(false)
     }
 
     pub fn set_my_riichi(&mut self, value: bool) {
@@ -182,24 +179,15 @@ impl Table {
     }
 
     pub fn get_p1_riichi(&self) -> bool {
-        match self.p1_riichi {
-            None => false,
-            Some(value) => value,
-        }
+        self.p1_riichi.unwrap_or(false)
     }
 
     pub fn get_p2_riichi(&self) -> bool {
-        match self.p2_riichi {
-            None => false,
-            Some(value) => value,
-        }
+        self.p2_riichi.unwrap_or(false)
     }
 
     pub fn get_p3_riichi(&self) -> bool {
-        match self.p3_riichi {
-            None => false,
-            Some(value) => value,
-        }
+        self.p3_riichi.unwrap_or(false)
     }
 
     pub fn set_riichi_declaring_player(&mut self, player_id: u8) {
@@ -359,10 +347,7 @@ impl Table {
     }
 
     pub fn get_riichi_sticks(&self) -> u8 {
-        match self.riichi_sticks_in_pot {
-            None => 0,
-            Some(value) => value,
-        }
+        self.riichi_sticks_in_pot.unwrap_or(0)
     }
 
     pub fn set_tsumibo(&mut self, value: u8) {
@@ -370,10 +355,7 @@ impl Table {
     }
 
     pub fn get_tsumibo(&self) -> u8 {
-        match self.tsumibo {
-            None => 0,
-            Some(value) => value,
-        }
+        self.tsumibo.unwrap_or(0)
     }
 
     pub fn set_rules(&mut self, rules: Rules) {

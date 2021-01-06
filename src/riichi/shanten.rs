@@ -30,8 +30,7 @@ impl ShantenFinder {
         let mut chiitoi_shanten = 99;
 
         // add kans to completed melds
-        self.complete_melds += hand.get_kans() as i8;
-        // TODO add other open shapes to completed melds
+        self.complete_melds += hand.get_closed_kans() as i8;
         self.complete_melds += hand.get_open_shapes().len() as i8;
 
         if hand.is_closed() {
@@ -183,6 +182,7 @@ impl ShantenFinder {
         let s = (8 - self.complete_melds * 2 - self.incomplete_melds - self.pairs + over) as i8;
 
         if s < self.min_found {
+            // println!("{} {} {} {}", self.complete_melds, self.incomplete_melds, self.pairs, over);
             self.min_found = s;
         }
 
@@ -201,6 +201,9 @@ impl ShantenFinder {
 
     fn add_pair(&mut self, array_34: &mut [u8; 34], depth: usize) {
         array_34[depth] -= 2;
+
+        // println!("{}", array_34[depth]);
+
         self.pairs += 1;
     }
 

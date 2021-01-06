@@ -44,7 +44,7 @@ impl Hand {
         }
 
         // 13 tiles + 5 optional from kans & draw
-        if tile_count > 18 || tile_count < 13 {
+        if !(13..=18).contains(&tile_count) {
             return false;
         }
 
@@ -756,14 +756,14 @@ impl Hand {
         self.get_34_array(false)[(tile_id - 1) as usize]
     }
 
-    pub fn get_kans(&self) -> u8 {
+    pub fn get_closed_kans(&self) -> u8 {
         let mut array_34 = [0u8; 34];
         let mut cnt = 0;
         for t_o in self.tiles.iter() {
             match t_o {
                 None => {}
                 Some(tile) => {
-                    if tile.is_kan {
+                    if !tile.is_open && tile.is_kan {
                         array_34[(tile.to_id() - 1) as usize] += 1;
                         if array_34[(tile.to_id() - 1) as usize] == 4 {
                             cnt += 1;
@@ -1432,6 +1432,23 @@ mod tests {
         let map = hand.find_shanten_improving_tiles(None);
 
         assert_eq!(map.len(), 4);
+    }
+
+    #[test]
+    fn find_improving_tiles_14_tenpai_daiminkan() {
+        let mut hand = Hand::from_text("1111m222s333p5z(k4z1)", false).unwrap();
+
+        assert_eq!(hand.count_tiles(), 14);
+        assert_eq!(hand.shanten(), 0);
+
+        let map = hand.find_shanten_improving_tiles(None);
+
+        let waiting_tiles = map.get(0).unwrap();
+
+        // println!("{:#?}", hand.tiles);
+
+        assert_eq!(map.len(), 2);
+        assert_eq!(waiting_tiles.1.len(), 1);
     }
 
     #[test]

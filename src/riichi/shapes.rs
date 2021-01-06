@@ -84,7 +84,7 @@ impl Shape {
         let shape_type: ShapeType;
         let tile_count: u8 = tiles.iter().count() as u8;
 
-        if tile_count < 1 || tile_count > 4 {
+        if !(1..=4).contains(&tile_count) {
             // 4 = kan?
             return Err(RiichiError::new(
                 120,
@@ -192,7 +192,7 @@ impl Shape {
 
     /// Are these two tiles in a shape together?
     pub fn are_in_shape(first_tile_id: u8, second_tile_id: u8) -> bool {
-        if first_tile_id < 1 || first_tile_id > 34 || second_tile_id < 1 || second_tile_id > 34 {
+        if !(1..=34).contains(&first_tile_id) || second_tile_id < 1 || second_tile_id > 34 {
             panic!("Wrong tile IDs");
         }
 

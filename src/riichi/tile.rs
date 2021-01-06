@@ -152,7 +152,7 @@ impl Tile {
     /// id is an integer value > 0 of a tile.
     /// The order is Manzu - Pinzu - Souzu - Winds - Dragons
     pub fn from_id(id: u8) -> Result<Tile, RiichiError> {
-        if id < 1 || id > 34 {
+        if !(1..=34).contains(&id) {
             return Err(RiichiError::new(107, &format!("Wrong tile ID {}", id)[..]));
         }
 
