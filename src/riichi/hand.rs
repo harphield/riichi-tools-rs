@@ -444,27 +444,49 @@ impl Hand {
     /// N = number 0-9
     /// C = color (mpsz)
     /// P = player who was ponned
-    /// r = TODO optional: if the pon has a red 5 (0m, 0p, 0s), the r signifies it was the red 5 that was called.
+    /// r = optional: if the pon has a red 5 (0m, 0p, 0s), the r signifies it was the red 5 that was called.
     ///
     /// Only insides of the brackets are in the pons vector.
     fn parse_pon(pon: &str) -> Result<(Vec<Option<Tile>>, CompleteShape), RiichiError> {
         let mut tiles: Vec<Option<Tile>> = Vec::new();
         // number
-        let n = pon.chars().nth(1).unwrap();
+        let mut n = pon.chars().nth(1).unwrap();
         // color
         let c = pon.chars().nth(2).unwrap();
         // player
         let p = pon.chars().nth(3).unwrap();
+        // red 5 called?
+        let r = match pon.chars().nth(4) {
+            None => false,
+            Some(red) => red == 'r',
+        };
 
-        let mut tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+        if n != '0' && r {
+            return Err(RiichiError::new(589, "Only 0 can have r"));
+        }
+
+        let mut first_tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+
+        if n == '0' {
+            // red 5, change to 5 for the other tiles
+            n = '5';
+        }
+
+        let mut second_tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
+        let third_tile = Tile::from_text(&format!("{}{}", n, c)[..]).unwrap();
 
         // TODO maybe sometimes specify exactly which one was called with id_136?
-        tile.called_from = p.to_digit(10).unwrap() as u8;
-        let shape = CompleteShape::Open(OpenShape::Pon([tile, tile, tile]));
+        if r {
+            first_tile.called_from = p.to_digit(10).unwrap() as u8;
+        } else {
+            second_tile.called_from = p.to_digit(10).unwrap() as u8;
+        }
 
-        tiles.push(Some(tile));
-        tiles.push(Some(tile));
-        tiles.push(Some(tile));
+        let shape = CompleteShape::Open(OpenShape::Pon([first_tile, second_tile, third_tile]));
+
+        tiles.push(Some(first_tile));
+        tiles.push(Some(second_tile));
+        tiles.push(Some(third_tile));
 
         Ok((tiles, shape))
     }
@@ -1637,5 +1659,43 @@ mod tests {
         assert!(hand.validate());
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), -1);
+    }
+
+    #[test]
+    fn parse_hand_with_red_5_closed() {
+        let hand = Hand::from_text("123406m111p222s33z", false).unwrap();
+
+        assert_eq!(hand.to_string(), "123406m111p222s33z");
+    }
+
+    #[test]
+    fn parse_hand_with_red_5_chi() {
+        let hand = Hand::from_text("123m111p222s33z(406m1)", false).unwrap();
+
+        assert_eq!(hand.to_string(), "123m111p222s33z(406m1)");
+    }
+
+    #[test]
+    fn parse_hand_with_red_5_pon() {
+        let hand = Hand::from_text("123m111p222s33z(p0m1)", false).unwrap();
+
+        assert_eq!(hand.to_string(), "123m111p222s33z(p0m1)");
+
+        let mut reds = 0;
+        for tile in hand.get_tiles().iter().filter(|t| match t {
+            None => false,
+            Some(tile) => tile.get_value() == 5 || tile.get_value() == 0,
+        }) {
+            match tile {
+                None => {}
+                Some(t) => {
+                    if t.is_red {
+                        reds += 1;
+                    }
+                }
+            }
+        }
+
+        assert_eq!(reds, 1);
     }
 }
