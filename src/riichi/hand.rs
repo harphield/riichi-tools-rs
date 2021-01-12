@@ -497,7 +497,7 @@ impl Hand {
     /// N = number 0-9
     /// C = color (mpsz)
     /// P = player who was kanned (or ponned originally, if the kan is upgraded from pon). Optional - closed kans don't have this.
-    /// r = TODO optional with open kans: if the kan has a red 5 (0m, 0p, 0s), the r signifies it was the red 5 that was called.
+    /// r = optional with open kans: if the kan has a red 5 (0m, 0p, 0s), the r signifies it was the red 5 that was called.
     ///
     /// Only insides of the brackets are in the kans vector.
     fn parse_kan(kan: &str) -> Result<(Vec<Option<Tile>>, CompleteShape), RiichiError> {
