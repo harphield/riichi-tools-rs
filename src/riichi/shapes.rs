@@ -291,7 +291,6 @@ impl Display for Shape {
                         }
                         OpenShape::Pon(tiles) => {
                             let mut called_from = 0;
-                            println!("{:#?}", tiles);
                             for t in tiles.iter() {
                                 if t.called_from > 0 {
                                     called_from = t.called_from;

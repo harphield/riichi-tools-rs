@@ -394,7 +394,13 @@ impl Tile {
 
     pub fn get_value(&self) -> u8 {
         match &self.tile_type {
-            TileType::Number(number, _color) => *number,
+            TileType::Number(number, _color) => {
+                if self.is_red {
+                    return 0;
+                }
+
+                *number
+            }
             TileType::Wind(number) => *number,
             TileType::Dragon(number) => *number,
         }
@@ -437,7 +443,12 @@ impl Display for Tile {
             f,
             "{}",
             match &self.tile_type {
-                TileType::Number(number, color) => format!("{}{}", number, color),
+                TileType::Number(mut number, color) => {
+                    if self.is_red {
+                        number = 0;
+                    }
+                    format!("{}{}", number, color)
+                }
                 TileType::Wind(number) => format!("{}z", number),
                 TileType::Dragon(number) => format!("{}z", number),
             }
