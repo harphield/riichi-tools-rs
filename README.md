@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.65
+v0.0.66
 
 ![Build Status](https://github.com/harphield/riichi-tools-rs/workflows/Build,%20test%20and%20Clippy/badge.svg)
 
@@ -44,7 +44,7 @@ Showcase / frontend of this library can be found at https://riichi.harphield.com
     - 7 = red dragon
 - Open shapes
     - **(XYZCI)** is chi, where XYZ are consecutive numbers, C is the color (m, p, s) and I is the index of the called tile (0-2).
-    - **(pXCIr)** is pon, where X is 0-9, C is the color (m, p, s, z) and I is the index of the player from who we called (1 = shimocha, 2 = toimen, 3 = kamicha). In case the pon has a red 5, the representation will use `0` - for example **(p0m2)**. If it was the red 5 that was called, **r** is added (this is TODO)
+    - **(pXCIr)** is pon, where X is 0-9, C is the color (m, p, s, z) and I is the index of the player from who we called (1 = shimocha, 2 = toimen, 3 = kamicha). In case the pon has a red 5, the representation will use `0` - for example **(p0m2)**. If it was the red 5 that was called, **r** is added
     - **(kXCIr)** is closed kan or daiminkan (open called kan). Same rules as pon apply, but **I** is optional - if not available, the kan is considered closed.
     - **(sXCIr)** is a shouminkan (added kan). Same rules as daiminkan above.
   
