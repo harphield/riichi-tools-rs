@@ -333,6 +333,7 @@ impl Table {
 
     pub fn reset_tile_vectors(&mut self) {
         self.visible_tiles = [0; 34];
+        self.my_discards = vec![];
         self.p1_discards = vec![];
         self.p2_discards = vec![];
         self.p3_discards = vec![];
