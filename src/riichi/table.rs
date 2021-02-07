@@ -377,6 +377,8 @@ impl Table {
         &self.rules
     }
 
+    pub fn get_my_discards(&self) -> &Vec<Tile> { &self.my_discards }
+
     pub fn add_tile_to_discards(&mut self, player: u8, tile: Tile) {
         match player {
             0 => self.my_discards.push(tile),
