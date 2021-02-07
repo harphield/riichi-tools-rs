@@ -42,6 +42,8 @@ pub struct Table {
     prevalent_wind: Option<u8>,
     my_seat_wind: Option<u8>,
     my_initial_seat_wind: Option<u8>,
+    /// E1 - E4, S1-S4...
+    dealer_turn: Option<u8>,
     total_round: Option<u8>,
     tiles_remaining: Option<u8>,
 
@@ -84,6 +86,7 @@ impl Table {
             prevalent_wind: None,
             my_seat_wind: None,
             my_initial_seat_wind: None,
+            dealer_turn: None,
             total_round: None,
             tiles_remaining: None,
             riichi_sticks_in_pot: None,
@@ -277,6 +280,12 @@ impl Table {
     pub fn get_prevalent_wind(&self) -> Option<u8> {
         self.prevalent_wind
     }
+
+    pub fn set_dealer_turn(&mut self, value: u8) {
+        self.dealer_turn = Some(value);
+    }
+
+    pub fn get_dealer_turn(&self) -> Option<u8> { self.dealer_turn }
 
     pub fn get_placing(&self) -> u8 {
         // TODO: account for different tie-breaking rules
