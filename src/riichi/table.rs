@@ -231,6 +231,8 @@ impl Table {
         }
     }
 
+    pub fn get_my_hand_option(&self) -> &Option<Hand> { &self.my_hand }
+
     pub fn get_my_winning_tile(&self) -> Tile {
         match &self.my_hand {
             None => panic!("No drawn tile in hand!"),
