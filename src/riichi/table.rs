@@ -289,6 +289,8 @@ impl Table {
 
     pub fn get_dealer_turn(&self) -> Option<u8> { self.dealer_turn }
 
+    pub fn get_my_points(&self) -> Option<i32> { self.my_points }
+
     pub fn get_placing(&self) -> u8 {
         // TODO: account for different tie-breaking rules
         let initial_seat_winds = match self.my_initial_seat_wind {
