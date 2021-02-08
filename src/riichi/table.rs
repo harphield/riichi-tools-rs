@@ -474,7 +474,7 @@ impl Table {
     }
 
     /// Can my hand do an ankan (closed kan)? And if so, with what tile?
-    pub fn can_ankan(&mut self) -> Option<Vec<Tile>> {
+    pub fn can_ankan(&self) -> Option<Vec<Tile>> {
         let mut hand = self.get_my_hand().clone();
         if !hand.is_closed() {
             return None;
