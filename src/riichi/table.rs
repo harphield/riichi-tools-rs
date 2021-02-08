@@ -289,6 +289,16 @@ impl Table {
 
     pub fn get_dealer_turn(&self) -> Option<u8> { self.dealer_turn }
 
+    pub fn set_points(&mut self, player: u8, value: i32) {
+        match player {
+            0 => self.my_points = Some(value),
+            1 => self.p1_points = Some(value),
+            2 => self.p2_points = Some(value),
+            3 => self.p3_points = Some(value),
+            _ => panic!("Wrong player!")
+        }
+    }
+
     pub fn get_my_points(&self) -> Option<i32> { self.my_points }
 
     pub fn get_placing(&self) -> u8 {
