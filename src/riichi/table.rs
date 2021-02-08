@@ -231,7 +231,9 @@ impl Table {
         }
     }
 
-    pub fn get_my_hand_option(&self) -> &Option<Hand> { &self.my_hand }
+    pub fn get_my_hand_option(&self) -> &Option<Hand> {
+        &self.my_hand
+    }
 
     pub fn get_my_winning_tile(&self) -> Tile {
         match &self.my_hand {
@@ -287,7 +289,9 @@ impl Table {
         self.dealer_turn = Some(value);
     }
 
-    pub fn get_dealer_turn(&self) -> Option<u8> { self.dealer_turn }
+    pub fn get_dealer_turn(&self) -> Option<u8> {
+        self.dealer_turn
+    }
 
     pub fn set_points(&mut self, player: u8, value: i32) {
         match player {
@@ -295,11 +299,13 @@ impl Table {
             1 => self.p1_points = Some(value),
             2 => self.p2_points = Some(value),
             3 => self.p3_points = Some(value),
-            _ => panic!("Wrong player!")
+            _ => panic!("Wrong player!"),
         }
     }
 
-    pub fn get_my_points(&self) -> Option<i32> { self.my_points }
+    pub fn get_my_points(&self) -> Option<i32> {
+        self.my_points
+    }
 
     pub fn get_placing(&self) -> u8 {
         // TODO: account for different tie-breaking rules
@@ -390,7 +396,9 @@ impl Table {
         &self.rules
     }
 
-    pub fn get_my_discards(&self) -> &Vec<Tile> { &self.my_discards }
+    pub fn get_my_discards(&self) -> &Vec<Tile> {
+        &self.my_discards
+    }
 
     pub fn add_tile_to_discards(&mut self, player: u8, tile: Tile) {
         match player {
@@ -417,6 +425,55 @@ impl Table {
         yf.find(self)
     }
 
+    /// Can my hand pon this tile? And if so, with which tiles?
+    pub fn can_pon(&self, tile: &Tile) -> Option<Vec<Tile>> {
+        let hand = self.get_my_hand().clone();
+
+        if self.did_i_riichi() {
+            return None;
+        }
+
+        if hand.count_tiles() == 14 {
+            return None;
+        }
+
+        let tile_id = tile.to_id();
+
+        let array_34 = hand.get_34_array(true);
+        let mut can_pon = false;
+        for (i, count) in array_34.iter().enumerate() {
+            if i + 1 == tile_id as usize && *count >= 2 && *count < 4 {
+                can_pon = true;
+            }
+        }
+
+        if !can_pon {
+            return None;
+        }
+
+        let mut ret_ids = vec![];
+        for t in hand.get_tiles().iter().filter(|t_o| {
+            if let Some(t) = t_o {
+                return t.to_id() == tile_id;
+            }
+
+            false
+        }) {
+            ret_ids.push(t.unwrap());
+
+            if ret_ids.len() == 2 {
+                break;
+            }
+        }
+
+        if ret_ids.len() == 2 {
+            return Some(ret_ids);
+        }
+
+        None
+    }
+
+    /// Can my hand do an ankan (closed kan)? And if so, with what tile?
     pub fn can_ankan(&mut self) -> Option<Vec<Tile>> {
         let mut hand = self.get_my_hand().clone();
         if !hand.is_closed() {
@@ -615,9 +672,21 @@ mod tests {
         // table.set_my_hand(Hand::from_text("11123m234p456s44z1m", false).unwrap());
 
         table.my_initial_seat_wind = Some(3);
-        assert!(table.get_placing() == 3);
+        assert_eq!(table.get_placing(), 3);
         table.my_points = Some(20000);
-        assert!(table.get_placing() == 4);
+        assert_eq!(table.get_placing(), 4);
+    }
+
+    #[test]
+    fn pon_test() {
+        use super::*;
+        let mut table = Table::from_map(&Map::new()).unwrap();
+        table.set_my_hand(Hand::from_text("11234m234p456s44z", false).unwrap());
+
+        let can_pon_tiles = table.can_pon(&Tile::from_text("1m").unwrap()).unwrap();
+        assert_eq!(can_pon_tiles.len(), 2);
+        assert_eq!(can_pon_tiles.get(0).unwrap().to_id(), 1);
+        assert_eq!(can_pon_tiles.get(1).unwrap().to_id(), 1);
     }
 
     #[test]
