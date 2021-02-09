@@ -451,7 +451,7 @@ impl Table {
             return None;
         }
 
-        let mut ret_ids = vec![];
+        let mut ret_tiles = vec![];
         for t in hand.get_tiles().iter().filter(|t_o| {
             if let Some(t) = t_o {
                 return t.to_id() == tile_id;
@@ -459,15 +459,15 @@ impl Table {
 
             false
         }) {
-            ret_ids.push(t.unwrap());
+            ret_tiles.push(t.unwrap());
 
-            if ret_ids.len() == 2 {
+            if ret_tiles.len() == 2 {
                 break;
             }
         }
 
-        if ret_ids.len() == 2 {
-            return Some(ret_ids);
+        if ret_tiles.len() == 2 {
+            return Some(ret_tiles);
         }
 
         None

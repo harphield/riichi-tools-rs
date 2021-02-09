@@ -1108,6 +1108,8 @@ impl Hand {
         let mut try_tiles: Vec<u8> = vec![];
         let mut tiles_and_counts = vec![];
 
+        let mut hand = self.clone();
+
         // we don't need to try all tiles:
         // - the same tile
         // - next tile
@@ -1116,7 +1118,7 @@ impl Hand {
         // - previous - 1
         // - all terminals and honors because kokushi
 
-        for o_tile in self.tiles.iter() {
+        for o_tile in hand.tiles.iter() {
             match o_tile {
                 Some(t) => {
                     if t.is_open || t.is_kan {
@@ -1154,7 +1156,7 @@ impl Hand {
         }
 
         // terminals and honors check
-        if self.is_closed() {
+        if hand.is_closed() {
             for tile_id in [1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34].iter() {
                 if !try_tiles.contains(&tile_id) {
                     try_tiles.push(*tile_id);
@@ -1162,19 +1164,19 @@ impl Hand {
             }
         }
 
-        let array_34 = self.get_34_array(true);
+        let array_34 = hand.get_34_array(true);
 
         // we draw a tile and count shanten - if it improves, we add it to the tiles
         for i in try_tiles.iter() {
-            if self.get_tile_count_by_id(*i) == 4 {
+            if hand.get_tile_count_by_id(*i) == 4 {
                 continue;
             }
             let drawn_tile = Tile::from_id(*i).unwrap();
             // let tile_str = drawn_tile.to_string();
-            self.add_tile(drawn_tile);
+            hand.add_tile(drawn_tile);
 
-            self.reset_shanten();
-            let new_shanten = self.shanten();
+            hand.reset_shanten();
+            let new_shanten = hand.shanten();
             // println!("new shanten with {} = {}", drawn_tile.to_string(), new_shanten);
 
             if new_shanten < current_shanten {
@@ -1188,7 +1190,7 @@ impl Hand {
                 // we remove tiles that are visible in the hand from ukeire
             }
 
-            self.remove_tile(&Tile::from_id(*i).unwrap());
+            hand.remove_tile(&Tile::from_id(*i).unwrap());
         }
 
         tiles_and_counts
