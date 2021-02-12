@@ -413,20 +413,29 @@ impl Hand {
         let c = chi.chars().nth(3).unwrap();
         let n = chi.chars().nth(4).unwrap();
 
+        let mut got_called = false;
+
         let mut tile_1 =
             Tile::from_text(&format!("{}{}", chi.chars().next().unwrap(), c)[..]).unwrap();
         if n.eq(&'0') {
             tile_1.called_from = 3;
+            got_called = true;
         }
         let mut tile_2 =
             Tile::from_text(&format!("{}{}", chi.chars().nth(1).unwrap(), c)[..]).unwrap();
         if n.eq(&'1') {
             tile_2.called_from = 3;
+            got_called = true;
         }
         let mut tile_3 =
             Tile::from_text(&format!("{}{}", chi.chars().nth(2).unwrap(), c)[..]).unwrap();
         if n.eq(&'2') {
             tile_3.called_from = 3;
+            got_called = true;
+        }
+
+        if !got_called {
+            return Err(RiichiError::new(780, "Called tile was not specified"));
         }
 
         tiles.push(Some(tile_1));
