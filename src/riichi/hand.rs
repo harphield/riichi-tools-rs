@@ -300,6 +300,36 @@ impl Hand {
         Hand::new(final_tiles)
     }
 
+    /// Generate a random closed hand
+    pub fn random_hand() -> Hand {
+        let mut rng = rand::thread_rng();
+        let mut used_tiles: [u8; 34] = [0; 34];
+        let mut tiles: Vec<Option<Tile>> = vec![];
+
+        for i in 0..14 {
+            let mut tile_id;
+            loop {
+                tile_id = rng.gen_range(1, 35);
+
+                if used_tiles[tile_id - 1 as usize] == 4 {
+                    continue;
+                }
+
+                break;
+            }
+
+            used_tiles[tile_id - 1 as usize] += 1;
+
+            let mut tile = Tile::from_id(tile_id as u8).unwrap();
+            if i == 0 {
+                tile.is_draw = true;
+            }
+            tiles.push(Some(tile));
+        }
+
+        Hand::new(tiles)
+    }
+
     fn generate_toitsu(used_tiles: &mut [u8; 34], tiles: &mut Vec<Tile>) {
         let mut rng = rand::thread_rng();
         let mut tile_id: u8;
