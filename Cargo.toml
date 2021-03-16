@@ -1,11 +1,14 @@
 [package]
 name = "riichi-tools-rs"
 version = "0.0.66"
-authors = ["harphield <harphield@gmail.com>"]
+authors = ["harphield <harphield@protonmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "Riichi Mahjong tools library, mostly for WASM"
+homepage = "https://riichi.harphield.com/tools/"
+repository = "https://github.com/harphield/riichi-tools-rs"
 readme = "README.md"
+keywords = ["riichi", "mahjong", "wasm"]
 
 [lib]
 crate-type = ["lib"]
