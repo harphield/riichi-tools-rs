@@ -12,6 +12,7 @@ keywords = ["riichi", "mahjong", "wasm"]
 exclude = [
     ".travis.yml",
     ".github",
+    ".gitignore",
 ]
 
 [lib]
