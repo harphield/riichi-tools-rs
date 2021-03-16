@@ -9,6 +9,10 @@ homepage = "https://riichi.harphield.com/tools/"
 repository = "https://github.com/harphield/riichi-tools-rs"
 readme = "README.md"
 keywords = ["riichi", "mahjong", "wasm"]
+exclude = [
+    ".travis.yml",
+    ".github",
+]
 
 [lib]
 crate-type = ["lib"]
