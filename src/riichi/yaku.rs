@@ -286,7 +286,7 @@ impl YakuFinder {
             }
         }
 
-        println!("{:#?}", best_variant);
+        // println!("{:#?}", best_variant);
         Some(best_variant)
     }
 }
@@ -968,7 +968,7 @@ impl Yaku {
                 }
             }
             Yaku::SanshokuDoukou => {
-                println!("{:#?}", variant);
+                // println!("{:#?}", variant);
 
                 let mut combos: HashMap<String, [bool; 3]> = HashMap::new();
 
