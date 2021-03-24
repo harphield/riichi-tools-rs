@@ -2,6 +2,8 @@
 v0.0.67
 
 ![Build Status](https://github.com/harphield/riichi-tools-rs/workflows/Build,%20test%20and%20Clippy/badge.svg)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/harphield/riichi-tools-rs)
+[![License](https://img.shields.io/github/license/harphield/riichi-tools-rs)](https://github.com/harphield/riichi-tools-rs/blob/master/LICENSE)
 
 A tool library for riichi mahjong written in Rust, made mostly to be used as a WASM component.
 
