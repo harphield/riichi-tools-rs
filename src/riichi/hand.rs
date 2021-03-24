@@ -5,7 +5,9 @@ use std::fmt;
 use super::shanten::ShantenFinder;
 use super::tile::Tile;
 use crate::riichi::riichi_error::RiichiError;
+use crate::riichi::rules::Rules;
 use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenKan, OpenShape, Shape, ShapeType};
+use crate::riichi::tile::{TileColor, TileType};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
@@ -301,29 +303,64 @@ impl Hand {
     }
 
     /// Generate a random closed hand
-    pub fn random_hand() -> Hand {
+    pub fn random_hand(rules: Option<&Rules>) -> Hand {
         let mut rng = rand::thread_rng();
         let mut used_tiles: [u8; 34] = [0; 34];
         let mut tiles: Vec<Option<Tile>> = vec![];
+
+        // if I generated a red 5, save it here.
+        // 0 = m, 1 = p, 2 = s
+        let mut red5s: [bool; 3] = [false; 3];
 
         for i in 0..14 {
             let mut tile_id;
             loop {
                 tile_id = rng.gen_range(1, 35);
 
-                if used_tiles[tile_id - 1 as usize] == 4 {
+                if used_tiles[tile_id - 1_usize] == 4 {
                     continue;
                 }
 
                 break;
             }
 
-            used_tiles[tile_id - 1 as usize] += 1;
+            used_tiles[tile_id - 1_usize] += 1;
 
             let mut tile = Tile::from_id(tile_id as u8).unwrap();
             if i == 0 {
                 tile.is_draw = true;
             }
+
+            if let Some(r) = rules {
+                if r.aka_ari {
+                    if let TileType::Number(value, color) = tile.tile_type {
+                        // 25% chance of having a red 5
+                        if value == 5 {
+                            match color {
+                                TileColor::Manzu => {
+                                    if !red5s[0] && rng.gen_range(0, 4) == 0 {
+                                        tile.is_red = true;
+                                        red5s[0] = true;
+                                    }
+                                }
+                                TileColor::Pinzu => {
+                                    if !red5s[1] && rng.gen_range(0, 4) == 0 {
+                                        tile.is_red = true;
+                                        red5s[1] = true;
+                                    }
+                                }
+                                TileColor::Souzu => {
+                                    if !red5s[2] && rng.gen_range(0, 4) == 0 {
+                                        tile.is_red = true;
+                                        red5s[2] = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             tiles.push(Some(tile));
         }
 
@@ -1676,6 +1713,17 @@ mod tests {
         assert!(hand.validate());
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), -1);
+    }
+
+    #[test]
+    fn random_hand() {
+        let mut hand = Hand::random_hand(None);
+
+        println!("{}", hand.to_string());
+        println!("{}", hand.count_tiles());
+
+        assert!(hand.validate());
+        assert_eq!(hand.count_tiles(), 14);
     }
 
     #[test]
