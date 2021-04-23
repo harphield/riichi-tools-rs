@@ -1,3 +1,4 @@
+mod fast_shanten;
 pub mod hand;
 pub mod riichi_error;
 pub mod rules;

@@ -1090,6 +1090,7 @@ impl Hand {
     pub fn shanten(&mut self) -> i8 {
         if self.shanten == 99 {
             match ShantenFinder::new().shanten(self) {
+                // match FastShantenFinder::new().shanten(self) {
                 Ok(shanten) => {
                     self.shanten = shanten;
                 }
