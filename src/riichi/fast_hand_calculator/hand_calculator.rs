@@ -1,12 +1,12 @@
-use crate::riichi::fast_shanten::chiitoi_classifier::ChiitoiClassifier;
-use crate::riichi::fast_shanten::kokushi_classifier::KokushiClassifier;
-use crate::riichi::fast_shanten::progressive_honor_classifier::ProgressiveHonorClassifier;
-use crate::riichi::fast_shanten::suit_classifier::SuitClassifier;
+use crate::riichi::fast_hand_calculator::chiitoi_classifier::ChiitoiClassifier;
+use crate::riichi::fast_hand_calculator::kokushi_classifier::KokushiClassifier;
+use crate::riichi::fast_hand_calculator::progressive_honor_classifier::ProgressiveHonorClassifier;
+use crate::riichi::fast_hand_calculator::suit_classifier::SuitClassifier;
 use crate::riichi::riichi_error::RiichiError;
 
 static BASE5TABLE: [u32; 9] = [1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
-pub struct FastShantenFinder {
+pub struct HandCalculator {
     arrangement_values: [u32; 4],
     /// base 5 representation of concealed suits. Not relevant with a meld.
     base5hashes: [u32; 3],
@@ -24,9 +24,9 @@ pub struct FastShantenFinder {
     meld_count: u8,
 }
 
-impl FastShantenFinder {
-    pub fn new() -> FastShantenFinder {
-        FastShantenFinder {
+impl HandCalculator {
+    pub fn new() -> HandCalculator {
+        HandCalculator {
             ..Default::default()
         }
     }
@@ -43,9 +43,9 @@ impl FastShantenFinder {
     }
 }
 
-impl Default for FastShantenFinder {
-    fn default() -> FastShantenFinder {
-        FastShantenFinder {
+impl Default for HandCalculator {
+    fn default() -> HandCalculator {
+        HandCalculator {
             arrangement_values: [0; 4],
             base5hashes: [0; 3],
             concealed_tiles: [0; 34],

@@ -1,5 +1,5 @@
 #[cfg(feature = "fast_shanten")]
-mod fast_shanten;
+mod fast_hand_calculator;
 pub mod hand;
 pub mod riichi_error;
 pub mod rules;

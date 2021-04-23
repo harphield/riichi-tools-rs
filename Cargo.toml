@@ -30,5 +30,6 @@ lazy_static = "1.4.0"
 rust-embed = { version = "5.9.0", optional = true }
 
 [features]
+default = ["fast_shanten"] # need this for intellij, might remove later?
 # uses a better and faster shanten & ukeire algorithm, but makes the binary larger, because it uses lookup tables.
 fast_shanten = ["rust-embed"]

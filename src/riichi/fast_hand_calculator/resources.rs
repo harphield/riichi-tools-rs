@@ -1,5 +1,4 @@
 use rust_embed::RustEmbed;
-use std::num::ParseIntError;
 
 #[derive(RustEmbed)]
 #[folder = "res/"]
@@ -84,7 +83,7 @@ impl Resources {
 
 #[cfg(test)]
 mod tests {
-    use crate::riichi::fast_shanten::resources::Resources;
+    use crate::riichi::fast_hand_calculator::resources::Resources;
 
     #[test]
     fn load_first_phase() {
