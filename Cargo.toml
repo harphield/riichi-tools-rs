@@ -1,6 +1,6 @@
 [package]
 name = "riichi-tools-rs"
-version = "0.0.68"
+version = "0.0.69"
 authors = ["harphield <harphield@protonmail.com>"]
 edition = "2018"
 license = "MIT"

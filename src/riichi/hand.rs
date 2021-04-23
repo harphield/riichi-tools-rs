@@ -1024,6 +1024,19 @@ impl Hand {
         out
     }
 
+    pub fn to_unicode(&self) -> String {
+        let mut out = "".to_string();
+
+        // TODO shapes
+        for tile in self.tiles.iter() {
+            if let Some(t) = tile {
+                out.push(t.to_unicode());
+            }
+        }
+
+        out
+    }
+
     fn remove_meld_from_tiles(&self, meld_tiles: &[Tile], tiles: &mut Vec<Option<Tile>>) {
         for meld_tile in meld_tiles.iter() {
             let mut index = 0;
@@ -1837,5 +1850,12 @@ mod tests {
         }
 
         assert_eq!(reds, 1);
+    }
+
+    #[test]
+    fn unicode_hand_1() {
+        let hand = Hand::from_text("123m111p222s33z(k0m1)", false).unwrap();
+
+        println!("{}", hand.to_unicode());
     }
 }

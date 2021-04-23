@@ -406,6 +406,20 @@ impl Tile {
         }
     }
 
+    pub fn to_unicode(&self) -> char {
+        std::char::from_u32(match &self.tile_type {
+            TileType::Number(number, color) => {
+                match color {
+                    TileColor::Manzu => 0x1F006 + *number as u32,
+                    TileColor::Pinzu => 0x1F018 + *number as u32,
+                    TileColor::Souzu => 0x1F00F + *number as u32,
+                }
+            }
+            TileType::Wind(number) => 0x1EFFF + *number as u32,
+            TileType::Dragon(number) => 0x1F003 + *number as u32 - 4,
+        } as u32).unwrap()
+    }
+
     /// Returns an array of 3 values: type, color and number for this tile
     /// TODO red 5s
     fn get_ordering_values(&self) -> [u8; 3] {
@@ -603,5 +617,47 @@ mod tests {
         let prev = tile.prev_id(true, 2);
 
         assert_eq!(prev, 7);
+    }
+
+    #[test]
+    fn unicode_char_east() {
+        let tile = Tile::new(TileType::Wind(1));
+
+        assert_eq!('\u{1F000}', tile.to_unicode());
+    }
+
+    #[test]
+    fn unicode_char_chun() {
+        let tile = Tile::new(TileType::Dragon(5));
+
+        assert_eq!('\u{1F004}', tile.to_unicode());
+    }
+
+    #[test]
+    fn unicode_char_1m() {
+        let tile = Tile::new(TileType::Number(1, TileColor::Manzu));
+
+        assert_eq!('\u{1F007}', tile.to_unicode());
+    }
+
+    #[test]
+    fn unicode_char_1s() {
+        let tile = Tile::new(TileType::Number(1, TileColor::Souzu));
+
+        assert_eq!('\u{1F010}', tile.to_unicode());
+    }
+
+    #[test]
+    fn unicode_char_1p() {
+        let tile = Tile::new(TileType::Number(1, TileColor::Pinzu));
+
+        assert_eq!('\u{1F019}', tile.to_unicode());
+    }
+
+    #[test]
+    fn unicode_char_8p() {
+        let tile = Tile::new(TileType::Number(8, TileColor::Pinzu));
+
+        assert_eq!('\u{1F020}', tile.to_unicode());
     }
 }
