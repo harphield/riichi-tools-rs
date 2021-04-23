@@ -32,7 +32,7 @@ impl SuitClassifier {
         // self.second_phase = SuitSecondPhases[_meldCount];
     }
 
-    pub fn get_value(&self, tiles: Vec<u8>, suit: usize, base5hashes: Vec<u8>) -> u32 {
+    pub fn get_value(&self, tiles: &[u8; 34], suit: usize, base5hashes: &[u32; 3]) -> u32 {
         let offset = suit * 9;
         match self.meld_count {
             0 => return *self.resources.unwrap().get_suit_base_5_lookup().get(base5hashes[suit] as usize).unwrap() as u32,

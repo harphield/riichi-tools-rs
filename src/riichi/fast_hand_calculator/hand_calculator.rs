@@ -3,6 +3,8 @@ use crate::riichi::fast_hand_calculator::kokushi_classifier::KokushiClassifier;
 use crate::riichi::fast_hand_calculator::progressive_honor_classifier::ProgressiveHonorClassifier;
 use crate::riichi::fast_hand_calculator::suit_classifier::SuitClassifier;
 use crate::riichi::riichi_error::RiichiError;
+use crate::riichi::tile::{Tile, TileType, TileColor};
+use crate::riichi::hand::Hand;
 
 static BASE5TABLE: [u32; 9] = [1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
@@ -31,7 +33,44 @@ impl HandCalculator {
         }
     }
 
-    pub fn shanten(&self, arrangement_values: Vec<u8>) -> Result<i8, RiichiError> {
+    fn init(&mut self, hand: &Hand) {
+        for tile_o in hand.get_tiles() {
+            match tile_o {
+                None => {}
+                Some(tile) => {
+                    self.in_hand_by_type[tile.to_id() as usize] += 1;
+                    let prev_tile_count = self.concealed_tiles[tile.to_id() as usize];
+                    self.concealed_tiles[tile.to_id() as usize] += 1;
+
+                    self.kokushi.draw(tile.to_id(), prev_tile_count);
+                    self.chiitoi.draw(prev_tile_count);
+
+                    match tile.tile_type {
+                        TileType::Number(value, color) => {
+                            match color {
+                                TileColor::Manzu => self.base5hashes[0] += BASE5TABLE[value as usize],
+                                TileColor::Pinzu => self.base5hashes[1] += BASE5TABLE[value as usize],
+                                TileColor::Souzu => self.base5hashes[2] += BASE5TABLE[value as usize],
+                            }
+                        }
+                        TileType::Wind(value) | TileType::Dragon(value) => {
+                            self.arrangement_values[3] = self.honor_classifier.draw(prev_tile_count, self.jihai_meld_bit >> value & 1)
+                        }
+                    }
+                }
+            }
+        }
+
+        self.update_value(0);
+        self.update_value(1);
+        self.update_value(2);
+    }
+
+    fn update_value(&mut self, suit: usize) {
+        self.arrangement_values[suit] = self.suit_classifiers[suit].get_value(&self.concealed_tiles, suit, &self.base5hashes);
+    }
+
+    pub fn calculate_shanten(&self, arrangement_values: Vec<u8>) -> Result<i8, RiichiError> {
         // let shanten = ArrangementClassifier.Classify(arrangement_values);
         // if self.meld_count > 0 {
         //     return shanten;
