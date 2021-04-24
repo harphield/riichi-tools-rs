@@ -54,7 +54,7 @@ impl HandCalculator {
                             }
                         }
                         TileType::Wind(value) | TileType::Dragon(value) => {
-                            self.arrangement_values[3] = self.honor_classifier.draw(prev_tile_count, self.jihai_meld_bit >> value & 1)
+                            self.arrangement_values[3] = self.honor_classifier.draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
                         }
                     }
                 }
@@ -64,6 +64,49 @@ impl HandCalculator {
         self.update_value(0);
         self.update_value(1);
         self.update_value(2);
+    }
+
+    fn draw(&mut self, tile: &Tile) {
+        if self.tiles_in_hand() != 13 {
+            panic!("Can only draw with a 13 tile hand.");
+        }
+
+        if self.in_hand_by_type[tile.to_id() as usize] == 4 {
+            panic!("Can't draw a tile with 4 of that tile in hand.");
+        }
+
+        self.in_hand_by_type[tile.to_id() as usize] += 1;
+        let prev_tile_count = self.concealed_tiles[tile.to_id() as usize];
+        self.concealed_tiles[tile.to_id() as usize] += 1;
+
+        self.kokushi.draw(tile.to_id(), prev_tile_count);
+        self.chiitoi.draw(prev_tile_count);
+
+        match tile.tile_type {
+            TileType::Number(value, color) => {
+                match color {
+                    TileColor::Manzu => {
+                        self.base5hashes[0] += BASE5TABLE[value as usize];
+                        self.update_value(0);
+                    },
+                    TileColor::Pinzu => {
+                        self.base5hashes[1] += BASE5TABLE[value as usize];
+                        self.update_value(1);
+                    },
+                    TileColor::Souzu => {
+                        self.base5hashes[2] += BASE5TABLE[value as usize];
+                        self.update_value(2);
+                    },
+                }
+            }
+            TileType::Wind(value) | TileType::Dragon(value) => {
+                self.arrangement_values[3] = self.honor_classifier.draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+            }
+        }
+    }
+
+    fn tiles_in_hand(&self) -> u8 {
+        self.concealed_tiles.iter().sum::<u8>() + self.meld_count * 3
     }
 
     fn update_value(&mut self, suit: usize) {
