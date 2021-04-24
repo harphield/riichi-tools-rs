@@ -8,4 +8,12 @@ impl ProgressiveHonorClassifier {
     pub fn draw(&self, tile_id: u8, prev_tile_count: u8) -> u32 {
         0
     }
+
+    pub fn pon(&self, tile_id: u8) -> u32 {
+        0
+    }
+
+    pub fn shouminkan(&self) -> u32 {
+        0
+    }
 }

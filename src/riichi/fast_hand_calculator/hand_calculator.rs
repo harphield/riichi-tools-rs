@@ -105,6 +105,167 @@ impl HandCalculator {
         }
     }
 
+    fn discard(&mut self, tile: &Tile) {
+        if self.tiles_in_hand() != 13 {
+            panic!("Can only draw with a 13 tile hand.");
+        }
+
+        if self.in_hand_by_type[tile.to_id() as usize] == 4 {
+            panic!("Can't draw a tile with 4 of that tile in hand.");
+        }
+        self.in_hand_by_type[tile.to_id() as usize] -= 1;
+        self.concealed_tiles[tile.to_id() as usize] -= 1;
+        let tile_count_after_discard = self.concealed_tiles[tile.to_id() as usize];
+
+        self.kokushi.draw(tile.to_id(), tile_count_after_discard);
+        self.chiitoi.draw(tile_count_after_discard);
+
+        match tile.tile_type {
+            TileType::Number(value, color) => {
+                match color {
+                    TileColor::Manzu => {
+                        self.base5hashes[0] -= BASE5TABLE[value as usize];
+                        self.update_value(0);
+                    },
+                    TileColor::Pinzu => {
+                        self.base5hashes[1] -= BASE5TABLE[value as usize];
+                        self.update_value(1);
+                    },
+                    TileColor::Souzu => {
+                        self.base5hashes[2] -= BASE5TABLE[value as usize];
+                        self.update_value(2);
+                    },
+                }
+            }
+            TileType::Wind(value) | TileType::Dragon(value) => {
+                self.arrangement_values[3] = self.honor_classifier.draw(tile_count_after_discard, self.jihai_meld_bit >> value & 1);
+            }
+        }
+    }
+
+    fn chii(&mut self, lowest_tile: &Tile, called_tile: &Tile) {
+        if self.tiles_in_hand() != 13 {
+            panic!("Chii only after discard.");
+        }
+
+        match lowest_tile.tile_type {
+            TileType::Wind(_) | TileType::Dragon(_) => panic!("Not a valid suit for chii"),
+            _ => {}
+        }
+
+        self.concealed_tiles[lowest_tile.to_id() as usize] -= 1;
+        self.concealed_tiles[(lowest_tile.to_id() + 1) as usize] -= 1;
+        self.concealed_tiles[(lowest_tile.to_id() + 2) as usize] -= 1;
+        self.concealed_tiles[called_tile.to_id() as usize] += 1;
+
+        match lowest_tile.tile_type {
+            TileType::Number(value, color) => {
+                match color {
+                    TileColor::Manzu => {
+                        self.melds[0] <<= 6;
+                        self.melds[0] += 1 + value;
+
+                        self.melds[0] = self.suit_classifiers[0].set_melds(self.melds[0]);
+                        self.update_value(0);
+                    }
+                    TileColor::Pinzu => {
+                        self.melds[1] <<= 6;
+                        self.melds[1] += 1 + value;
+
+                        self.melds[1] = self.suit_classifiers[1].set_melds(self.melds[1]);
+                        self.update_value(1);
+                    }
+                    TileColor::Souzu => {
+                        self.melds[2] <<= 6;
+                        self.melds[2] += 1 + value;
+
+                        self.melds[2] = self.suit_classifiers[2].set_melds(self.melds[2]);
+                        self.update_value(2);
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        self.meld_count += 1;
+        self.in_hand_by_type[called_tile.to_id() as usize] += 1;
+    }
+
+    fn pon(&mut self, tile: &Tile) {
+        if self.tiles_in_hand() != 13 {
+            panic!("Pon only after discard.");
+        }
+
+        self.concealed_tiles[tile.to_id() as usize] -= 2;
+
+        match tile.tile_type {
+            TileType::Number(value, color) => {
+                match color {
+                    TileColor::Manzu => {
+                        self.melds[0] <<= 6;
+                        self.melds[0] += 1 + 7 + value;
+
+                        self.melds[0] = self.suit_classifiers[0].set_melds(self.melds[0]);
+                        self.update_value(0);
+                    }
+                    TileColor::Pinzu => {
+                        self.melds[1] <<= 6;
+                        self.melds[1] += 1 + 7 + value;
+
+                        self.melds[1] = self.suit_classifiers[1].set_melds(self.melds[1]);
+                        self.update_value(1);
+                    }
+                    TileColor::Souzu => {
+                        self.melds[2] <<= 6;
+                        self.melds[2] += 1 + 7 + value;
+
+                        self.melds[2] = self.suit_classifiers[2].set_melds(self.melds[2]);
+                        self.update_value(2);
+                    }
+                }
+            }
+            TileType::Wind(_) | TileType::Dragon(_) => {
+                self.arrangement_values[3] = self.honor_classifier.pon(self.concealed_tiles[tile.to_id() as usize]);
+                self.jihai_meld_bit += 1 << tile.get_value();
+            }
+        }
+
+        self.meld_count += 1;
+        self.in_hand_by_type[tile.to_id() as usize] += 1;
+    }
+
+    fn shouminkan(&mut self, tile: &Tile) {
+        if self.tiles_in_hand() != 14 {
+            panic!("Shouminkan only after draw.");
+        }
+
+        self.concealed_tiles[tile.to_id() as usize] -= 1;
+
+        match tile.tile_type {
+            TileType::Number(value, color) => {
+                let c: usize = match color {
+                    TileColor::Manzu => 0,
+                    TileColor::Pinzu => 1,
+                    TileColor::Souzu => 2,
+                };
+
+                let pon = 1 + 7 + value;
+                for i in 0..4 {
+                    if (self.melds[c] >> 6 * i & 0b111111) == pon {
+                        self.melds[c] += 9 << 6 * i;
+                        break;
+                    }
+                }
+
+                self.melds[c] = self.suit_classifiers[c].set_melds(self.melds[c]);
+                self.update_value(c);
+            },
+            TileType::Wind(_) | TileType::Dragon(_) => {
+                self.arrangement_values[3] = self.honor_classifier.shouminkan();
+            }
+        }
+    }
+
     fn tiles_in_hand(&self) -> u8 {
         self.concealed_tiles.iter().sum::<u8>() + self.meld_count * 3
     }
