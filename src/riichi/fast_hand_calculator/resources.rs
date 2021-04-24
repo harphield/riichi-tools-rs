@@ -1,4 +1,9 @@
 use rust_embed::RustEmbed;
+use std::sync::Mutex;
+
+lazy_static! {
+    pub static ref RESOURCES: Mutex<Resources> = Mutex::new(Resources::new());
+}
 
 #[derive(RustEmbed)]
 #[folder = "res/"]
@@ -12,6 +17,7 @@ pub struct Resources {
     suit_second_phase_3: Vec<u32>,
     suit_second_phase_4: Vec<u32>,
     suit_base_5_lookup: Vec<u8>,
+    arrangement_transitions: Vec<u32>,
 }
 
 impl Resources {
@@ -24,6 +30,7 @@ impl Resources {
             suit_second_phase_3: Resources::init_suit_second_phase(3),
             suit_second_phase_4: Resources::init_suit_second_phase(4),
             suit_base_5_lookup: Resources::init_suit_base_5_lookup(),
+            arrangement_transitions: Resources::init_arrangement_transitions(),
         }
     }
 
@@ -46,6 +53,10 @@ impl Resources {
         &self.suit_base_5_lookup
     }
 
+    pub fn get_arrangement_transitions(&self) -> &Vec<u32> {
+        &self.arrangement_transitions
+    }
+
     fn init_suit_first_phase() -> Vec<u32> {
         let file = Asset::get("SuitFirstPhase.txt").unwrap();
         Resources::prepare_data_from_string(std::str::from_utf8(file.as_ref()).unwrap())
@@ -60,6 +71,11 @@ impl Resources {
         Asset::get("suitArrangementsBase5NoMelds.dat")
             .unwrap()
             .to_vec()
+    }
+
+    fn init_arrangement_transitions() -> Vec<u32> {
+        let file = Asset::get("ArrangementTransitions.txt").unwrap();
+        Resources::prepare_data_from_string(std::str::from_utf8(file.as_ref()).unwrap())
     }
 
     fn prepare_data_from_string(data: &str) -> Vec<u32> {

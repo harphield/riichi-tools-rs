@@ -5,6 +5,7 @@ use crate::riichi::fast_hand_calculator::suit_classifier::SuitClassifier;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::tile::{Tile, TileType, TileColor};
 use crate::riichi::hand::Hand;
+use crate::riichi::fast_hand_calculator::arrangement_classifier::ArrangementClassifier;
 
 static BASE5TABLE: [u32; 9] = [1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
@@ -398,7 +399,7 @@ impl HandCalculator {
     }
 
     pub fn calculate_shanten(&self, arrangement_values: &[u32; 4]) -> Result<i8, RiichiError> {
-        // let shanten = ArrangementClassifier.Classify(arrangement_values);
+        let shanten = ArrangementClassifier::new().classify(&arrangement_values);
         // if self.meld_count > 0 {
         //     return shanten;
         // }
