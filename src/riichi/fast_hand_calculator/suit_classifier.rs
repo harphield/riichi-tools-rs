@@ -13,7 +13,7 @@ impl SuitClassifier {
         }
     }
 
-    pub fn set_melds(&mut self, mut melds: u8) -> u8 {
+    pub fn set_melds(&mut self, mut melds: u8) {
         let mut current = 0;
         self.meld_count = 0;
         for _i in 0..5 {
@@ -30,8 +30,6 @@ impl SuitClassifier {
         self.entry = self.resources.unwrap().get_suit_first_phase()[current];
         // just do it based on meld count later
         // self.second_phase = SuitSecondPhases[_meldCount];
-
-        melds
     }
 
     pub fn get_value(&self, tiles: &[u8; 34], suit: usize, base5hashes: &[u32; 3]) -> u32 {

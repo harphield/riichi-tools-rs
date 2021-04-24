@@ -5,7 +5,11 @@ impl KokushiClassifier {
         KokushiClassifier {}
     }
 
-    pub fn draw(&self, tile_id: u8, prev_tile_count: u8) {
+    pub fn draw(&self, tile_id: usize, prev_tile_count: u8) {
+
+    }
+
+    pub fn discard(&self, tile_id: usize, prev_tile_count: u8) {
 
     }
 }

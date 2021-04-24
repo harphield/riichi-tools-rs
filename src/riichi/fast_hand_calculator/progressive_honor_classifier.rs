@@ -16,4 +16,12 @@ impl ProgressiveHonorClassifier {
     pub fn shouminkan(&self) -> u32 {
         0
     }
+
+    pub fn ankan(&self) -> u32 {
+        0
+    }
+
+    pub fn daiminkan(&self) -> u32 {
+        0
+    }
 }
