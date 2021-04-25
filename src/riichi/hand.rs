@@ -2,8 +2,11 @@
 
 use std::fmt;
 
+#[cfg(not(feature = "fast_shanten"))]
 use super::shanten::ShantenFinder;
 use super::tile::Tile;
+#[cfg(feature = "fast_shanten")]
+use crate::riichi::fast_hand_calculator::hand_calculator::HandCalculator;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::rules::Rules;
 use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenKan, OpenShape, Shape, ShapeType};
@@ -1087,6 +1090,7 @@ impl Hand {
     }
 
     /// Get shanten of this hand (and also set it if it's not calculated yet)
+    #[cfg(not(feature = "fast_shanten"))]
     pub fn shanten(&mut self) -> i8 {
         if self.shanten == 99 {
             match ShantenFinder::new().shanten(self) {
@@ -1096,6 +1100,19 @@ impl Hand {
                 }
                 Err(_error) => (),
             }
+        }
+
+        self.shanten
+    }
+
+    /// Get shanten of this hand (and also set it if it's not calculated yet)
+    #[cfg(feature = "fast_shanten")]
+    pub fn shanten(&mut self) -> i8 {
+        if self.shanten == 99 {
+            let mut hc = HandCalculator::new();
+            hc.init(&self);
+
+            self.shanten = hc.shanten();
         }
 
         self.shanten

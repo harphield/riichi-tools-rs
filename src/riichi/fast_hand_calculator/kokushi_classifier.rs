@@ -12,12 +12,12 @@ impl KokushiClassifier {
         KokushiClassifier {
             shanten: match shanten {
                 None => 14,
-                Some(s) => s
+                Some(s) => s,
             },
             pairs: match pairs {
                 None => 1,
-                Some(p) => p
-            }
+                Some(p) => p,
+            },
         }
     }
 
@@ -25,7 +25,8 @@ impl KokushiClassifier {
         // (1 << x & 0b100000001100000001100000001) >> x | (x + 5) >> 5
         // 1 if the tileType is a terminal or honor, else 0
 
-        let r = (1u64 << tile_id & 0b100000001100000001100000001) >> tile_id | (tile_id as u64 + 5) >> 5;
+        let r = (1u64 << tile_id & 0b100000001100000001100000001) >> tile_id
+            | (tile_id as u64 + 5) >> 5;
 
         // TODO Is suspect this can be simplified
 
@@ -42,7 +43,8 @@ impl KokushiClassifier {
     pub fn discard(&mut self, tile_id: u32, tile_count_after_discard: u32) {
         // (1 << x & 0b100000001100000001100000001) >> x | (x + 5) >> 5
         // 1 if the tileType is a terminal or honor, else 0
-        let r = (1u64 << tile_id & 0b100000001100000001100000001) >> tile_id | (tile_id as u64 + 5) >> 5;
+        let r = (1u64 << tile_id & 0b100000001100000001100000001) >> tile_id
+            | (tile_id as u64 + 5) >> 5;
 
         // 1 if tileCountAfterDiscard < 2, else 0
         let s = (tile_count_after_discard as u64 ^ 2) >> 1 & r;

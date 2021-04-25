@@ -20,7 +20,8 @@ impl ChiitoiClassifier {
     }
 
     pub fn discard(&mut self, tile_count_after_discard: u8) {
-        self.shanten += ((tile_count_after_discard as i8 >> 1) ^ 1) & tile_count_after_discard as i8;
+        self.shanten +=
+            ((tile_count_after_discard as i8 >> 1) ^ 1) & tile_count_after_discard as i8;
     }
 
     pub fn get_shanten(&self) -> i8 {

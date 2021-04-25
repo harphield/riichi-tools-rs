@@ -42,7 +42,8 @@ impl HandCalculator {
                     let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
                     self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
 
-                    self.kokushi.draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
+                    self.kokushi
+                        .draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
                     self.chiitoi.draw(prev_tile_count);
 
                     match tile.tile_type {
@@ -79,7 +80,8 @@ impl HandCalculator {
         let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
         self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
 
-        self.kokushi.draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
+        self.kokushi
+            .draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
         self.chiitoi.draw(prev_tile_count);
 
         match tile.tile_type {
@@ -342,7 +344,8 @@ impl HandCalculator {
         for suit in 0..3 {
             for value in 0..9 {
                 if self.in_hand_by_type[tile_id] != 4 {
-                    self.kokushi.draw(tile_id as u32, self.concealed_tiles[tile_id] as u32);
+                    self.kokushi
+                        .draw(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                     self.chiitoi.draw(self.concealed_tiles[tile_id]);
 
                     self.concealed_tiles[tile_id] += 1;
@@ -361,7 +364,8 @@ impl HandCalculator {
                     self.concealed_tiles[tile_id] -= 1;
                     self.base5hashes[suit] -= BASE5TABLE[value];
 
-                    self.kokushi.discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
+                    self.kokushi
+                        .discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                     self.chiitoi.discard(self.concealed_tiles[tile_id]);
                 }
 
@@ -373,7 +377,8 @@ impl HandCalculator {
 
         for value in 0..7 {
             if self.in_hand_by_type[tile_id] != 4 {
-                self.kokushi.draw(tile_id as u32, self.concealed_tiles[tile_id] as u32);
+                self.kokushi
+                    .draw(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                 self.chiitoi.draw(self.concealed_tiles[tile_id]);
 
                 // TODO clone the honor_classifier?
@@ -386,7 +391,8 @@ impl HandCalculator {
                 let delta = current_shanten - new_shanten;
                 uke_ire[tile_id] = ((5 - self.in_hand_by_type[tile_id]) as i8 * delta - 1) as i32;
 
-                self.kokushi.discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
+                self.kokushi
+                    .discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                 self.chiitoi.discard(self.concealed_tiles[tile_id]);
             }
 

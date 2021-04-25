@@ -33,9 +33,7 @@ pub struct ProgressiveHonorClassifier {
 
 impl ProgressiveHonorClassifier {
     pub fn new() -> ProgressiveHonorClassifier {
-        ProgressiveHonorClassifier {
-            current: 0,
-        }
+        ProgressiveHonorClassifier { current: 0 }
     }
 
     pub fn draw(&mut self, previous_tiles: u8, meld_bit: u8) -> u32 {
@@ -51,7 +49,8 @@ impl ProgressiveHonorClassifier {
     }
 
     pub fn pon(&mut self, previous_tiles: u8) -> u32 {
-        self.current = RESOURCES.get_honor_state_machine()[(self.current + previous_tiles as u32 + 9) as usize];
+        self.current = RESOURCES.get_honor_state_machine()
+            [(self.current + previous_tiles as u32 + 9) as usize];
         RESOURCES.get_honor_state_machine()[self.current as usize]
     }
 

@@ -58,7 +58,9 @@ impl Resources {
         &self.arrangement_transitions
     }
 
-    pub fn get_honor_state_machine(&self) -> &Vec<u32> { &self.honor_state_machine }
+    pub fn get_honor_state_machine(&self) -> &Vec<u32> {
+        &self.honor_state_machine
+    }
 
     fn init_suit_first_phase() -> Vec<u32> {
         let file = Asset::get("SuitFirstPhase.txt").unwrap();
