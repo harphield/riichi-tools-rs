@@ -5,6 +5,7 @@ use crate::riichi::fast_hand_calculator::progressive_honor_classifier::Progressi
 use crate::riichi::fast_hand_calculator::suit_classifier::SuitClassifier;
 use crate::riichi::hand::Hand;
 use crate::riichi::tile::{Tile, TileColor, TileType};
+use crate::riichi::shapes::OpenShape;
 
 static BASE5TABLE: [u32; 10] = [0, 1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
@@ -33,32 +34,61 @@ impl HandCalculator {
         }
     }
 
+    /// TODO only works with closed hands, has problems with kans
     pub fn init(&mut self, hand: &Hand) {
         for tile_o in hand.get_tiles() {
             match tile_o {
                 None => {}
                 Some(tile) => {
-                    self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
-                    let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
-                    self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
+                    if !tile.is_open && !tile.is_kan {
+                        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
+                        let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
+                        self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
 
-                    self.kokushi
-                        .draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
-                    self.chiitoi.draw(prev_tile_count);
+                        self.kokushi
+                            .draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
+                        self.chiitoi.draw(prev_tile_count);
 
-                    match tile.tile_type {
-                        TileType::Number(value, color) => match color {
-                            TileColor::Manzu => self.base5hashes[0] += BASE5TABLE[value as usize],
-                            TileColor::Pinzu => self.base5hashes[1] += BASE5TABLE[value as usize],
-                            TileColor::Souzu => self.base5hashes[2] += BASE5TABLE[value as usize],
-                        },
-                        TileType::Wind(value) | TileType::Dragon(value) => {
-                            self.arrangement_values[3] = self
-                                .honor_classifier
-                                .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                        match tile.tile_type {
+                            TileType::Number(value, color) => match color {
+                                TileColor::Manzu => self.base5hashes[0] += BASE5TABLE[value as usize],
+                                TileColor::Pinzu => self.base5hashes[1] += BASE5TABLE[value as usize],
+                                TileColor::Souzu => self.base5hashes[2] += BASE5TABLE[value as usize],
+                            },
+                            TileType::Wind(value) | TileType::Dragon(value) => {
+                                self.arrangement_values[3] = self
+                                    .honor_classifier
+                                    .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                            }
                         }
                     }
                 }
+            }
+        }
+
+        for shape in hand.get_open_shapes() {
+            match shape {
+                OpenShape::Chi(tiles) => {
+                    self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
+                    self.in_hand_by_type[tiles[1].to_id_minus_1() as usize] += 1;
+                    self.in_hand_by_type[tiles[2].to_id_minus_1() as usize] += 1;
+                    self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+                    self.concealed_tiles[tiles[1].to_id_minus_1() as usize] += 1;
+                    self.concealed_tiles[tiles[2].to_id_minus_1() as usize] += 1;
+
+                    let called_tile = tiles.iter().find(|t| t.called_from != 0).unwrap();
+                    self.in_hand_by_type[called_tile.to_id_minus_1() as usize] -= 1;
+                    self.concealed_tiles[called_tile.to_id_minus_1() as usize] -= 1;
+
+                    self.chii(&tiles[0], &called_tile);
+                }
+                OpenShape::Pon(tiles) => {
+                    self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 2;
+                    self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 2;
+
+                    self.pon(&tiles[0]);
+                }
+                OpenShape::Kan(_) => {}
             }
         }
 
@@ -148,7 +178,7 @@ impl HandCalculator {
 
     pub fn chii(&mut self, lowest_tile: &Tile, called_tile: &Tile) {
         if self.tiles_in_hand() != 13 {
-            panic!("Chii only after discard.");
+            // panic!("Chii only after discard.");
         }
 
         match lowest_tile.tile_type {
@@ -156,10 +186,15 @@ impl HandCalculator {
             _ => {}
         }
 
-        self.concealed_tiles[lowest_tile.to_id_minus_1() as usize] -= 1;
-        self.concealed_tiles[(lowest_tile.to_id_minus_1() + 1) as usize] -= 1;
-        self.concealed_tiles[(lowest_tile.to_id_minus_1() + 2) as usize] -= 1;
-        self.concealed_tiles[called_tile.to_id_minus_1() as usize] += 1;
+        if lowest_tile.to_id_minus_1() != called_tile.to_id_minus_1() {
+            self.concealed_tiles[lowest_tile.to_id_minus_1() as usize] -= 1;
+        }
+        if lowest_tile.to_id_minus_1() + 1 != called_tile.to_id_minus_1() {
+            self.concealed_tiles[(lowest_tile.to_id_minus_1() + 1) as usize] -= 1;
+        }
+        if lowest_tile.to_id_minus_1() + 2 != called_tile.to_id_minus_1() {
+            self.concealed_tiles[(lowest_tile.to_id_minus_1() + 2) as usize] -= 1;
+        }
 
         match lowest_tile.tile_type {
             TileType::Number(value, color) => match color {
@@ -194,9 +229,10 @@ impl HandCalculator {
 
     pub fn pon(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 13 {
-            panic!("Pon only after discard.");
+            // panic!("Pon only after discard.");
         }
 
+        let prev_tiles = self.concealed_tiles[tile.to_id_minus_1() as usize];
         self.concealed_tiles[tile.to_id_minus_1() as usize] -= 2;
 
         match tile.tile_type {
@@ -226,7 +262,7 @@ impl HandCalculator {
             TileType::Wind(_) | TileType::Dragon(_) => {
                 self.arrangement_values[3] = self
                     .honor_classifier
-                    .pon(self.concealed_tiles[tile.to_id_minus_1() as usize]);
+                    .pon(prev_tiles);
                 self.jihai_meld_bit += 1 << tile.get_value();
             }
         }

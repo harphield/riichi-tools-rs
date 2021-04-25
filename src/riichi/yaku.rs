@@ -1957,6 +1957,10 @@ mod tests {
         map.insert("my_hand".to_string(), Value::from("123m234s67888p(p5z1)"));
 
         let mut table = Table::from_map(&map).unwrap();
+
+        let mut h = table.get_my_hand().clone();
+        println!("shanten {}", h.shanten());
+
         let res = table.yaku().unwrap();
         assert!(match res.0.get(0).unwrap() {
             Yaku::WhiteDragons => true,
