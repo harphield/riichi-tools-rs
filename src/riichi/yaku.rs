@@ -1958,9 +1958,6 @@ mod tests {
 
         let mut table = Table::from_map(&map).unwrap();
 
-        let mut h = table.get_my_hand().clone();
-        println!("shanten {}", h.shanten());
-
         let res = table.yaku().unwrap();
         assert!(match res.0.get(0).unwrap() {
             Yaku::WhiteDragons => true,

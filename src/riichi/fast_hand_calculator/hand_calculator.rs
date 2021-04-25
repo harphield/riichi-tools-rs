@@ -5,7 +5,7 @@ use crate::riichi::fast_hand_calculator::progressive_honor_classifier::Progressi
 use crate::riichi::fast_hand_calculator::suit_classifier::SuitClassifier;
 use crate::riichi::hand::Hand;
 use crate::riichi::tile::{Tile, TileColor, TileType};
-use crate::riichi::shapes::OpenShape;
+use crate::riichi::shapes::{OpenShape, OpenKan};
 
 static BASE5TABLE: [u32; 10] = [0, 1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
@@ -83,12 +83,79 @@ impl HandCalculator {
                     self.chii(&tiles[0], &called_tile);
                 }
                 OpenShape::Pon(tiles) => {
-                    self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 2;
-                    self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 2;
+                    for _i in 0..2 {
+                        let prev_tile_count = self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
+                        self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
+                        self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+
+                        match tiles[0].tile_type {
+                            TileType::Number(_, _) => {},
+                            TileType::Wind(value) | TileType::Dragon(value) => {
+                                self.arrangement_values[3] = self
+                                    .honor_classifier
+                                    .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                            }
+                        }
+                    }
 
                     self.pon(&tiles[0]);
                 }
-                OpenShape::Kan(_) => {}
+                OpenShape::Kan(open_kan) => {
+                    match open_kan {
+                        OpenKan::Daiminkan(tiles) => {
+                            for _i in 0..3 {
+                                let prev_tile_count = self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
+                                self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
+                                self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+
+                                match tiles[0].tile_type {
+                                    TileType::Number(_, _) => {},
+                                    TileType::Wind(value) | TileType::Dragon(value) => {
+                                        self.arrangement_values[3] = self
+                                            .honor_classifier
+                                            .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                    }
+                                }
+                            }
+
+                            self.daiminkan(&tiles[0]);
+                        }
+                        OpenKan::Shouminkan(tiles) => {
+                            // first we pon, then shouminkan
+                            for _i in 0..2 {
+                                let prev_tile_count = self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
+                                self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
+                                self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+
+                                match tiles[0].tile_type {
+                                    TileType::Number(_, _) => {},
+                                    TileType::Wind(value) | TileType::Dragon(value) => {
+                                        self.arrangement_values[3] = self
+                                            .honor_classifier
+                                            .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                    }
+                                }
+                            }
+
+                            self.pon(&tiles[0]);
+
+                            let prev_tile_count = self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
+                            self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
+                            self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+
+                            match tiles[0].tile_type {
+                                TileType::Number(_, _) => {},
+                                TileType::Wind(value) | TileType::Dragon(value) => {
+                                    self.arrangement_values[3] = self
+                                        .honor_classifier
+                                        .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                }
+                            }
+
+                            self.shouminkan(&tiles[0]);
+                        }
+                    }
+                }
             }
         }
 
@@ -273,7 +340,7 @@ impl HandCalculator {
 
     pub fn shouminkan(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 14 {
-            panic!("Shouminkan only after draw.");
+            // panic!("Shouminkan only after draw.");
         }
 
         self.concealed_tiles[tile.to_id_minus_1() as usize] -= 1;
@@ -332,7 +399,7 @@ impl HandCalculator {
 
     pub fn daiminkan(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 13 {
-            panic!("Daiminkan only after discard.");
+            // panic!("Daiminkan only after discard.");
         }
 
         self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;

@@ -1582,6 +1582,7 @@ mod tests {
     #[test]
     fn find_improving_tiles_14_tenpai_daiminkan() {
         let mut hand = Hand::from_text("1111m222s333p5z(k4z1)", false).unwrap();
+        // let mut hand = Hand::from_text("1111m222s333p5z444z", false).unwrap();
 
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), 0);
