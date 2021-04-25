@@ -188,6 +188,11 @@ impl Tile {
         }
     }
 
+    /// Some algorithms use ids starting from 0
+    pub fn to_id_minus_1(&self) -> u8 {
+        self.to_id() - 1
+    }
+
     /// Returns an ID of the next tile in order.
     pub fn next_id(&self, dora: bool, depth: u8) -> u8 {
         let id = self.to_id();

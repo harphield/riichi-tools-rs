@@ -1,8 +1,7 @@
 use rust_embed::RustEmbed;
-use std::sync::Mutex;
 
 lazy_static! {
-    pub static ref RESOURCES: Mutex<Resources> = Mutex::new(Resources::new());
+    pub static ref RESOURCES: Resources = Resources::new();
 }
 
 #[derive(RustEmbed)]

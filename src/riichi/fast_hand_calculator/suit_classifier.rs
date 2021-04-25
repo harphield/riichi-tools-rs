@@ -1,9 +1,8 @@
-use crate::riichi::fast_hand_calculator::resources::Resources;
+use crate::riichi::fast_hand_calculator::resources::RESOURCES;
 
 pub struct SuitClassifier {
     meld_count: u8,
     entry: u32,
-    resources: Option<&'static Resources>,
 }
 
 impl SuitClassifier {
@@ -19,15 +18,14 @@ impl SuitClassifier {
         for _i in 0..5 {
             let m = melds & 0b111111;
             if m != 0 {
-                current =
-                    self.resources.unwrap().get_suit_first_phase()[current + m as usize] as usize;
+                current = RESOURCES.get_suit_first_phase()[current + m as usize] as usize;
                 melds >>= 6;
                 self.meld_count += 1;
             } else {
                 break;
             }
         }
-        self.entry = self.resources.unwrap().get_suit_first_phase()[current];
+        self.entry = RESOURCES.get_suit_first_phase()[current];
         // just do it based on meld count later
         // self.second_phase = SuitSecondPhases[_meldCount];
     }
@@ -35,10 +33,15 @@ impl SuitClassifier {
     pub fn get_value(&self, tiles: &[u8; 34], suit: usize, base5hashes: &[u32; 3]) -> u32 {
         let offset = suit * 9;
         match self.meld_count {
-            0 => return *self.resources.unwrap().get_suit_base_5_lookup().get(base5hashes[suit] as usize).unwrap() as u32,
+            0 => {
+                return *RESOURCES
+                    .get_suit_base_5_lookup()
+                    .get(base5hashes[suit] as usize)
+                    .unwrap() as u32
+            }
             1 => {
                 let mut current = self.entry;
-                let second_phase = self.resources.unwrap().get_suit_second_phase(self.meld_count).unwrap();
+                let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
                 current = second_phase[(current + tiles[offset + 0] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize];
@@ -48,10 +51,10 @@ impl SuitClassifier {
                 current = second_phase[(current + tiles[offset + 6] as u32) as usize] + 80078;
                 current = second_phase[(current + tiles[offset + 7] as u32) as usize] + 99750;
                 return second_phase[(current + tiles[offset + 8] as u32) as usize];
-            },
+            }
             2 => {
                 let mut current = self.entry;
-                let second_phase = self.resources.unwrap().get_suit_second_phase(self.meld_count).unwrap();
+                let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
                 current = second_phase[(current + tiles[offset + 0] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize] + 22358;
@@ -61,10 +64,10 @@ impl SuitClassifier {
                 current = second_phase[(current + tiles[offset + 6] as u32) as usize] + 139662;
                 current = second_phase[(current + tiles[offset + 7] as u32) as usize] + 150573;
                 return second_phase[(current + tiles[offset + 8] as u32) as usize];
-            },
+            }
             3 => {
                 let mut current = self.entry;
-                let second_phase = self.resources.unwrap().get_suit_second_phase(self.meld_count).unwrap();
+                let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
                 current = second_phase[(current + tiles[offset + 0] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize] + 24641;
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize] + 50680;
@@ -74,10 +77,10 @@ impl SuitClassifier {
                 current = second_phase[(current + tiles[offset + 6] as u32) as usize] + 107217;
                 current = second_phase[(current + tiles[offset + 7] as u32) as usize] + 108982;
                 return second_phase[(current + tiles[offset + 8] as u32) as usize];
-            },
+            }
             4 => {
                 let mut current = self.entry;
-                let second_phase = self.resources.unwrap().get_suit_second_phase(self.meld_count).unwrap();
+                let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
                 current = second_phase[(current + tiles[offset + 0] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize];
@@ -100,7 +103,6 @@ impl Default for SuitClassifier {
         SuitClassifier {
             meld_count: 0,
             entry: 0,
-            resources: None,
         }
     }
 }

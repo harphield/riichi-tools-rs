@@ -1,7 +1,7 @@
+mod arrangement_classifier;
 mod chiitoi_classifier;
+mod hand_calculator;
 mod kokushi_classifier;
 mod progressive_honor_classifier;
 mod resources;
-mod hand_calculator;
 mod suit_classifier;
-mod arrangement_classifier;

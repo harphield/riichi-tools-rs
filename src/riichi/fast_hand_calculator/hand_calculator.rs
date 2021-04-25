@@ -1,13 +1,12 @@
+use crate::riichi::fast_hand_calculator::arrangement_classifier::ArrangementClassifier;
 use crate::riichi::fast_hand_calculator::chiitoi_classifier::ChiitoiClassifier;
 use crate::riichi::fast_hand_calculator::kokushi_classifier::KokushiClassifier;
 use crate::riichi::fast_hand_calculator::progressive_honor_classifier::ProgressiveHonorClassifier;
 use crate::riichi::fast_hand_calculator::suit_classifier::SuitClassifier;
-use crate::riichi::riichi_error::RiichiError;
-use crate::riichi::tile::{Tile, TileType, TileColor};
 use crate::riichi::hand::Hand;
-use crate::riichi::fast_hand_calculator::arrangement_classifier::ArrangementClassifier;
+use crate::riichi::tile::{Tile, TileColor, TileType};
 
-static BASE5TABLE: [u32; 9] = [1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
+static BASE5TABLE: [u32; 10] = [0, 1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
 pub struct HandCalculator {
     arrangement_values: [u32; 4],
@@ -39,23 +38,23 @@ impl HandCalculator {
             match tile_o {
                 None => {}
                 Some(tile) => {
-                    self.in_hand_by_type[tile.to_id() as usize] += 1;
-                    let prev_tile_count = self.concealed_tiles[tile.to_id() as usize];
-                    self.concealed_tiles[tile.to_id() as usize] += 1;
+                    self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
+                    let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
+                    self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
 
-                    self.kokushi.draw(tile.to_id() as usize, prev_tile_count);
+                    self.kokushi.draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
                     self.chiitoi.draw(prev_tile_count);
 
                     match tile.tile_type {
-                        TileType::Number(value, color) => {
-                            match color {
-                                TileColor::Manzu => self.base5hashes[0] += BASE5TABLE[value as usize],
-                                TileColor::Pinzu => self.base5hashes[1] += BASE5TABLE[value as usize],
-                                TileColor::Souzu => self.base5hashes[2] += BASE5TABLE[value as usize],
-                            }
-                        }
+                        TileType::Number(value, color) => match color {
+                            TileColor::Manzu => self.base5hashes[0] += BASE5TABLE[value as usize],
+                            TileColor::Pinzu => self.base5hashes[1] += BASE5TABLE[value as usize],
+                            TileColor::Souzu => self.base5hashes[2] += BASE5TABLE[value as usize],
+                        },
                         TileType::Wind(value) | TileType::Dragon(value) => {
-                            self.arrangement_values[3] = self.honor_classifier.draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                            self.arrangement_values[3] = self
+                                .honor_classifier
+                                .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
                         }
                     }
                 }
@@ -72,36 +71,36 @@ impl HandCalculator {
             panic!("Can only draw with a 13 tile hand.");
         }
 
-        if self.in_hand_by_type[tile.to_id() as usize] == 4 {
+        if self.in_hand_by_type[tile.to_id_minus_1() as usize] == 4 {
             panic!("Can't draw a tile with 4 of that tile in hand.");
         }
 
-        self.in_hand_by_type[tile.to_id() as usize] += 1;
-        let prev_tile_count = self.concealed_tiles[tile.to_id() as usize];
-        self.concealed_tiles[tile.to_id() as usize] += 1;
+        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
+        let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
+        self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
 
-        self.kokushi.draw(tile.to_id() as usize, prev_tile_count);
+        self.kokushi.draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
         self.chiitoi.draw(prev_tile_count);
 
         match tile.tile_type {
-            TileType::Number(value, color) => {
-                match color {
-                    TileColor::Manzu => {
-                        self.base5hashes[0] += BASE5TABLE[value as usize];
-                        self.update_value(0);
-                    },
-                    TileColor::Pinzu => {
-                        self.base5hashes[1] += BASE5TABLE[value as usize];
-                        self.update_value(1);
-                    },
-                    TileColor::Souzu => {
-                        self.base5hashes[2] += BASE5TABLE[value as usize];
-                        self.update_value(2);
-                    },
+            TileType::Number(value, color) => match color {
+                TileColor::Manzu => {
+                    self.base5hashes[0] += BASE5TABLE[value as usize];
+                    self.update_value(0);
                 }
-            }
+                TileColor::Pinzu => {
+                    self.base5hashes[1] += BASE5TABLE[value as usize];
+                    self.update_value(1);
+                }
+                TileColor::Souzu => {
+                    self.base5hashes[2] += BASE5TABLE[value as usize];
+                    self.update_value(2);
+                }
+            },
             TileType::Wind(value) | TileType::Dragon(value) => {
-                self.arrangement_values[3] = self.honor_classifier.draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                self.arrangement_values[3] = self
+                    .honor_classifier
+                    .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
             }
         }
     }
@@ -111,35 +110,36 @@ impl HandCalculator {
             panic!("Can only draw with a 13 tile hand.");
         }
 
-        if self.in_hand_by_type[tile.to_id() as usize] == 4 {
+        if self.in_hand_by_type[tile.to_id_minus_1() as usize] == 4 {
             panic!("Can't draw a tile with 4 of that tile in hand.");
         }
-        self.in_hand_by_type[tile.to_id() as usize] -= 1;
-        self.concealed_tiles[tile.to_id() as usize] -= 1;
-        let tile_count_after_discard = self.concealed_tiles[tile.to_id() as usize];
+        self.in_hand_by_type[tile.to_id_minus_1() as usize] -= 1;
+        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 1;
+        let tile_count_after_discard = self.concealed_tiles[tile.to_id_minus_1() as usize];
 
-        self.kokushi.draw(tile.to_id() as usize, tile_count_after_discard);
+        self.kokushi
+            .draw(tile.to_id_minus_1() as u32, tile_count_after_discard as u32);
         self.chiitoi.draw(tile_count_after_discard);
 
         match tile.tile_type {
-            TileType::Number(value, color) => {
-                match color {
-                    TileColor::Manzu => {
-                        self.base5hashes[0] -= BASE5TABLE[value as usize];
-                        self.update_value(0);
-                    },
-                    TileColor::Pinzu => {
-                        self.base5hashes[1] -= BASE5TABLE[value as usize];
-                        self.update_value(1);
-                    },
-                    TileColor::Souzu => {
-                        self.base5hashes[2] -= BASE5TABLE[value as usize];
-                        self.update_value(2);
-                    },
+            TileType::Number(value, color) => match color {
+                TileColor::Manzu => {
+                    self.base5hashes[0] -= BASE5TABLE[value as usize];
+                    self.update_value(0);
                 }
-            }
+                TileColor::Pinzu => {
+                    self.base5hashes[1] -= BASE5TABLE[value as usize];
+                    self.update_value(1);
+                }
+                TileColor::Souzu => {
+                    self.base5hashes[2] -= BASE5TABLE[value as usize];
+                    self.update_value(2);
+                }
+            },
             TileType::Wind(value) | TileType::Dragon(value) => {
-                self.arrangement_values[3] = self.honor_classifier.draw(tile_count_after_discard, self.jihai_meld_bit >> value & 1);
+                self.arrangement_values[3] = self
+                    .honor_classifier
+                    .draw(tile_count_after_discard, self.jihai_meld_bit >> value & 1);
             }
         }
     }
@@ -154,42 +154,40 @@ impl HandCalculator {
             _ => {}
         }
 
-        self.concealed_tiles[lowest_tile.to_id() as usize] -= 1;
-        self.concealed_tiles[(lowest_tile.to_id() + 1) as usize] -= 1;
-        self.concealed_tiles[(lowest_tile.to_id() + 2) as usize] -= 1;
-        self.concealed_tiles[called_tile.to_id() as usize] += 1;
+        self.concealed_tiles[lowest_tile.to_id_minus_1() as usize] -= 1;
+        self.concealed_tiles[(lowest_tile.to_id_minus_1() + 1) as usize] -= 1;
+        self.concealed_tiles[(lowest_tile.to_id_minus_1() + 2) as usize] -= 1;
+        self.concealed_tiles[called_tile.to_id_minus_1() as usize] += 1;
 
         match lowest_tile.tile_type {
-            TileType::Number(value, color) => {
-                match color {
-                    TileColor::Manzu => {
-                        self.melds[0] <<= 6;
-                        self.melds[0] += 1 + value;
+            TileType::Number(value, color) => match color {
+                TileColor::Manzu => {
+                    self.melds[0] <<= 6;
+                    self.melds[0] += 1 + value;
 
-                        self.suit_classifiers[0].set_melds(self.melds[0]);
-                        self.update_value(0);
-                    }
-                    TileColor::Pinzu => {
-                        self.melds[1] <<= 6;
-                        self.melds[1] += 1 + value;
-
-                        self.suit_classifiers[1].set_melds(self.melds[1]);
-                        self.update_value(1);
-                    }
-                    TileColor::Souzu => {
-                        self.melds[2] <<= 6;
-                        self.melds[2] += 1 + value;
-
-                        self.suit_classifiers[2].set_melds(self.melds[2]);
-                        self.update_value(2);
-                    }
+                    self.suit_classifiers[0].set_melds(self.melds[0]);
+                    self.update_value(0);
                 }
-            }
+                TileColor::Pinzu => {
+                    self.melds[1] <<= 6;
+                    self.melds[1] += 1 + value;
+
+                    self.suit_classifiers[1].set_melds(self.melds[1]);
+                    self.update_value(1);
+                }
+                TileColor::Souzu => {
+                    self.melds[2] <<= 6;
+                    self.melds[2] += 1 + value;
+
+                    self.suit_classifiers[2].set_melds(self.melds[2]);
+                    self.update_value(2);
+                }
+            },
             _ => {}
         }
 
         self.meld_count += 1;
-        self.in_hand_by_type[called_tile.to_id() as usize] += 1;
+        self.in_hand_by_type[called_tile.to_id_minus_1() as usize] += 1;
     }
 
     fn pon(&mut self, tile: &Tile) {
@@ -197,42 +195,42 @@ impl HandCalculator {
             panic!("Pon only after discard.");
         }
 
-        self.concealed_tiles[tile.to_id() as usize] -= 2;
+        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 2;
 
         match tile.tile_type {
-            TileType::Number(value, color) => {
-                match color {
-                    TileColor::Manzu => {
-                        self.melds[0] <<= 6;
-                        self.melds[0] += 1 + 7 + value;
+            TileType::Number(value, color) => match color {
+                TileColor::Manzu => {
+                    self.melds[0] <<= 6;
+                    self.melds[0] += 1 + 7 + value;
 
-                        self.suit_classifiers[0].set_melds(self.melds[0]);
-                        self.update_value(0);
-                    }
-                    TileColor::Pinzu => {
-                        self.melds[1] <<= 6;
-                        self.melds[1] += 1 + 7 + value;
-
-                        self.suit_classifiers[1].set_melds(self.melds[1]);
-                        self.update_value(1);
-                    }
-                    TileColor::Souzu => {
-                        self.melds[2] <<= 6;
-                        self.melds[2] += 1 + 7 + value;
-
-                        self.suit_classifiers[2].set_melds(self.melds[2]);
-                        self.update_value(2);
-                    }
+                    self.suit_classifiers[0].set_melds(self.melds[0]);
+                    self.update_value(0);
                 }
-            }
+                TileColor::Pinzu => {
+                    self.melds[1] <<= 6;
+                    self.melds[1] += 1 + 7 + value;
+
+                    self.suit_classifiers[1].set_melds(self.melds[1]);
+                    self.update_value(1);
+                }
+                TileColor::Souzu => {
+                    self.melds[2] <<= 6;
+                    self.melds[2] += 1 + 7 + value;
+
+                    self.suit_classifiers[2].set_melds(self.melds[2]);
+                    self.update_value(2);
+                }
+            },
             TileType::Wind(_) | TileType::Dragon(_) => {
-                self.arrangement_values[3] = self.honor_classifier.pon(self.concealed_tiles[tile.to_id() as usize]);
+                self.arrangement_values[3] = self
+                    .honor_classifier
+                    .pon(self.concealed_tiles[tile.to_id_minus_1() as usize]);
                 self.jihai_meld_bit += 1 << tile.get_value();
             }
         }
 
         self.meld_count += 1;
-        self.in_hand_by_type[tile.to_id() as usize] += 1;
+        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
     }
 
     fn shouminkan(&mut self, tile: &Tile) {
@@ -240,7 +238,7 @@ impl HandCalculator {
             panic!("Shouminkan only after draw.");
         }
 
-        self.concealed_tiles[tile.to_id() as usize] -= 1;
+        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 1;
 
         match tile.tile_type {
             TileType::Number(value, color) => {
@@ -260,7 +258,7 @@ impl HandCalculator {
 
                 self.suit_classifiers[c].set_melds(self.melds[c]);
                 self.update_value(c);
-            },
+            }
             TileType::Wind(_) | TileType::Dragon(_) => {
                 self.arrangement_values[3] = self.honor_classifier.shouminkan();
             }
@@ -272,7 +270,7 @@ impl HandCalculator {
             panic!("Ankan only after draw.");
         }
 
-        self.concealed_tiles[tile.to_id() as usize] -= 4;
+        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 4;
         self.meld_count += 1;
 
         match tile.tile_type {
@@ -287,7 +285,7 @@ impl HandCalculator {
                 self.melds[c] += 1 + 7 + 9 + value;
                 self.suit_classifiers[c].set_melds(self.melds[c]);
                 self.update_value(c);
-            },
+            }
             TileType::Wind(_) | TileType::Dragon(_) => {
                 self.arrangement_values[3] = self.honor_classifier.ankan();
             }
@@ -299,8 +297,8 @@ impl HandCalculator {
             panic!("Daiminkan only after discard.");
         }
 
-        self.in_hand_by_type[tile.to_id() as usize] += 1;
-        self.concealed_tiles[tile.to_id() as usize] -= 3;
+        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
+        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 3;
         self.meld_count += 1;
 
         match tile.tile_type {
@@ -315,7 +313,7 @@ impl HandCalculator {
                 self.melds[c] += 1 + 7 + 9 + value;
                 self.suit_classifiers[c].set_melds(self.melds[c]);
                 self.update_value(c);
-            },
+            }
             TileType::Wind(_) | TileType::Dragon(_) => {
                 self.arrangement_values[3] = self.honor_classifier.daiminkan();
             }
@@ -330,7 +328,7 @@ impl HandCalculator {
             panic!("It says 13 in the method name!");
         }
 
-        let current_shanten = self.calculate_shanten(&self.arrangement_values).unwrap();
+        let current_shanten = self.calculate_shanten(&self.arrangement_values);
 
         let mut uke_ire: [i32; 34] = [-1; 34];
         let mut tile_id = 0;
@@ -344,21 +342,26 @@ impl HandCalculator {
         for suit in 0..3 {
             for value in 0..9 {
                 if self.in_hand_by_type[tile_id] != 4 {
-                    self.kokushi.draw(tile_id, self.concealed_tiles[tile_id]);
+                    self.kokushi.draw(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                     self.chiitoi.draw(self.concealed_tiles[tile_id]);
 
                     self.concealed_tiles[tile_id] += 1;
                     self.base5hashes[suit] += BASE5TABLE[value];
-                    local_arrangements[suit] = self.suit_classifiers[suit].get_value(&self.concealed_tiles, suit, &self.base5hashes);
+                    local_arrangements[suit] = self.suit_classifiers[suit].get_value(
+                        &self.concealed_tiles,
+                        suit,
+                        &self.base5hashes,
+                    );
 
-                    let new_shanten = self.calculate_shanten(&local_arrangements).unwrap();
+                    let new_shanten = self.calculate_shanten(&local_arrangements);
                     let delta = current_shanten - new_shanten;
-                    uke_ire[tile_id] = ((5 - self.in_hand_by_type[tile_id]) as i8 * delta - 1) as i32;
+                    uke_ire[tile_id] =
+                        ((5 - self.in_hand_by_type[tile_id]) as i8 * delta - 1) as i32;
 
                     self.concealed_tiles[tile_id] -= 1;
                     self.base5hashes[suit] -= BASE5TABLE[value];
 
-                    self.kokushi.discard(tile_id, self.concealed_tiles[tile_id]);
+                    self.kokushi.discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                     self.chiitoi.discard(self.concealed_tiles[tile_id]);
                 }
 
@@ -370,17 +373,20 @@ impl HandCalculator {
 
         for value in 0..7 {
             if self.in_hand_by_type[tile_id] != 4 {
-                self.kokushi.draw(tile_id, self.concealed_tiles[tile_id]);
+                self.kokushi.draw(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                 self.chiitoi.draw(self.concealed_tiles[tile_id]);
 
                 // TODO clone the honor_classifier?
-                local_arrangements[3] = self.honor_classifier.draw(self.concealed_tiles[tile_id], self.jihai_meld_bit >> value & 1);
+                local_arrangements[3] = self.honor_classifier.draw(
+                    self.concealed_tiles[tile_id],
+                    self.jihai_meld_bit >> value & 1,
+                );
 
-                let new_shanten = self.calculate_shanten(&local_arrangements).unwrap();
+                let new_shanten = self.calculate_shanten(&local_arrangements);
                 let delta = current_shanten - new_shanten;
                 uke_ire[tile_id] = ((5 - self.in_hand_by_type[tile_id]) as i8 * delta - 1) as i32;
 
-                self.kokushi.discard(tile_id, self.concealed_tiles[tile_id]);
+                self.kokushi.discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                 self.chiitoi.discard(self.concealed_tiles[tile_id]);
             }
 
@@ -395,18 +401,29 @@ impl HandCalculator {
     }
 
     fn update_value(&mut self, suit: usize) {
-        self.arrangement_values[suit] = self.suit_classifiers[suit].get_value(&self.concealed_tiles, suit, &self.base5hashes);
+        self.arrangement_values[suit] =
+            self.suit_classifiers[suit].get_value(&self.concealed_tiles, suit, &self.base5hashes);
     }
 
-    pub fn calculate_shanten(&self, arrangement_values: &[u32; 4]) -> Result<i8, RiichiError> {
+    fn calculate_shanten(&self, arrangement_values: &[u32; 4]) -> i8 {
         let shanten = ArrangementClassifier::new().classify(&arrangement_values);
-        // if self.meld_count > 0 {
-        //     return shanten;
-        // }
+        if self.meld_count > 0 {
+            return shanten as i8;
+        }
         //
         // // return Math.Min(shanten, Math.Min(_kokushi.Shanten, _chiitoi.Shanten));
-        // Ok(*shantens.iter().min().unwrap())
-        Err(RiichiError::new(404, "test"))
+
+        let shantens = [
+            shanten as i8,
+            self.chiitoi.get_shanten(),
+            self.kokushi.get_shanten(),
+        ];
+
+        *shantens.iter().min().unwrap()
+    }
+
+    pub fn shanten(&self) -> i8 {
+        self.calculate_shanten(&self.arrangement_values) - 1
     }
 }
 
@@ -424,10 +441,52 @@ impl Default for HandCalculator {
                 SuitClassifier::new(),
                 SuitClassifier::new(),
             ],
-            chiitoi: ChiitoiClassifier::new(),
-            kokushi: KokushiClassifier::new(),
+            chiitoi: ChiitoiClassifier::new(None),
+            kokushi: KokushiClassifier::new(None, None),
             honor_classifier: ProgressiveHonorClassifier::new(),
             meld_count: 0,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::riichi::fast_hand_calculator::hand_calculator::HandCalculator;
+    use crate::riichi::hand::Hand;
+
+    #[test]
+    fn pinfu_tenpai() {
+        let mut hand = Hand::from_text("123456789m23p11s", false).unwrap();
+
+        let mut hc = HandCalculator::new();
+        hc.init(&hand);
+
+        let shanten = hc.shanten();
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn chiitoitsu_tenpai() {
+        let mut hand = Hand::from_text("1133557799p22s3z", false).unwrap();
+
+        let mut hc = HandCalculator::new();
+        hc.init(&hand);
+
+        let shanten = hc.shanten();
+
+        assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn kokushi_tenpai_13_waits() {
+        let hand = Hand::from_text("19m19s19p1234567z", false).unwrap();
+
+        let mut hc = HandCalculator::new();
+        hc.init(&hand);
+
+        let shanten = hc.shanten();
+
+        assert_eq!(shanten, 0);
     }
 }
