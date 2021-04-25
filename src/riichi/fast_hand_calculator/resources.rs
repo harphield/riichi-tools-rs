@@ -17,6 +17,7 @@ pub struct Resources {
     suit_second_phase_4: Vec<u32>,
     suit_base_5_lookup: Vec<u8>,
     arrangement_transitions: Vec<u32>,
+    honor_state_machine: Vec<u32>,
 }
 
 impl Resources {
@@ -30,6 +31,7 @@ impl Resources {
             suit_second_phase_4: Resources::init_suit_second_phase(4),
             suit_base_5_lookup: Resources::init_suit_base_5_lookup(),
             arrangement_transitions: Resources::init_arrangement_transitions(),
+            honor_state_machine: Resources::init_honor_state_machine(),
         }
     }
 
@@ -56,6 +58,8 @@ impl Resources {
         &self.arrangement_transitions
     }
 
+    pub fn get_honor_state_machine(&self) -> &Vec<u32> { &self.honor_state_machine }
+
     fn init_suit_first_phase() -> Vec<u32> {
         let file = Asset::get("SuitFirstPhase.txt").unwrap();
         Resources::prepare_data_from_string(std::str::from_utf8(file.as_ref()).unwrap())
@@ -74,6 +78,11 @@ impl Resources {
 
     fn init_arrangement_transitions() -> Vec<u32> {
         let file = Asset::get("ArrangementTransitions.txt").unwrap();
+        Resources::prepare_data_from_string(std::str::from_utf8(file.as_ref()).unwrap())
+    }
+
+    fn init_honor_state_machine() -> Vec<u32> {
+        let file = Asset::get("ProgressiveHonorStateMachine.txt").unwrap();
         Resources::prepare_data_from_string(std::str::from_utf8(file.as_ref()).unwrap())
     }
 

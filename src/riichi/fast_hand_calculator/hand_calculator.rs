@@ -33,7 +33,7 @@ impl HandCalculator {
         }
     }
 
-    fn init(&mut self, hand: &Hand) {
+    pub fn init(&mut self, hand: &Hand) {
         for tile_o in hand.get_tiles() {
             match tile_o {
                 None => {}
@@ -66,7 +66,7 @@ impl HandCalculator {
         self.update_value(2);
     }
 
-    fn draw(&mut self, tile: &Tile) {
+    pub fn draw(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 13 {
             panic!("Can only draw with a 13 tile hand.");
         }
@@ -105,7 +105,7 @@ impl HandCalculator {
         }
     }
 
-    fn discard(&mut self, tile: &Tile) {
+    pub fn discard(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 13 {
             panic!("Can only draw with a 13 tile hand.");
         }
@@ -118,8 +118,8 @@ impl HandCalculator {
         let tile_count_after_discard = self.concealed_tiles[tile.to_id_minus_1() as usize];
 
         self.kokushi
-            .draw(tile.to_id_minus_1() as u32, tile_count_after_discard as u32);
-        self.chiitoi.draw(tile_count_after_discard);
+            .discard(tile.to_id_minus_1() as u32, tile_count_after_discard as u32);
+        self.chiitoi.discard(tile_count_after_discard);
 
         match tile.tile_type {
             TileType::Number(value, color) => match color {
@@ -139,12 +139,12 @@ impl HandCalculator {
             TileType::Wind(value) | TileType::Dragon(value) => {
                 self.arrangement_values[3] = self
                     .honor_classifier
-                    .draw(tile_count_after_discard, self.jihai_meld_bit >> value & 1);
+                    .discard(tile_count_after_discard, self.jihai_meld_bit >> value & 1);
             }
         }
     }
 
-    fn chii(&mut self, lowest_tile: &Tile, called_tile: &Tile) {
+    pub fn chii(&mut self, lowest_tile: &Tile, called_tile: &Tile) {
         if self.tiles_in_hand() != 13 {
             panic!("Chii only after discard.");
         }
@@ -190,7 +190,7 @@ impl HandCalculator {
         self.in_hand_by_type[called_tile.to_id_minus_1() as usize] += 1;
     }
 
-    fn pon(&mut self, tile: &Tile) {
+    pub fn pon(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 13 {
             panic!("Pon only after discard.");
         }
@@ -233,7 +233,7 @@ impl HandCalculator {
         self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
     }
 
-    fn shouminkan(&mut self, tile: &Tile) {
+    pub fn shouminkan(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 14 {
             panic!("Shouminkan only after draw.");
         }
@@ -265,7 +265,7 @@ impl HandCalculator {
         }
     }
 
-    fn ankan(&mut self, tile: &Tile) {
+    pub fn ankan(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 14 {
             panic!("Ankan only after draw.");
         }
@@ -292,7 +292,7 @@ impl HandCalculator {
         }
     }
 
-    fn daiminkan(&mut self, tile: &Tile) {
+    pub fn daiminkan(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 13 {
             panic!("Daiminkan only after discard.");
         }
@@ -410,8 +410,6 @@ impl HandCalculator {
         if self.meld_count > 0 {
             return shanten as i8;
         }
-        //
-        // // return Math.Min(shanten, Math.Min(_kokushi.Shanten, _chiitoi.Shanten));
 
         let shantens = [
             shanten as i8,
@@ -456,7 +454,7 @@ mod tests {
 
     #[test]
     fn pinfu_tenpai() {
-        let mut hand = Hand::from_text("123456789m23p11s", false).unwrap();
+        let hand = Hand::from_text("123456789m23p11s", false).unwrap();
 
         let mut hc = HandCalculator::new();
         hc.init(&hand);
@@ -468,7 +466,7 @@ mod tests {
 
     #[test]
     fn chiitoitsu_tenpai() {
-        let mut hand = Hand::from_text("1133557799p22s3z", false).unwrap();
+        let hand = Hand::from_text("1133557799p22s3z", false).unwrap();
 
         let mut hc = HandCalculator::new();
         hc.init(&hand);
