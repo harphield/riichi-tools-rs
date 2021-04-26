@@ -7,6 +7,7 @@ use crate::riichi::hand::Hand;
 use crate::riichi::tile::{Tile, TileColor, TileType};
 use crate::riichi::shapes::{OpenShape, OpenKan};
 
+/// the 0 index is not used
 static BASE5TABLE: [u32; 10] = [0, 1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
 pub struct HandCalculator {
@@ -58,7 +59,7 @@ impl HandCalculator {
                             TileType::Wind(value) | TileType::Dragon(value) => {
                                 self.arrangement_values[3] = self
                                     .honor_classifier
-                                    .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                    .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
                             }
                         }
                     }
@@ -93,7 +94,7 @@ impl HandCalculator {
                             TileType::Wind(value) | TileType::Dragon(value) => {
                                 self.arrangement_values[3] = self
                                     .honor_classifier
-                                    .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                    .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
                             }
                         }
                     }
@@ -113,7 +114,7 @@ impl HandCalculator {
                                     TileType::Wind(value) | TileType::Dragon(value) => {
                                         self.arrangement_values[3] = self
                                             .honor_classifier
-                                            .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                            .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
                                     }
                                 }
                             }
@@ -132,7 +133,7 @@ impl HandCalculator {
                                     TileType::Wind(value) | TileType::Dragon(value) => {
                                         self.arrangement_values[3] = self
                                             .honor_classifier
-                                            .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                            .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
                                     }
                                 }
                             }
@@ -148,7 +149,7 @@ impl HandCalculator {
                                 TileType::Wind(value) | TileType::Dragon(value) => {
                                     self.arrangement_values[3] = self
                                         .honor_classifier
-                                        .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                                        .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
                                 }
                             }
 
@@ -199,7 +200,7 @@ impl HandCalculator {
             TileType::Wind(value) | TileType::Dragon(value) => {
                 self.arrangement_values[3] = self
                     .honor_classifier
-                    .draw(prev_tile_count, self.jihai_meld_bit >> value & 1);
+                    .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
             }
         }
     }
@@ -238,7 +239,7 @@ impl HandCalculator {
             TileType::Wind(value) | TileType::Dragon(value) => {
                 self.arrangement_values[3] = self
                     .honor_classifier
-                    .discard(tile_count_after_discard, self.jihai_meld_bit >> value & 1);
+                    .discard(tile_count_after_discard, self.jihai_meld_bit >> (value - 1) & 1);
             }
         }
     }
@@ -267,21 +268,21 @@ impl HandCalculator {
             TileType::Number(value, color) => match color {
                 TileColor::Manzu => {
                     self.melds[0] <<= 6;
-                    self.melds[0] += 1 + value;
+                    self.melds[0] += 1 + (value - 1);
 
                     self.suit_classifiers[0].set_melds(self.melds[0]);
                     self.update_value(0);
                 }
                 TileColor::Pinzu => {
                     self.melds[1] <<= 6;
-                    self.melds[1] += 1 + value;
+                    self.melds[1] += 1 + (value - 1);
 
                     self.suit_classifiers[1].set_melds(self.melds[1]);
                     self.update_value(1);
                 }
                 TileColor::Souzu => {
                     self.melds[2] <<= 6;
-                    self.melds[2] += 1 + value;
+                    self.melds[2] += 1 + (value - 1);
 
                     self.suit_classifiers[2].set_melds(self.melds[2]);
                     self.update_value(2);
@@ -306,21 +307,21 @@ impl HandCalculator {
             TileType::Number(value, color) => match color {
                 TileColor::Manzu => {
                     self.melds[0] <<= 6;
-                    self.melds[0] += 1 + 7 + value;
+                    self.melds[0] += 1 + 7 + (value - 1);
 
                     self.suit_classifiers[0].set_melds(self.melds[0]);
                     self.update_value(0);
                 }
                 TileColor::Pinzu => {
                     self.melds[1] <<= 6;
-                    self.melds[1] += 1 + 7 + value;
+                    self.melds[1] += 1 + 7 + (value - 1);
 
                     self.suit_classifiers[1].set_melds(self.melds[1]);
                     self.update_value(1);
                 }
                 TileColor::Souzu => {
                     self.melds[2] <<= 6;
-                    self.melds[2] += 1 + 7 + value;
+                    self.melds[2] += 1 + 7 + (value - 1);
 
                     self.suit_classifiers[2].set_melds(self.melds[2]);
                     self.update_value(2);
@@ -353,7 +354,7 @@ impl HandCalculator {
                     TileColor::Souzu => 2,
                 };
 
-                let pon = 1 + 7 + value;
+                let pon = 1 + 7 + (value - 1);
                 for i in 0..4 {
                     if (self.melds[c] >> 6 * i & 0b111111) == pon {
                         self.melds[c] += 9 << 6 * i;
@@ -387,7 +388,7 @@ impl HandCalculator {
                 };
 
                 self.melds[c] <<= 6;
-                self.melds[c] += 1 + 7 + 9 + value;
+                self.melds[c] += 1 + 7 + 9 + (value - 1);
                 self.suit_classifiers[c].set_melds(self.melds[c]);
                 self.update_value(c);
             }
@@ -415,7 +416,7 @@ impl HandCalculator {
                 };
 
                 self.melds[c] <<= 6;
-                self.melds[c] += 1 + 7 + 9 + value;
+                self.melds[c] += 1 + 7 + 9 + (value - 1);
                 self.suit_classifiers[c].set_melds(self.melds[c]);
                 self.update_value(c);
             }
@@ -595,5 +596,17 @@ mod tests {
         let shanten = hc.shanten();
 
         assert_eq!(shanten, 0);
+    }
+
+    #[test]
+    fn tenpai_with_chi() {
+        let hand = Hand::from_text("123456m11p222s(789p1)", false).unwrap();
+
+        let mut hc = HandCalculator::new();
+        hc.init(&hand);
+
+        let shanten = hc.shanten();
+
+        assert_eq!(shanten, -1);
     }
 }
