@@ -1,5 +1,5 @@
 # riichi-tools-rs
-v0.0.68
+v0.0.69
 
 ![Build Status](https://github.com/harphield/riichi-tools-rs/workflows/Build,%20test%20and%20Clippy/badge.svg)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/harphield/riichi-tools-rs)
@@ -11,6 +11,17 @@ Lots of inspiration from other mahjong tools, like https://euophrys.itch.io/mahj
 http://kobalab.net/majiang/dapai.html etc.
 
 Showcase / frontend of this library can be found at https://riichi.harphield.com/tools/
+
+## Shanten and Uke-ire modes
+There are two implementations of shanten and uke-ire calculations available. The default one is slower, but doesn't
+use any lookup tables, so it creates a smaller binary: ideal for WASM.
+
+The other one is a port from [Spines.Mahjong](https://github.com/spinesheath/Spines.Mahjong) and is a lot faster,
+but the binary is larger.
+
+You can enable the faster mode with enabling the feature in your cargo.toml:
+
+`riichi-tools-rs = { version = "0.0.69", features = ["fast_shanten"] }`
 
 ## Roadmap
 - South 4 Simulator

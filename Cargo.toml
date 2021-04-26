@@ -1,6 +1,6 @@
 [package]
 name = "riichi-tools-rs"
-version = "0.0.68"
+version = "0.0.69"
 authors = ["harphield <harphield@protonmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -30,6 +30,6 @@ lazy_static = "1.4.0"
 rust-embed = { version = "5.9.0", optional = true }
 
 [features]
-default = ["fast_shanten"] # need this for intellij, might remove later?
+# default = ["fast_shanten"]
 # uses a better and faster shanten & ukeire algorithm, but makes the binary larger, because it uses lookup tables.
 fast_shanten = ["rust-embed"]
