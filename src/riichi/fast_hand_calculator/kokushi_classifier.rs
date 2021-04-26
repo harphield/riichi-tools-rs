@@ -10,14 +10,8 @@ pub struct KokushiClassifier {
 impl KokushiClassifier {
     pub fn new(shanten: Option<i8>, pairs: Option<u8>) -> KokushiClassifier {
         KokushiClassifier {
-            shanten: match shanten {
-                None => 14,
-                Some(s) => s,
-            },
-            pairs: match pairs {
-                None => 1,
-                Some(p) => p,
-            },
+            shanten: shanten.unwrap_or(14),
+            pairs: pairs.unwrap_or(1),
         }
     }
 

@@ -2,7 +2,7 @@ use crate::riichi::hand::Hand;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::rules::Rules;
 use crate::riichi::scores::Score;
-use crate::riichi::shapes::{Shape, ClosedShape};
+use crate::riichi::shapes::{ClosedShape, Shape};
 use crate::riichi::tile::Tile;
 use crate::riichi::yaku::{Yaku, YakuFinder};
 use serde_json::{Map, Value};

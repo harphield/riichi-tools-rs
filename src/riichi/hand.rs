@@ -1707,9 +1707,7 @@ mod tests {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
         let tile = Tile::from_id(1).unwrap();
 
-        hand.add_closed_kan(ClosedShape::Kantsu([
-            tile, tile, tile, tile,
-        ]));
+        hand.add_closed_kan(ClosedShape::Kantsu([tile, tile, tile, tile]));
 
         assert_eq!(hand.count_tiles(), 13);
     }
@@ -1719,9 +1717,7 @@ mod tests {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
         let tile = Tile::from_id(1).unwrap();
 
-        hand.add_closed_kan(ClosedShape::Kantsu([
-            tile, tile, tile, tile,
-        ]));
+        hand.add_closed_kan(ClosedShape::Kantsu([tile, tile, tile, tile]));
 
         println!("{}", hand);
 

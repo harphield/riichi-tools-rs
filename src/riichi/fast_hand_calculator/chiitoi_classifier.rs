@@ -8,10 +8,7 @@ pub struct ChiitoiClassifier {
 impl ChiitoiClassifier {
     pub fn new(shanten: Option<i8>) -> ChiitoiClassifier {
         ChiitoiClassifier {
-            shanten: match shanten {
-                None => 7,
-                Some(s) => s,
-            },
+            shanten: shanten.unwrap_or(7),
         }
     }
 

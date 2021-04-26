@@ -42,7 +42,7 @@ impl SuitClassifier {
             1 => {
                 let mut current = self.entry;
                 let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
-                current = second_phase[(current + tiles[offset + 0] as u32) as usize];
+                current = second_phase[(current + tiles[offset] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 3] as u32) as usize] + 11752;
@@ -55,7 +55,7 @@ impl SuitClassifier {
             2 => {
                 let mut current = self.entry;
                 let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
-                current = second_phase[(current + tiles[offset + 0] as u32) as usize];
+                current = second_phase[(current + tiles[offset] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize] + 22358;
                 current = second_phase[(current + tiles[offset + 3] as u32) as usize] + 54162;
@@ -68,7 +68,7 @@ impl SuitClassifier {
             3 => {
                 let mut current = self.entry;
                 let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
-                current = second_phase[(current + tiles[offset + 0] as u32) as usize];
+                current = second_phase[(current + tiles[offset] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize] + 24641;
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize] + 50680;
                 current = second_phase[(current + tiles[offset + 3] as u32) as usize] + 76245;
@@ -81,7 +81,7 @@ impl SuitClassifier {
             4 => {
                 let mut current = self.entry;
                 let second_phase = RESOURCES.get_suit_second_phase(self.meld_count).unwrap();
-                current = second_phase[(current + tiles[offset + 0] as u32) as usize];
+                current = second_phase[(current + tiles[offset] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 1] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 2] as u32) as usize];
                 current = second_phase[(current + tiles[offset + 3] as u32) as usize];
