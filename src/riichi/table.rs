@@ -2,7 +2,7 @@ use crate::riichi::hand::Hand;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::rules::Rules;
 use crate::riichi::scores::Score;
-use crate::riichi::shapes::Shape;
+use crate::riichi::shapes::{Shape, ClosedShape};
 use crate::riichi::tile::Tile;
 use crate::riichi::yaku::{Yaku, YakuFinder};
 use serde_json::{Map, Value};
@@ -511,7 +511,9 @@ impl Table {
 
             drawn_tile.is_draw = false;
             hand.add_tile(drawn_tile);
-            hand.ankan_tiles(drawn_tile);
+            hand.add_closed_kan(ClosedShape::Kantsu([
+                drawn_tile, drawn_tile, drawn_tile, drawn_tile,
+            ]));
 
             hand.reset_shanten();
             let kan_improving_tiles = hand.find_shanten_improving_tiles(None);

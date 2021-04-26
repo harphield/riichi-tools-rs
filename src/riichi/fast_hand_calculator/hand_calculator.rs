@@ -5,7 +5,7 @@ use crate::riichi::fast_hand_calculator::progressive_honor_classifier::Progressi
 use crate::riichi::fast_hand_calculator::suit_classifier::SuitClassifier;
 use crate::riichi::hand::Hand;
 use crate::riichi::tile::{Tile, TileColor, TileType};
-use crate::riichi::shapes::{OpenShape, OpenKan};
+use crate::riichi::shapes::{OpenShape, OpenKan, CompleteShape, ClosedShape};
 
 /// the 0 index is not used
 static BASE5TABLE: [u32; 10] = [0, 1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
@@ -35,7 +35,6 @@ impl HandCalculator {
         }
     }
 
-    /// TODO only works with closed hands, has problems with kans
     pub fn init(&mut self, hand: &Hand) {
         for tile_o in hand.get_tiles() {
             match tile_o {
@@ -157,6 +156,35 @@ impl HandCalculator {
                         }
                     }
                 }
+            }
+        }
+
+        for shape in hand.get_shapes().iter() {
+            match shape {
+                CompleteShape::Closed(closed_shape) => {
+                    match closed_shape {
+                        ClosedShape::Kantsu(tiles) => {
+                            for _i in 0..4 {
+                                let prev_tile_count = self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
+                                self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
+                                self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+
+                                match tiles[0].tile_type {
+                                    TileType::Number(_, _) => {},
+                                    TileType::Wind(value) | TileType::Dragon(value) => {
+                                        self.arrangement_values[3] = self
+                                            .honor_classifier
+                                            .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
+                                    }
+                                }
+                            }
+
+                            self.ankan(&tiles[0]);
+                        }
+                        _ => {}
+                    }
+                }
+                CompleteShape::Open(_) => {}
             }
         }
 
@@ -373,7 +401,7 @@ impl HandCalculator {
 
     pub fn ankan(&mut self, tile: &Tile) {
         if self.tiles_in_hand() != 14 {
-            panic!("Ankan only after draw.");
+            // panic!("Ankan only after draw.");
         }
 
         self.concealed_tiles[tile.to_id_minus_1() as usize] -= 4;
@@ -608,5 +636,17 @@ mod tests {
         let shanten = hc.shanten();
 
         assert_eq!(shanten, -1);
+    }
+
+    #[test]
+    fn iishanten_hand_with_unkanned_4_tiles() {
+        let hand = Hand::from_text("1111m222s333p444z", false).unwrap();
+
+        let mut hc = HandCalculator::new();
+        hc.init(&hand);
+
+        let shanten = hc.shanten();
+
+        assert_eq!(shanten, 1);
     }
 }

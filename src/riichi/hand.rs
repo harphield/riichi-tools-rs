@@ -718,33 +718,33 @@ impl Hand {
         self.remove_tile(&tile);
     }
 
-    /// Do a closed kan with these tiles, if it has them
-    pub fn ankan_tiles(&mut self, mut tile: Tile) {
-        let array_34 = self.get_34_array(true);
-        if array_34[(tile.to_id() - 1) as usize] != 4 {
-            panic!("Trying to kan, but don't have 4 tiles!");
-        }
-
-        // remove the kanned tiles
-        self.tiles.retain(|x| match x {
-            None => true,
-            Some(t) => {
-                if t.to_id() == tile.to_id() {
-                    return false;
-                }
-
-                true
-            }
-        });
-
-        // add them as kanned
-        tile.is_kan = true;
-
-        self.add_tile(tile);
-        self.add_tile(tile);
-        self.add_tile(tile);
-        self.add_tile(tile);
-    }
+    // /// Do a closed kan with these tiles, if it has them
+    // pub fn ankan_tiles(&mut self, mut tile: Tile) {
+    //     let array_34 = self.get_34_array(true);
+    //     if array_34[(tile.to_id() - 1) as usize] != 4 {
+    //         panic!("Trying to kan, but don't have 4 tiles!");
+    //     }
+    //
+    //     // remove the kanned tiles
+    //     self.tiles.retain(|x| match x {
+    //         None => true,
+    //         Some(t) => {
+    //             if t.to_id() == tile.to_id() {
+    //                 return false;
+    //             }
+    //
+    //             true
+    //         }
+    //     });
+    //
+    //     // add them as kanned
+    //     tile.is_kan = true;
+    //
+    //     self.add_tile(tile);
+    //     self.add_tile(tile);
+    //     self.add_tile(tile);
+    //     self.add_tile(tile);
+    // }
 
     /// Goes through the tiles and dedicates them to an open shape
     pub fn add_open_shape(&mut self, shape: &OpenShape) {
@@ -1581,7 +1581,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_14_tenpai_daiminkan() {
-        let mut hand = Hand::from_text("1111m222s333p5z(k4z1)", false).unwrap();
+        let mut hand = Hand::from_text("111m222s333p56z(k4z1)", false).unwrap();
         // let mut hand = Hand::from_text("1111m222s333p5z444z", false).unwrap();
 
         assert_eq!(hand.count_tiles(), 14);
@@ -1707,7 +1707,9 @@ mod tests {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
         let tile = Tile::from_id(1).unwrap();
 
-        hand.ankan_tiles(tile);
+        hand.add_closed_kan(ClosedShape::Kantsu([
+            tile, tile, tile, tile,
+        ]));
 
         assert_eq!(hand.count_tiles(), 13);
     }
@@ -1717,7 +1719,11 @@ mod tests {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
         let tile = Tile::from_id(1).unwrap();
 
-        hand.ankan_tiles(tile);
+        hand.add_closed_kan(ClosedShape::Kantsu([
+            tile, tile, tile, tile,
+        ]));
+
+        println!("{}", hand);
 
         assert_eq!(hand.shanten(), 0);
     }
