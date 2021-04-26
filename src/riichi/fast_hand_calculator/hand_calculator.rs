@@ -241,13 +241,14 @@ impl HandCalculator {
     }
 
     pub fn discard(&mut self, tile: &Tile) {
-        if self.tiles_in_hand() != 13 {
-            panic!("Can only draw with a 13 tile hand.");
+        if self.tiles_in_hand() != 14 {
+            panic!("Can only discard with a 14 tile hand.");
         }
 
-        if self.in_hand_by_type[tile.to_id_minus_1() as usize] == 4 {
-            panic!("Can't draw a tile with 4 of that tile in hand.");
+        if self.in_hand_by_type[tile.to_id_minus_1() as usize] == 0 {
+            panic!("Can't discard from 0");
         }
+
         self.in_hand_by_type[tile.to_id_minus_1() as usize] -= 1;
         self.concealed_tiles[tile.to_id_minus_1() as usize] -= 1;
         let tile_count_after_discard = self.concealed_tiles[tile.to_id_minus_1() as usize];
