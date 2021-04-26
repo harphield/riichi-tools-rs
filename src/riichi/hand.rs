@@ -2,8 +2,11 @@
 
 use std::fmt;
 
+#[cfg(not(feature = "fast_shanten"))]
 use super::shanten::ShantenFinder;
 use super::tile::Tile;
+#[cfg(feature = "fast_shanten")]
+use crate::riichi::fast_hand_calculator::hand_calculator::HandCalculator;
 use crate::riichi::riichi_error::RiichiError;
 use crate::riichi::rules::Rules;
 use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenKan, OpenShape, Shape, ShapeType};
@@ -715,33 +718,33 @@ impl Hand {
         self.remove_tile(&tile);
     }
 
-    /// Do a closed kan with these tiles, if it has them
-    pub fn ankan_tiles(&mut self, mut tile: Tile) {
-        let array_34 = self.get_34_array(true);
-        if array_34[(tile.to_id() - 1) as usize] != 4 {
-            panic!("Trying to kan, but don't have 4 tiles!");
-        }
-
-        // remove the kanned tiles
-        self.tiles.retain(|x| match x {
-            None => true,
-            Some(t) => {
-                if t.to_id() == tile.to_id() {
-                    return false;
-                }
-
-                true
-            }
-        });
-
-        // add them as kanned
-        tile.is_kan = true;
-
-        self.add_tile(tile);
-        self.add_tile(tile);
-        self.add_tile(tile);
-        self.add_tile(tile);
-    }
+    // /// Do a closed kan with these tiles, if it has them
+    // pub fn ankan_tiles(&mut self, mut tile: Tile) {
+    //     let array_34 = self.get_34_array(true);
+    //     if array_34[(tile.to_id() - 1) as usize] != 4 {
+    //         panic!("Trying to kan, but don't have 4 tiles!");
+    //     }
+    //
+    //     // remove the kanned tiles
+    //     self.tiles.retain(|x| match x {
+    //         None => true,
+    //         Some(t) => {
+    //             if t.to_id() == tile.to_id() {
+    //                 return false;
+    //             }
+    //
+    //             true
+    //         }
+    //     });
+    //
+    //     // add them as kanned
+    //     tile.is_kan = true;
+    //
+    //     self.add_tile(tile);
+    //     self.add_tile(tile);
+    //     self.add_tile(tile);
+    //     self.add_tile(tile);
+    // }
 
     /// Goes through the tiles and dedicates them to an open shape
     pub fn add_open_shape(&mut self, shape: &OpenShape) {
@@ -877,6 +880,7 @@ impl Hand {
         hand_size
     }
 
+    #[cfg(not(feature = "fast_shanten"))]
     fn get_tile_count_by_id(&self, tile_id: u8) -> u8 {
         self.get_34_array(false)[(tile_id - 1) as usize]
     }
@@ -1087,14 +1091,29 @@ impl Hand {
     }
 
     /// Get shanten of this hand (and also set it if it's not calculated yet)
+    #[cfg(not(feature = "fast_shanten"))]
     pub fn shanten(&mut self) -> i8 {
         if self.shanten == 99 {
             match ShantenFinder::new().shanten(self) {
+                // match FastShantenFinder::new().shanten(self) {
                 Ok(shanten) => {
                     self.shanten = shanten;
                 }
                 Err(_error) => (),
             }
+        }
+
+        self.shanten
+    }
+
+    /// Get shanten of this hand (and also set it if it's not calculated yet)
+    #[cfg(feature = "fast_shanten")]
+    pub fn shanten(&mut self) -> i8 {
+        if self.shanten == 99 {
+            let mut hc = HandCalculator::new();
+            hc.init(&self);
+
+            self.shanten = hc.shanten();
         }
 
         self.shanten
@@ -1110,6 +1129,7 @@ impl Hand {
     /// For 13 tile hands, there is only one option.
     /// For 14 tile hands, we list options for all discards that don't lower our shanten.
     /// You can set visible_tiles that you can see on the table and it will remove them from the final list / ukeire count
+    #[cfg(not(feature = "fast_shanten"))]
     pub fn find_shanten_improving_tiles(
         &mut self,
         visible_tiles: Option<&[u8; 34]>,
@@ -1160,7 +1180,8 @@ impl Hand {
                             let mut result = self
                                 .get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
                             result.sort();
-                            imp_tiles.push((Some(*t), result.clone(), count_total_ukeire(&result)));
+                            let cnt = count_total_ukeire(&result);
+                            imp_tiles.push((Some(*t), result, cnt));
                         }
 
                         self.add_tile(*t);
@@ -1176,6 +1197,97 @@ impl Hand {
         imp_tiles
     }
 
+    #[cfg(feature = "fast_shanten")]
+    pub fn find_shanten_improving_tiles(
+        &mut self,
+        _visible_tiles: Option<&[u8; 34]>,
+    ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>, u8)> {
+        let mut hc = HandCalculator::new();
+        hc.init(&self);
+
+        let mut imp_tiles = vec![];
+        let count_total_ukeire =
+            |ukeires: &Vec<(Tile, u8)>| ukeires.iter().map(|u| u.1).sum::<u8>();
+
+        let current_shanten = hc.shanten();
+
+        // for 13 tile hands, the Option for the discard tile is None
+        let hand_count = self.count_tiles();
+
+        if hand_count == 13 {
+            let results = hc.get_uke_ire_for_13();
+
+            let mut tiles = vec![];
+            for (tile_id, uke_count) in results.iter().enumerate() {
+                if *uke_count >= 0 {
+                    tiles.push((Tile::from_id(tile_id as u8 + 1).unwrap(), *uke_count as u8));
+                }
+            }
+
+            tiles.sort();
+            let cnt = count_total_ukeire(&tiles);
+            imp_tiles.push((None, tiles, cnt))
+        } else if hand_count == 14 {
+            // finished hand has no improving tiles
+            if current_shanten < 0 {
+                return imp_tiles;
+            }
+
+            // first we choose a tile to discard, then we look at our tiles
+            let hand_tiles = self.tiles.to_vec();
+
+            let mut tried = vec![];
+            for o_tile in hand_tiles.iter() {
+                match o_tile {
+                    Some(t) => {
+                        if t.is_open || t.is_kan {
+                            continue;
+                        }
+
+                        if tried.contains(&t.to_id()) {
+                            continue;
+                        }
+
+                        tried.push(t.to_id());
+                        // self.remove_tile(t);
+                        hc.discard(&t);
+
+                        // hc = HandCalculator::new();
+                        // hc.init(&self);
+
+                        let new_shanten = hc.shanten();
+
+                        if new_shanten <= current_shanten {
+                            // only cares about tiles that don't raise our shanten
+                            let results = hc.get_uke_ire_for_13();
+
+                            let mut tiles = vec![];
+                            for (tile_id, uke_count) in results.iter().enumerate() {
+                                if *uke_count >= 0 {
+                                    tiles.push((
+                                        Tile::from_id(tile_id as u8 + 1).unwrap(),
+                                        *uke_count as u8,
+                                    ));
+                                }
+                            }
+
+                            tiles.sort();
+                            let cnt = count_total_ukeire(&tiles);
+                            imp_tiles.push((Some(*t), tiles, cnt));
+                        }
+
+                        // self.add_tile(*t);
+                        hc.draw(&t);
+                    }
+                    None => (),
+                }
+            }
+        }
+
+        imp_tiles
+    }
+
+    #[cfg(not(feature = "fast_shanten"))]
     fn get_shanten_improving_tiles_13(
         &mut self,
         current_shanten: i8,
@@ -1528,7 +1640,9 @@ mod tests {
                         println!("tajl: {} count: {}", tile.to_string(), row.2);
                         //                        println!("{:#?}", row.1);
                         assert_eq!(row.1.len(), 5);
+                        assert_eq!(row.1[0].0.to_string(), "1m");
                         assert_eq!(row.1[0].1, 4);
+                        assert_eq!(row.1[1].0.to_string(), "4m");
                         assert_eq!(row.1[1].1, 4);
                         assert_eq!(row.1[2].1, 4);
                         assert_eq!(row.1[3].1, 4);
@@ -1548,9 +1662,12 @@ mod tests {
         let mut hand = Hand::from_text("888p333s12345m77z", false).unwrap();
         let map = hand.find_shanten_improving_tiles(None);
 
-        println!("{:#?}", map);
+        let waiting_tiles = map.get(0).unwrap();
+
+        println!("{:#?}", waiting_tiles);
 
         assert_eq!(map.len(), 1);
+        assert_eq!(waiting_tiles.1.len(), 2);
     }
 
     #[test]
@@ -1563,7 +1680,8 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_14_tenpai_daiminkan() {
-        let mut hand = Hand::from_text("1111m222s333p5z(k4z1)", false).unwrap();
+        let mut hand = Hand::from_text("111m222s333p56z(k4z1)", false).unwrap();
+        // let mut hand = Hand::from_text("111m222s333p56z444z", false).unwrap();
 
         assert_eq!(hand.count_tiles(), 14);
         assert_eq!(hand.shanten(), 0);
@@ -1571,8 +1689,6 @@ mod tests {
         let map = hand.find_shanten_improving_tiles(None);
 
         let waiting_tiles = map.get(0).unwrap();
-
-        // println!("{:#?}", hand.tiles);
 
         assert_eq!(map.len(), 2);
         assert_eq!(waiting_tiles.1.len(), 1);
@@ -1688,7 +1804,7 @@ mod tests {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
         let tile = Tile::from_id(1).unwrap();
 
-        hand.ankan_tiles(tile);
+        hand.add_closed_kan(ClosedShape::Kantsu([tile, tile, tile, tile]));
 
         assert_eq!(hand.count_tiles(), 13);
     }
@@ -1698,7 +1814,9 @@ mod tests {
         let mut hand = Hand::from_text("111123m456s678p22z", false).unwrap();
         let tile = Tile::from_id(1).unwrap();
 
-        hand.ankan_tiles(tile);
+        hand.add_closed_kan(ClosedShape::Kantsu([tile, tile, tile, tile]));
+
+        println!("{}", hand);
 
         assert_eq!(hand.shanten(), 0);
     }
