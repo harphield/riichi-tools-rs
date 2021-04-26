@@ -175,18 +175,16 @@ impl HandCalculator {
         for shape in hand.get_shapes().iter() {
             if let CompleteShape::Closed(ClosedShape::Kantsu(tiles)) = shape {
                 for _i in 0..4 {
-                    let prev_tile_count =
-                        self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
+                    let prev_tile_count = self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
                     self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
                     self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
 
                     match tiles[0].tile_type {
                         TileType::Number(_, _) => {}
                         TileType::Wind(value) | TileType::Dragon(value) => {
-                            self.arrangement_values[3] = self.honor_classifier.draw(
-                                prev_tile_count,
-                                self.jihai_meld_bit >> (value - 1) & 1,
-                            );
+                            self.arrangement_values[3] = self
+                                .honor_classifier
+                                .draw(prev_tile_count, self.jihai_meld_bit >> (value - 1) & 1);
                         }
                     }
                 }
@@ -470,7 +468,7 @@ impl HandCalculator {
 
         let current_shanten = self.calculate_shanten(&self.arrangement_values);
 
-        let mut uke_ire: [i32; 34] = [-1; 34];
+        let mut uke_ire: [i32; 34] = [0; 34];
         let mut tile_id = 0;
         let mut local_arrangements = [
             self.arrangement_values[0],
@@ -505,6 +503,8 @@ impl HandCalculator {
                     self.kokushi
                         .discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                     self.chiitoi.discard(self.concealed_tiles[tile_id]);
+                } else {
+                    uke_ire[tile_id] = -1;
                 }
 
                 tile_id += 1;
@@ -519,8 +519,7 @@ impl HandCalculator {
                     .draw(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                 self.chiitoi.draw(self.concealed_tiles[tile_id]);
 
-                // TODO clone the honor_classifier?
-                local_arrangements[3] = self.honor_classifier.draw(
+                local_arrangements[3] = self.honor_classifier.clone().draw(
                     self.concealed_tiles[tile_id],
                     self.jihai_meld_bit >> value & 1,
                 );
@@ -532,6 +531,8 @@ impl HandCalculator {
                 self.kokushi
                     .discard(tile_id as u32, self.concealed_tiles[tile_id] as u32);
                 self.chiitoi.discard(self.concealed_tiles[tile_id]);
+            } else {
+                uke_ire[tile_id] = -1;
             }
 
             tile_id += 1;

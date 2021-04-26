@@ -880,6 +880,7 @@ impl Hand {
         hand_size
     }
 
+    #[cfg(not(feature = "fast_shanten"))]
     fn get_tile_count_by_id(&self, tile_id: u8) -> u8 {
         self.get_34_array(false)[(tile_id - 1) as usize]
     }
@@ -1217,8 +1218,10 @@ impl Hand {
             let results = hc.get_uke_ire_for_13();
 
             let mut tiles = vec![];
-            for (tile_id, uke_count) in results.iter().filter(|i| **i >= 0).enumerate() {
-                tiles.push((Tile::from_id(tile_id as u8 + 1).unwrap(), *uke_count as u8));
+            for (tile_id, uke_count) in results.iter().enumerate() {
+                if *uke_count >= 0 {
+                    tiles.push((Tile::from_id(tile_id as u8 + 1).unwrap(), *uke_count as u8));
+                }
             }
 
             tiles.sort();
@@ -1246,11 +1249,11 @@ impl Hand {
                         }
 
                         tried.push(t.to_id());
-                        self.remove_tile(t);
-                        // hc.discard(&t);
+                        // self.remove_tile(t);
+                        hc.discard(&t);
 
-                        hc = HandCalculator::new();
-                        hc.init(&self);
+                        // hc = HandCalculator::new();
+                        // hc.init(&self);
 
                         let new_shanten = hc.shanten();
 
@@ -1259,8 +1262,13 @@ impl Hand {
                             let results = hc.get_uke_ire_for_13();
 
                             let mut tiles = vec![];
-                            for (tile_id, uke_count) in results.iter().filter(|i| **i >= 0).enumerate() {
-                                tiles.push((Tile::from_id(tile_id as u8 + 1).unwrap(), *uke_count as u8));
+                            for (tile_id, uke_count) in results.iter().enumerate() {
+                                if *uke_count >= 0 {
+                                    tiles.push((
+                                        Tile::from_id(tile_id as u8 + 1).unwrap(),
+                                        *uke_count as u8,
+                                    ));
+                                }
                             }
 
                             tiles.sort();
@@ -1268,8 +1276,8 @@ impl Hand {
                             imp_tiles.push((Some(*t), tiles, cnt));
                         }
 
-                        self.add_tile(*t);
-                        // hc.draw(&t);
+                        // self.add_tile(*t);
+                        hc.draw(&t);
                     }
                     None => (),
                 }

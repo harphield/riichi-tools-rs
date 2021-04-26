@@ -27,6 +27,7 @@ use crate::riichi::fast_hand_calculator::resources::RESOURCES;
 /// 14 ankan
 ///
 /// The next state is always at current + 1 + actionId
+#[derive(Clone)]
 pub struct ProgressiveHonorClassifier {
     current: u32,
 }
