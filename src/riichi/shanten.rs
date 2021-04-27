@@ -18,7 +18,7 @@ impl ShantenFinder {
         }
     }
 
-    pub fn shanten(&mut self, hand: &mut Hand) -> Result<i8, RiichiError> {
+    pub fn shanten(&mut self, hand: &Hand) -> Result<i8, RiichiError> {
         if !hand.validate() {
             return Err(RiichiError::new(101, "Invalid hand"));
         }

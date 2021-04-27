@@ -37,7 +37,7 @@ impl Hand {
     }
 
     /// Checks the hand for invalid things (wrong number of tiles, > 4 same tiles...)
-    pub fn validate(&mut self) -> bool {
+    pub fn validate(&self) -> bool {
         let mut tile_count = 0;
         let array34 = self.get_34_array(false);
 
@@ -1106,6 +1106,15 @@ impl Hand {
         self.shanten
     }
 
+    /// Get shanten of this hand
+    #[cfg(not(feature = "fast_shanten"))]
+    pub fn get_shanten(&self) -> i8 {
+        match ShantenFinder::new().shanten(&self) {
+            Ok(shanten) => shanten,
+            Err(_error) => 99,
+        }
+    }
+
     /// Get shanten of this hand (and also set it if it's not calculated yet)
     #[cfg(feature = "fast_shanten")]
     pub fn shanten(&mut self) -> i8 {
@@ -1117,6 +1126,15 @@ impl Hand {
         }
 
         self.shanten
+    }
+
+    /// Get shanten of this hand
+    #[cfg(feature = "fast_shanten")]
+    pub fn get_shanten(&self) -> i8 {
+        let mut hc = HandCalculator::new();
+        hc.init(&self);
+
+        hc.shanten()
     }
 
     /// Reset shanten to 99 when we change the hand somehow
@@ -1249,11 +1267,7 @@ impl Hand {
                         }
 
                         tried.push(t.to_id());
-                        // self.remove_tile(t);
                         hc.discard(&t);
-
-                        // hc = HandCalculator::new();
-                        // hc.init(&self);
 
                         let new_shanten = hc.shanten();
 
@@ -1276,7 +1290,6 @@ impl Hand {
                             imp_tiles.push((Some(*t), tiles, cnt));
                         }
 
-                        // self.add_tile(*t);
                         hc.draw(&t);
                     }
                     None => (),
@@ -1511,7 +1524,7 @@ mod tests {
     #[test]
     fn validation_ok() {
         let rep = "123m123p12345s22z";
-        let mut hand = Hand::from_text(rep, false).unwrap();
+        let hand = Hand::from_text(rep, false).unwrap();
 
         assert!(hand.validate());
     }
@@ -1519,7 +1532,7 @@ mod tests {
     #[test]
     fn validation_bad_5_same_tiles() {
         let rep = "123m123p11111s22z";
-        let mut hand = Hand::from_text(rep, true).unwrap();
+        let hand = Hand::from_text(rep, true).unwrap();
 
         assert!(!hand.validate());
     }
@@ -1527,7 +1540,7 @@ mod tests {
     #[test]
     fn validation_bad_too_many_tiles() {
         let rep = "123456789m123456789p12345s22z";
-        let mut hand = Hand::from_text(rep, true).unwrap();
+        let hand = Hand::from_text(rep, true).unwrap();
 
         assert!(!hand.validate());
     }
@@ -1535,7 +1548,7 @@ mod tests {
     #[test]
     fn validation_bad_not_enough_tiles() {
         let rep = "123456m";
-        let mut hand = Hand::from_text(rep, true).unwrap();
+        let hand = Hand::from_text(rep, true).unwrap();
 
         assert!(!hand.validate());
     }
@@ -1835,7 +1848,7 @@ mod tests {
 
     #[test]
     fn random_hand() {
-        let mut hand = Hand::random_hand(None);
+        let hand = Hand::random_hand(None);
 
         println!("{}", hand.to_string());
         println!("{}", hand.count_tiles());

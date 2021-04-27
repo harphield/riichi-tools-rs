@@ -1,5 +1,4 @@
 # riichi-tools-rs
-v0.0.69
 
 ![Build Status](https://github.com/harphield/riichi-tools-rs/workflows/Build,%20test%20and%20Clippy/badge.svg)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/harphield/riichi-tools-rs)
@@ -21,7 +20,7 @@ but the binary is larger.
 
 You can enable the faster mode with enabling the feature in your cargo.toml:
 
-`riichi-tools-rs = { version = "0.0.69", features = ["fast_shanten"] }`
+`riichi-tools-rs = { version = "0.0.70", features = ["fast_shanten"] }`
 
 ## Roadmap
 - South 4 Simulator
