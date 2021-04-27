@@ -1834,6 +1834,14 @@ mod tests {
         assert_eq!(hand.shanten(), 0);
     }
 
+    /// I think this should be tenpai. We need to check with others.
+    // #[test]
+    // fn karaten_tenpai() {
+    //     let mut hand = Hand::from_text("13m456m44466p(k2m)", false).unwrap();
+    //
+    //     assert_eq!(hand.shanten(), 0);
+    // }
+
     #[test]
     fn random_complete_hand() {
         let mut hand = Hand::random_complete_hand(true, false);

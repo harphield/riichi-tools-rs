@@ -33,10 +33,13 @@ rust-embed = { version = "5.9.0", optional = true }
 criterion = "0.3.4"
 
 [features]
-# default = ["fast_shanten"]
+#default = ["fast_shanten"]
 # uses a better and faster shanten & ukeire algorithm, but makes the binary larger, because it uses lookup tables.
 fast_shanten = ["rust-embed"]
 
 [[bench]]
 name = "shanten"
+harness = false
+[[bench]]
+name = "hand_from_text"
 harness = false
