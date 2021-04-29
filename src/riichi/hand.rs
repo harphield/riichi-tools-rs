@@ -1218,7 +1218,7 @@ impl Hand {
     #[cfg(feature = "fast_shanten")]
     pub fn find_shanten_improving_tiles(
         &mut self,
-        _visible_tiles: Option<&[u8; 34]>,
+        visible_tiles: Option<&[u8; 34]>,
     ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>, u8)> {
         let mut hc = HandCalculator::new();
         hc.init(&self);
@@ -1226,6 +1226,19 @@ impl Hand {
         let mut imp_tiles = vec![];
         let count_total_ukeire =
             |ukeires: &Vec<(Tile, u8)>| ukeires.iter().map(|u| u.1).sum::<u8>();
+
+        let add_uke_ire_reuslt_to_tiles = |tile_id: &usize, uke_count: &i32, tiles: &mut Vec<(Tile, u8)>| {
+            if *uke_count > 0 {
+                let uke_count = match visible_tiles {
+                    None => *uke_count,
+                    Some(vt) => vt[*tile_id] as i32,
+                };
+
+                if uke_count > 0 {
+                    tiles.push((Tile::from_id(*tile_id as u8 + 1).unwrap(), uke_count as u8));
+                }
+            }
+        };
 
         let current_shanten = hc.shanten();
 
@@ -1237,9 +1250,7 @@ impl Hand {
 
             let mut tiles = vec![];
             for (tile_id, uke_count) in results.iter().enumerate() {
-                if *uke_count >= 0 {
-                    tiles.push((Tile::from_id(tile_id as u8 + 1).unwrap(), *uke_count as u8));
-                }
+                add_uke_ire_reuslt_to_tiles(&tile_id, &uke_count, &mut tiles);
             }
 
             tiles.sort();
@@ -1277,12 +1288,7 @@ impl Hand {
 
                             let mut tiles = vec![];
                             for (tile_id, uke_count) in results.iter().enumerate() {
-                                if *uke_count >= 0 {
-                                    tiles.push((
-                                        Tile::from_id(tile_id as u8 + 1).unwrap(),
-                                        *uke_count as u8,
-                                    ));
-                                }
+                                add_uke_ire_reuslt_to_tiles(&tile_id, &uke_count, &mut tiles);
                             }
 
                             tiles.sort();
@@ -1733,6 +1739,23 @@ mod tests {
         println!("{:#?}", result);
 
         assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn find_improving_tiles_13_with_some_visible_tiles() {
+        let mut hand = Hand::from_text("1234s123p999m456z", false).unwrap();
+
+        let mut visible_tiles = hand.get_34_array(false);
+        visible_tiles[Tile::from_text("1s").unwrap().to_id() as usize - 1] += 1; // 1s is also somewhere else
+
+        let result = hand.find_shanten_improving_tiles(Some(&visible_tiles));
+
+        println!("{:#?}", result);
+
+        assert_eq!(result.len(), 1);
+
+        // count of 1s that can come to my hand is 2
+        assert_eq!(result[0].1[0].1, 2);
     }
 
     #[test]
