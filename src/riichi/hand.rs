@@ -1231,7 +1231,7 @@ impl Hand {
             if *uke_count > 0 {
                 let uke_count = match visible_tiles {
                     None => *uke_count,
-                    Some(vt) => vt[*tile_id] as i32,
+                    Some(vt) => 4 - vt[*tile_id] as i32,
                 };
 
                 if uke_count > 0 {
@@ -1746,7 +1746,7 @@ mod tests {
         let mut hand = Hand::from_text("1234s123p999m456z", false).unwrap();
 
         let mut visible_tiles = hand.get_34_array(false);
-        visible_tiles[Tile::from_text("1s").unwrap().to_id() as usize - 1] += 1; // 1s is also somewhere else
+        visible_tiles[Tile::from_text("1s").unwrap().to_id() as usize - 1] += 2; // 1s is also somewhere else
 
         let result = hand.find_shanten_improving_tiles(Some(&visible_tiles));
 
@@ -1754,8 +1754,8 @@ mod tests {
 
         assert_eq!(result.len(), 1);
 
-        // count of 1s that can come to my hand is 2
-        assert_eq!(result[0].1[0].1, 2);
+        // count of 1s that can come to my hand is 3
+        assert_eq!(result[0].1[0].1, 1);
     }
 
     #[test]
