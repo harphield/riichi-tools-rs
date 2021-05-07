@@ -427,7 +427,7 @@ impl Table {
 
     /// Can my hand pon this tile? And if so, with which tiles?
     pub fn can_pon(&self, tile: &Tile) -> Option<Vec<Tile>> {
-        let hand = self.get_my_hand().clone();
+        let hand = self.get_my_hand();
 
         if self.did_i_riichi() {
             return None;

@@ -82,7 +82,7 @@ impl Shape {
         only_complete: bool,
     ) -> Result<Shape, RiichiError> {
         let shape_type: ShapeType;
-        let tile_count: u8 = tiles.iter().count() as u8;
+        let tile_count: u8 = tiles.len() as u8;
 
         if !(1..=4).contains(&tile_count) {
             // 4 = kan?

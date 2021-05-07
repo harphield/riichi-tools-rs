@@ -86,12 +86,10 @@ impl Hand {
     /// remove_open_tiles: ignores chi, pon and kanned tiles (also closed kans)
     pub fn get_34_array(&self, remove_open_tiles: bool) -> [u8; 34] {
         let mut array_34 = [0; 34];
-        for tile in self.tiles.iter() {
-            if let Option::Some(t) = tile {
-                // ignoring open tiles and kanned tiles
-                if !(remove_open_tiles && (t.is_open || t.is_kan)) {
-                    array_34[(t.to_id() - 1) as usize] += 1;
-                }
+        for tile in self.tiles.iter().flatten() {
+            // ignoring open tiles and kanned tiles
+            if !(remove_open_tiles && (tile.is_open || tile.is_kan)) {
+                array_34[(tile.to_id() - 1) as usize] += 1;
             }
         }
 
