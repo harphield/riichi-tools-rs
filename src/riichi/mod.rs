@@ -11,3 +11,4 @@ pub mod shapes;
 pub mod table;
 pub mod tile;
 pub mod yaku;
+pub mod potential;
