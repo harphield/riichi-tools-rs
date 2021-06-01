@@ -1147,20 +1147,22 @@ impl Hand {
     /// You can set visible_tiles that you can see on the table and it will remove them from the final list / ukeire count
     #[cfg(not(feature = "fast_shanten"))]
     pub fn find_shanten_improving_tiles(
-        &mut self,
+        &self,
         visible_tiles: Option<&[u8; 34]>,
     ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>, u8)> {
         let mut imp_tiles = vec![];
         let count_total_ukeire =
             |ukeires: &Vec<(Tile, u8)>| ukeires.iter().map(|u| u.1).sum::<u8>();
 
-        let current_shanten = self.shanten();
+        let mut hand = self.clone();
+
+        let current_shanten = hand.shanten();
 
         // for 13 tile hands, the Option for the discard tile is None
-        let hand_count = self.count_tiles();
+        let hand_count = hand.count_tiles();
 
         if hand_count == 13 {
-            let mut result = self.get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
+            let mut result = hand.get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
 
             result.sort();
             imp_tiles.push((None, result.clone(), count_total_ukeire(&result)));
@@ -1171,8 +1173,8 @@ impl Hand {
             }
 
             // first we choose a tile to discard, then we look at our tiles
-            let original_shanten = self.shanten();
-            let hand_tiles = self.tiles.to_vec();
+            let original_shanten = hand.shanten();
+            let hand_tiles = hand.tiles.to_vec();
 
             let mut tried = vec![];
             for o_tile in hand_tiles.iter() {
@@ -1187,27 +1189,27 @@ impl Hand {
                         }
 
                         tried.push(t.to_id());
-                        self.remove_tile(t);
-                        self.reset_shanten();
-                        let new_shanten = self.shanten();
+                        hand.remove_tile(t);
+                        hand.reset_shanten();
+                        let new_shanten = hand.shanten();
 
                         if new_shanten <= original_shanten {
                             // only cares about tiles that don't raise our shanten
-                            let mut result = self
+                            let mut result = hand
                                 .get_shanten_improving_tiles_13(current_shanten, &visible_tiles);
                             result.sort();
                             let cnt = count_total_ukeire(&result);
                             imp_tiles.push((Some(*t), result, cnt));
                         }
 
-                        self.add_tile(*t);
+                        hand.add_tile(*t);
                     }
                     None => (),
                 }
             }
         }
 
-        self.reset_shanten();
+        hand.reset_shanten();
 
         imp_tiles.sort_by(|a, b| b.2.cmp(&a.2));
         imp_tiles
@@ -1215,7 +1217,7 @@ impl Hand {
 
     #[cfg(feature = "fast_shanten")]
     pub fn find_shanten_improving_tiles(
-        &mut self,
+        &self,
         visible_tiles: Option<&[u8; 34]>,
     ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>, u8)> {
         let mut hc = HandCalculator::new();
@@ -1307,7 +1309,7 @@ impl Hand {
 
     #[cfg(not(feature = "fast_shanten"))]
     fn get_shanten_improving_tiles_13(
-        &mut self,
+        &self,
         current_shanten: i8,
         visible_tiles: &Option<&[u8; 34]>,
     ) -> Vec<(Tile, u8)> {
@@ -1560,7 +1562,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_2_shanten() {
-        let mut hand = Hand::from_text("237m13478s45699p", false).unwrap();
+        let hand = Hand::from_text("237m13478s45699p", false).unwrap();
 
         let tiles = hand.find_shanten_improving_tiles(None);
 
@@ -1591,7 +1593,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_2_shanten_14() {
-        let mut hand = Hand::from_text("237m13478s45699p1z", false).unwrap();
+        let hand = Hand::from_text("237m13478s45699p1z", false).unwrap();
 
         let result = hand.find_shanten_improving_tiles(None);
 
@@ -1633,7 +1635,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_2_shanten_14_open() {
-        let mut hand = Hand::from_text("237m13478s99p1z(456p0)", false).unwrap();
+        let hand = Hand::from_text("237m13478s99p1z(456p0)", false).unwrap();
 
         let result = hand.find_shanten_improving_tiles(None);
 
@@ -1677,7 +1679,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_13_tenpai() {
-        let mut hand = Hand::from_text("888p333s12345m77z", false).unwrap();
+        let hand = Hand::from_text("888p333s12345m77z", false).unwrap();
         let map = hand.find_shanten_improving_tiles(None);
 
         let waiting_tiles = map.get(0).unwrap();
@@ -1690,7 +1692,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_14_tenpai() {
-        let mut hand = Hand::from_text("123456789p12345m", false).unwrap();
+        let hand = Hand::from_text("123456789p12345m", false).unwrap();
         let map = hand.find_shanten_improving_tiles(None);
 
         assert_eq!(map.len(), 4);
@@ -1714,7 +1716,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_14_complete() {
-        let mut hand = Hand::from_text("123456789p12344m", false).unwrap();
+        let hand = Hand::from_text("123456789p12344m", false).unwrap();
         let map = hand.find_shanten_improving_tiles(None);
 
         assert_eq!(map.len(), 0);
@@ -1722,7 +1724,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_14_kokushi() {
-        let mut hand = Hand::from_text("129m19s19p1234566z", false).unwrap();
+        let hand = Hand::from_text("129m19s19p1234566z", false).unwrap();
         let map = hand.find_shanten_improving_tiles(None);
 
         println!("{:#?}", map);
@@ -1732,7 +1734,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_13_3() {
-        let mut hand = Hand::from_text("1234s123p999m456z", false).unwrap();
+        let hand = Hand::from_text("1234s123p999m456z", false).unwrap();
         let result = hand.find_shanten_improving_tiles(None);
 
         println!("{:#?}", result);
@@ -1742,7 +1744,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_13_with_some_visible_tiles() {
-        let mut hand = Hand::from_text("1234s123p999m456z", false).unwrap();
+        let hand = Hand::from_text("1234s123p999m456z", false).unwrap();
 
         let mut visible_tiles = hand.get_34_array(false);
         visible_tiles[Tile::from_text("1s").unwrap().to_id() as usize - 1] += 2; // 1s is also somewhere else
@@ -1759,7 +1761,7 @@ mod tests {
 
     #[test]
     fn find_improving_tiles_14_repeating() {
-        let mut hand = Hand::from_text("12356m12333s4499p", false).unwrap();
+        let hand = Hand::from_text("12356m12333s4499p", false).unwrap();
         let result = hand.find_shanten_improving_tiles(None);
 
         println!("{:#?}", result);
