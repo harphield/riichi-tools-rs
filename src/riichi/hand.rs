@@ -1225,18 +1225,19 @@ impl Hand {
         let count_total_ukeire =
             |ukeires: &Vec<(Tile, u8)>| ukeires.iter().map(|u| u.1).sum::<u8>();
 
-        let add_uke_ire_reuslt_to_tiles = |tile_id: &usize, uke_count: &i32, tiles: &mut Vec<(Tile, u8)>| {
-            if *uke_count > 0 {
-                let uke_count = match visible_tiles {
-                    None => *uke_count,
-                    Some(vt) => 4 - vt[*tile_id] as i32,
-                };
+        let add_uke_ire_reuslt_to_tiles =
+            |tile_id: &usize, uke_count: &i32, tiles: &mut Vec<(Tile, u8)>| {
+                if *uke_count > 0 {
+                    let uke_count = match visible_tiles {
+                        None => *uke_count,
+                        Some(vt) => 4 - vt[*tile_id] as i32,
+                    };
 
-                if uke_count > 0 {
-                    tiles.push((Tile::from_id(*tile_id as u8 + 1).unwrap(), uke_count as u8));
+                    if uke_count > 0 {
+                        tiles.push((Tile::from_id(*tile_id as u8 + 1).unwrap(), uke_count as u8));
+                    }
                 }
-            }
-        };
+            };
 
         let current_shanten = hc.shanten();
 

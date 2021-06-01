@@ -162,9 +162,9 @@ impl YakuFinder {
                                             }
                                         }
                                         ClosedShape::Koutsu(tiles) => {
-                                            match tiles[0].tile_type {
+                                            match &tiles[0].tile_type {
                                                 TileType::Number(value, _) => {
-                                                    if value == 1 || value == 9 {
+                                                    if *value == 1 || *value == 9 {
                                                         fu += 8;
                                                     } else {
                                                         fu += 4;
@@ -180,9 +180,9 @@ impl YakuFinder {
                                             }
                                         }
                                         ClosedShape::Kantsu(tiles) => {
-                                            match tiles[0].tile_type {
+                                            match &tiles[0].tile_type {
                                                 TileType::Number(value, _) => {
-                                                    if value == 1 || value == 9 {
+                                                    if *value == 1 || *value == 9 {
                                                         fu += 32;
                                                     } else {
                                                         fu += 16;
@@ -198,7 +198,7 @@ impl YakuFinder {
                                             }
                                         }
                                         ClosedShape::Toitsu(tiles) => {
-                                            match tiles[0].tile_type {
+                                            match &tiles[0].tile_type {
                                                 TileType::Number(_, _) => {}
                                                 TileType::Wind(value) => {
                                                     // prevalent wind: +2 fu
@@ -206,7 +206,7 @@ impl YakuFinder {
                                                     match table.get_prevalent_wind() {
                                                         None => {}
                                                         Some(pw) => {
-                                                            if pw == value {
+                                                            if pw == *value {
                                                                 fu += 2;
                                                             }
                                                         }
@@ -215,7 +215,7 @@ impl YakuFinder {
                                                     match table.get_my_seat_wind() {
                                                         None => {}
                                                         Some(msw) => {
-                                                            if msw == value {
+                                                            if msw == *value {
                                                                 fu += 2;
                                                             }
                                                         }
@@ -236,9 +236,9 @@ impl YakuFinder {
 
                                 CompleteShape::Open(open) => match open {
                                     OpenShape::Chi(_) => {}
-                                    OpenShape::Pon(tiles) => match tiles[0].tile_type {
+                                    OpenShape::Pon(tiles) => match &tiles[0].tile_type {
                                         TileType::Number(value, _) => {
-                                            if value == 1 || value == 9 {
+                                            if *value == 1 || *value == 9 {
                                                 fu += 4;
                                             } else {
                                                 fu += 2;
@@ -255,9 +255,9 @@ impl YakuFinder {
                                             }
                                         };
 
-                                        match tiles[0].tile_type {
+                                        match &tiles[0].tile_type {
                                             TileType::Number(value, _) => {
-                                                if value == 1 || value == 9 {
+                                                if *value == 1 || *value == 9 {
                                                     fu += 8;
                                                 } else {
                                                     fu += 4;
@@ -498,13 +498,13 @@ impl Yaku {
                                         return false;
                                     }
 
-                                    match tiles[0].tile_type {
+                                    match &tiles[0].tile_type {
                                         TileType::Wind(value) => match table.get_prevalent_wind() {
                                             None => return false,
                                             Some(prevalent) => match table.get_my_seat_wind() {
                                                 None => return false,
                                                 Some(seat) => {
-                                                    if value == prevalent || value == seat {
+                                                    if *value == prevalent || *value == seat {
                                                         return false;
                                                     }
                                                 }
