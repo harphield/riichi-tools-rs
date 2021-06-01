@@ -7,9 +7,7 @@ use crate::riichi::hand::Hand;
 /// 4. if complete, get value of hand, save it somewhere
 /// 5. finish all paths (do some pruning somehow?)
 
-pub struct PotentialFinder {
-
-}
+pub struct PotentialFinder {}
 
 impl PotentialFinder {
     pub fn find(&self, hand: &Hand) -> Vec<Hand> {
