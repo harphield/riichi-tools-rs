@@ -1,7 +1,7 @@
 use crate::riichi::hand::Hand;
+use crate::riichi::scores::Score;
 use crate::riichi::table::Table;
 use crate::riichi::yaku::Yaku;
-use crate::riichi::scores::Score;
 use std::cmp::Ordering;
 
 /// Let's find potential final hands from an incomplete hand
@@ -60,7 +60,7 @@ impl PotentialFinder {
 
         if hand.get_shanten() == -1 {
             let yaku = table.yaku();
-            final_hands.push((hand.clone(), yaku));
+            final_hands.push((hand, yaku));
 
             return final_hands;
         }
@@ -95,9 +95,9 @@ impl PotentialFinder {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use crate::riichi::potential::PotentialFinder;
-    use crate::riichi::table::Table;
+    use super::*;
     use serde_json::{Map, Value};
 
     #[test]
@@ -108,18 +108,25 @@ mod tests {
         let finder = PotentialFinder {};
         let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
 
-        let hands_strings: Vec<String> = hands.iter().map(|(h, o)| {
-            format!("{}{}", h.to_string(), match o {
-                None => "".to_string(),
-                Some(yakus) => {
-                    if yakus.1.han == 0 {
-                        " (no yaku)".to_string()
-                    } else {
-                        format!(" ({} {})", yakus.1.han, yakus.1.fu)
+        let hands_strings: Vec<String> = hands
+            .iter()
+            .map(|(h, o)| {
+                format!(
+                    "{}{}",
+                    h.to_string(),
+                    match o {
+                        None => "".to_string(),
+                        Some(yakus) => {
+                            if yakus.1.han == 0 {
+                                " (no yaku)".to_string()
+                            } else {
+                                format!(" ({} {})", yakus.1.han, yakus.1.fu)
+                            }
+                        }
                     }
-                }
+                )
             })
-        }).collect();
+            .collect();
 
         println!("{:#?}", hands_strings);
 
@@ -134,9 +141,7 @@ mod tests {
         let finder = PotentialFinder {};
         let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
 
-        let hands_strings: Vec<String> = hands.iter().map(|(h, _o)| {
-            h.to_string()
-        }).collect();
+        let hands_strings: Vec<String> = hands.iter().map(|(h, _o)| h.to_string()).collect();
 
         println!("{:#?}", hands_strings);
 
