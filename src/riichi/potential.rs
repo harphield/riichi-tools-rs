@@ -11,10 +11,12 @@ use std::cmp::Ordering;
 /// 4. if complete, get value of hand, save it somewhere
 /// 5. finish all paths (do some pruning somehow?)
 
+type PotentialList = Vec<(Hand, Option<(Vec<Yaku>, Score)>)>;
+
 pub struct PotentialFinder {}
 
 impl PotentialFinder {
-    pub fn find_potential(&self, table: &Table) -> Vec<(Hand, Option<(Vec<Yaku>, Score)>)> {
+    pub fn find_potential(&self, table: &Table) -> PotentialList {
         let mut table = table.clone();
 
         let mut results = self.find(&mut table);
@@ -53,7 +55,7 @@ impl PotentialFinder {
         results
     }
 
-    fn find(&self, mut table: &mut Table) -> Vec<(Hand, Option<(Vec<Yaku>, Score)>)> {
+    fn find(&self, mut table: &mut Table) -> PotentialList {
         let mut final_hands = vec![];
 
         let mut hand = table.get_my_hand().to_owned();
@@ -120,7 +122,7 @@ mod tests {
                             if yakus.1.han == 0 {
                                 " (no yaku)".to_string()
                             } else {
-                                format!(" ({} {})", yakus.1.han, yakus.1.fu)
+                                format!(" ({} {} : {})", yakus.1.han, yakus.1.fu, yakus.1.total_points())
                             }
                         }
                     }
