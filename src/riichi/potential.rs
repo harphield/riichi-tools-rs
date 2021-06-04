@@ -16,8 +16,13 @@ type PotentialList = Vec<(Hand, Option<(Vec<Yaku>, Score)>)>;
 pub struct PotentialFinder {}
 
 impl PotentialFinder {
-    pub fn find_potential(&self, table: &Table) -> PotentialList {
+    pub fn find_potential(&self, table: &Table) -> Option<PotentialList> {
         let mut table = table.clone();
+
+        // just don't
+        if table.get_my_hand().get_shanten() > 3 {
+            return None;
+        }
 
         let mut results = self.find(&mut table);
 
@@ -52,7 +57,7 @@ impl PotentialFinder {
 
         results.reverse();
 
-        results
+        Some(results)
     }
 
     fn find(&self, mut table: &mut Table) -> PotentialList {
@@ -102,51 +107,63 @@ mod tests {
     use super::*;
     use serde_json::{Map, Value};
 
-    #[test]
-    fn find_potential_2_shanten() {
+    fn test_hand(hand: &str) -> Option<PotentialList> {
         let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("347m13478s34599p"));
+        map.insert("my_hand".to_string(), Value::from(hand));
 
         let finder = PotentialFinder {};
         let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
 
-        let hands_strings: Vec<String> = hands
-            .iter()
-            .map(|(h, o)| {
-                format!(
-                    "{}{}",
-                    h.to_string(),
-                    match o {
-                        None => "".to_string(),
-                        Some(yakus) => {
-                            if yakus.1.han == 0 {
-                                " (no yaku)".to_string()
-                            } else {
-                                format!(" ({} {} : {})", yakus.1.han, yakus.1.fu, yakus.1.total_points())
+        match hands {
+            None => None,
+            Some(hands) => {
+                let hands_strings: Vec<String> = hands
+                    .iter()
+                    .map(|(h, o)| {
+                        format!(
+                            "{}{}",
+                            h.to_string(),
+                            match o {
+                                None => "".to_string(),
+                                Some(yakus) => {
+                                    if yakus.1.han == 0 {
+                                        " (no yaku)".to_string()
+                                    } else {
+                                        format!(
+                                            " ({} {} : {})",
+                                            yakus.1.han,
+                                            yakus.1.fu,
+                                            yakus.1.total_points()
+                                        )
+                                    }
+                                }
                             }
-                        }
-                    }
-                )
-            })
-            .collect();
+                        )
+                    })
+                    .collect();
 
-        println!("{:#?}", hands_strings);
+                println!("{:#?}", hands_strings);
 
-        assert!(hands.len() > 0);
+                Some(hands)
+            }
+        }
+    }
+
+    #[test]
+    fn find_potential_2_shanten() {
+        let hands = test_hand("347m13478s34599p");
+        assert!(hands.unwrap().len() > 0);
     }
 
     #[test]
     fn find_potential_3_shanten() {
-        let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("123459m378p39s26z5p"));
+        let hands = test_hand("123459m378p39s26z5p");
+        assert!(hands.unwrap().len() > 0);
+    }
 
-        let finder = PotentialFinder {};
-        let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
-
-        let hands_strings: Vec<String> = hands.iter().map(|(h, _o)| h.to_string()).collect();
-
-        println!("{:#?}", hands_strings);
-
-        assert!(hands.len() > 0);
+    #[test]
+    fn find_potential_4_shanten() {
+        let hands = test_hand("277m1459p699s346z6m");
+        assert!(hands.is_none());
     }
 }
