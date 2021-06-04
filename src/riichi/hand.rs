@@ -683,6 +683,14 @@ impl Hand {
         Ok(tiles)
     }
 
+    /// Adds a tile to this hand and sets it as drawn
+    pub fn draw_tile(&mut self, tile: &Tile) {
+        self.reset_drawn_tiles();
+        let mut tile = tile.clone();
+        tile.is_draw = true;
+        self.add_tile(tile);
+    }
+
     /// Adds a tile to this hand
     pub fn add_tile(&mut self, tile: Tile) {
         self.tiles.push(Some(tile));

@@ -2,6 +2,7 @@ use crate::riichi::hand::Hand;
 use crate::riichi::table::Table;
 use crate::riichi::yaku::Yaku;
 use crate::riichi::scores::Score;
+use std::cmp::Ordering;
 
 /// Let's find potential final hands from an incomplete hand
 /// 1. get ukeire tiles
@@ -13,7 +14,46 @@ use crate::riichi::scores::Score;
 pub struct PotentialFinder {}
 
 impl PotentialFinder {
-    pub fn find(&self, mut table: &mut Table) -> Vec<(Hand, Option<(Vec<Yaku>, Score)>)> {
+    pub fn find_potential(&self, table: &Table) -> Vec<(Hand, Option<(Vec<Yaku>, Score)>)> {
+        let mut table = table.clone();
+
+        let mut results = self.find(&mut table);
+
+        // sort results by value + speed
+        // TODO speed
+        results.sort_by(|a, b| {
+            if a.1.is_none() && b.1.is_none() {
+                return Ordering::Equal;
+            }
+
+            if a.1.is_none() {
+                return Ordering::Less;
+            }
+
+            if b.1.is_none() {
+                return Ordering::Greater;
+            }
+
+            let a_score = a.1.as_ref().unwrap();
+            let b_score = b.1.as_ref().unwrap();
+
+            if a_score.1.total_points() < b_score.1.total_points() {
+                return Ordering::Less;
+            }
+
+            if a_score.1.total_points() > b_score.1.total_points() {
+                return Ordering::Greater;
+            }
+
+            Ordering::Equal
+        });
+
+        results.reverse();
+
+        results
+    }
+
+    fn find(&self, mut table: &mut Table) -> Vec<(Hand, Option<(Vec<Yaku>, Score)>)> {
         let mut final_hands = vec![];
 
         let mut hand = table.get_my_hand().to_owned();
@@ -25,7 +65,7 @@ impl PotentialFinder {
             return final_hands;
         }
 
-        let ukeire = hand.find_shanten_improving_tiles(None);
+        let ukeire = hand.find_shanten_improving_tiles(Some(&table.get_visible_tiles()));
 
         if ukeire.is_empty() {
             // finished
@@ -38,12 +78,12 @@ impl PotentialFinder {
             }
 
             for (tile, _c) in imp_tiles {
-                hand.add_tile(*tile);
+                hand.draw_tile(&tile);
 
                 table.set_my_hand(hand.clone());
                 final_hands.append(&mut self.find(&mut table));
 
-                hand.remove_tile(tile);
+                hand.remove_tile(&tile);
             }
 
             if let Some(discard_tile) = discard_tile_o {
@@ -63,13 +103,22 @@ mod tests {
     #[test]
     fn find_potential_2_shanten() {
         let mut map = Map::new();
-        map.insert("my_hand".to_string(), Value::from("237m13478s45699p"));
+        map.insert("my_hand".to_string(), Value::from("347m13478s34599p"));
 
         let finder = PotentialFinder {};
-        let hands = finder.find(&mut Table::from_map(&map).unwrap());
+        let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
 
-        let hands_strings: Vec<String> = hands.iter().map(|(h, _o)| {
-            h.to_string()
+        let hands_strings: Vec<String> = hands.iter().map(|(h, o)| {
+            format!("{}{}", h.to_string(), match o {
+                None => "".to_string(),
+                Some(yakus) => {
+                    if yakus.1.han == 0 {
+                        " (no yaku)".to_string()
+                    } else {
+                        format!(" ({} {})", yakus.1.han, yakus.1.fu)
+                    }
+                }
+            })
         }).collect();
 
         println!("{:#?}", hands_strings);
@@ -83,7 +132,7 @@ mod tests {
         map.insert("my_hand".to_string(), Value::from("123459m378p39s26z5p"));
 
         let finder = PotentialFinder {};
-        let hands = finder.find(&mut Table::from_map(&map).unwrap());
+        let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
 
         let hands_strings: Vec<String> = hands.iter().map(|(h, _o)| {
             h.to_string()

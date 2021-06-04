@@ -8,6 +8,7 @@ use crate::riichi::yaku::{Yaku, YakuFinder};
 use serde_json::{Map, Value};
 
 /// Representation of the game state
+#[derive(Clone)]
 pub struct Table {
     my_hand: Option<Hand>,
     my_discards: Vec<Tile>,
