@@ -46,7 +46,7 @@ pub struct Table {
     /// E1 - E4, S1-S4...
     dealer_turn: Option<u8>,
     total_round: Option<u8>,
-    tiles_remaining: Option<u8>,
+    tiles_remaining: u8,
 
     riichi_sticks_in_pot: Option<u8>,
     tsumibo: Option<u8>,
@@ -89,7 +89,7 @@ impl Table {
             my_initial_seat_wind: None,
             dealer_turn: None,
             total_round: None,
-            tiles_remaining: None,
+            tiles_remaining: 69, // 1st turn after dealer draws
             riichi_sticks_in_pot: None,
             tsumibo: None,
             dora_indicators: vec![],
@@ -244,22 +244,15 @@ impl Table {
     }
 
     pub fn set_tiles_remaining(&mut self, value: u8) {
-        self.tiles_remaining = Some(value);
+        self.tiles_remaining = value;
     }
 
-    pub fn get_tiles_remaining(&self) -> Option<u8> {
+    pub fn get_tiles_remaining(&self) -> u8 {
         self.tiles_remaining
     }
 
     pub fn decrement_tiles_remaining(&mut self) {
-        match self.tiles_remaining {
-            None => {
-                self.set_tiles_remaining(0);
-            }
-            Some(value) => {
-                self.set_tiles_remaining(value - 1);
-            }
-        }
+        self.set_tiles_remaining(self.get_tiles_remaining() - 1);
     }
 
     pub fn set_my_seat_wind(&mut self, value: u8) {

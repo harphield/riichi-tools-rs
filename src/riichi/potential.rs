@@ -84,10 +84,11 @@ impl PotentialFinder {
                 hand.remove_tile(discard_tile);
             }
 
-            for (tile, _c) in imp_tiles {
+            for (tile, count) in imp_tiles {
                 hand.draw_tile(&tile);
 
                 table.set_my_hand(hand.clone());
+                // let draw_chance = count / table.get_tiles_remaining(); // TODO
                 final_hands.append(&mut self.find(&mut table));
 
                 hand.remove_tile(&tile);

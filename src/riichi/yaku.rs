@@ -532,16 +532,10 @@ impl Yaku {
                 return self.find_peikou(variant) == 1;
             }
             Yaku::Haitei => {
-                return match table.get_tiles_remaining() {
-                    None => false,
-                    Some(remaining) => table.did_i_tsumo() && remaining == 0,
-                }
+                return table.did_i_tsumo() && table.get_tiles_remaining() == 0;
             }
             Yaku::Houtei => {
-                return match table.get_tiles_remaining() {
-                    None => false,
-                    Some(remaining) => !table.did_i_tsumo() && remaining == 0,
-                }
+                return !table.did_i_tsumo() && table.get_tiles_remaining() == 0;
             }
             Yaku::Rinshan => {} // TODO
             Yaku::Chankan => {} // TODO
