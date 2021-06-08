@@ -60,6 +60,7 @@ impl PotentialFinder {
         Some(results)
     }
 
+    /// Recursive search through improving tiles until tenpai.
     fn find(&self, mut table: &mut Table) -> PotentialList {
         let mut final_hands = vec![];
 
@@ -100,6 +101,18 @@ impl PotentialFinder {
         }
 
         final_hands
+    }
+
+    /// count = number of tiles that I can find in the wall (based on visible tiles, so if you see 2, you can find 2)
+    /// remaining_tiles = how many tiles are left in the wall
+    /// visible_tiles = number of visible tiles
+    fn draw_chance(&self, count: u8, remaining_tiles: u8, visible_tiles: u8) {
+        let remaining_draws = (remaining_tiles as f32 / 4.0f32).floor() as u8;
+        let unobtainable_tiles = 136 - visible_tiles - remaining_draws;
+
+        // what chance do I have to draw a tile? There are <count> of them in <remaining_draws> + <unobtainable_tiles>,
+        // where only if some of them are in <remaining_draws> I can draw them.
+
     }
 }
 
