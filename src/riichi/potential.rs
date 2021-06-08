@@ -106,13 +106,14 @@ impl PotentialFinder {
     /// count = number of tiles that I can find in the wall (based on visible tiles, so if you see 2, you can find 2)
     /// remaining_tiles = how many tiles are left in the wall
     /// visible_tiles = number of visible tiles
-    fn draw_chance(&self, count: u8, remaining_tiles: u8, visible_tiles: u8) {
+    fn draw_chance(&self, count: u8, remaining_tiles: u8, visible_tiles: u8) -> f32 {
         let remaining_draws = (remaining_tiles as f32 / 4.0f32).floor() as u8;
-        let unobtainable_tiles = 136 - visible_tiles - remaining_draws;
+        let invisible_tiles = 136 - &visible_tiles;
+        // let unobtainable_tiles = 136 - visible_tiles - &remaining_draws;
 
         // what chance do I have to draw a tile? There are <count> of them in <remaining_draws> + <unobtainable_tiles>,
         // where only if some of them are in <remaining_draws> I can draw them.
-
+        return remaining_draws as f32 * (count as f32 / invisible_tiles as f32);
     }
 }
 
