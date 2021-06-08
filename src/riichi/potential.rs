@@ -86,10 +86,11 @@ impl PotentialFinder {
             }
 
             for (tile, count) in imp_tiles {
+                // TODO handle visible tiles between iterations correctly
                 hand.draw_tile(&tile);
 
                 table.set_my_hand(hand.clone());
-                // let draw_chance = count / table.get_tiles_remaining(); // TODO
+                let draw_chance = self.draw_chance(*count, table.get_tiles_remaining(), table.get_visible_tiles_count());
                 final_hands.append(&mut self.find(&mut table));
 
                 hand.remove_tile(&tile);
@@ -106,7 +107,13 @@ impl PotentialFinder {
     /// count = number of tiles that I can find in the wall (based on visible tiles, so if you see 2, you can find 2)
     /// remaining_tiles = how many tiles are left in the wall
     /// visible_tiles = number of visible tiles
+    ///
+    /// We are doing https://en.wikipedia.org/wiki/Hypergeometric_distribution for the probability
+    /// So the formula is:
+    /// ((<count> over <need>) * (<invisible_tiles> - <count> over <remaining_draws> - <need>)) / (<invisible_tiles> over <count>)
     fn draw_chance(&self, count: u8, remaining_tiles: u8, visible_tiles: u8) -> f32 {
+        let need = 1; // let's say we need 1
+
         let remaining_draws = (remaining_tiles as f32 / 4.0f32).floor() as u8;
         let invisible_tiles = 136 - &visible_tiles;
         // let unobtainable_tiles = 136 - visible_tiles - &remaining_draws;

@@ -101,7 +101,7 @@ impl Table {
             if index.eq(&String::from("my_hand")) {
                 if let Value::String(s) = value {
                     match Hand::from_text(s, false) {
-                        Ok(hand) => t.my_hand = Some(hand),
+                        Ok(hand) => t.set_my_hand(hand),
                         Err(error) => return Err(error),
                     }
                 }
@@ -232,6 +232,29 @@ impl Table {
         }
     }
 
+    pub fn my_hand_draw(&mut self, tile: &Tile) {
+        let mut hand = match &self.my_hand {
+            None => panic!("No hand!"),
+            Some(hand) => hand,
+        }.clone();
+
+        hand.draw_tile(&tile);
+        self.add_tile_to_visible_tiles(&tile);
+        self.decrement_tiles_remaining();
+
+        self.set_my_hand(hand);
+    }
+
+    pub fn my_hand_discard(&mut self, tile: &Tile) {
+        let mut hand = match &self.my_hand {
+            None => panic!("No hand!"),
+            Some(hand) => hand,
+        }.clone();
+
+        hand.remove_tile(&tile);
+        self.set_my_hand(hand);
+    }
+
     pub fn get_my_hand_option(&self) -> &Option<Hand> {
         &self.my_hand
     }
@@ -339,7 +362,7 @@ impl Table {
         &self.dora_indicators
     }
 
-    pub fn add_tile_to_visible_tiles(&mut self, tile: Tile) {
+    pub fn add_tile_to_visible_tiles(&mut self, tile: &Tile) {
         self.visible_tiles[(tile.to_id() - 1) as usize] += 1;
     }
 
@@ -356,6 +379,10 @@ impl Table {
 
     pub fn get_visible_tiles(&self) -> &[u8; 34] {
         &self.visible_tiles
+    }
+
+    pub fn get_visible_tiles_count(&self) -> u8 {
+        self.visible_tiles.iter().sum()
     }
 
     pub fn set_total_round(&mut self, value: u8) {
