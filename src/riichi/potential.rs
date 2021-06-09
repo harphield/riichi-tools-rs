@@ -84,7 +84,7 @@ impl PotentialFinder {
         }
 
         // save table data
-        let old_visible_tiles = table.get_visible_tiles().clone();
+        let old_visible_tiles = *table.get_visible_tiles();
         let old_remaining_tiles = table.get_tiles_remaining();
 
         for (discard_tile_o, imp_tiles, _count) in ukeire.iter() {
@@ -141,9 +141,11 @@ impl PotentialFinder {
 
         (binomial(count.clone(), need.clone())
             * binomial(
-                invisible_tiles.clone() - count.clone(),
+                invisible_tiles.clone() - count,
                 remaining_draws.clone() - need,
-            )).to_f32().unwrap()
+            ))
+        .to_f32()
+        .unwrap()
             / binomial(invisible_tiles, remaining_draws).to_f32().unwrap()
     }
 }
@@ -223,26 +225,21 @@ mod tests {
         println!("{}", res);
 
         let part1 = binomial(4, 1);
-        let part2 = binomial(
-            67 - 4,
-            5 - 1,
-        );
+        let part2 = binomial(67 - 4, 5 - 1);
         let part3 = binomial(67, 5);
 
-        println!("{} {} {}, {}, {}", part1, part2, part3, part1 * part2, (part1 * part2).to_f64().unwrap() / part3.to_f64().unwrap());
+        println!(
+            "{} {} {}, {}, {}",
+            part1,
+            part2,
+            part3,
+            part1 * part2,
+            (part1 * part2).to_f64().unwrap() / part3.to_f64().unwrap()
+        );
 
-        let test = (
-            (
-                binomial(4, 1)
-                * binomial(
-                    67 - 4,
-                    5 - 1,
-                )
-            )
-            / binomial(67, 5)
-        )
-        .to_f64()
-        .unwrap();
+        let test = ((binomial(4, 1) * binomial(67 - 4, 5 - 1)) / binomial(67, 5))
+            .to_f64()
+            .unwrap();
 
         println!("{}", test);
 

@@ -104,7 +104,7 @@ impl Table {
                         Ok(hand) => {
                             t.set_my_hand(hand);
                             t.init_visible_tiles();
-                        },
+                        }
                         Err(error) => return Err(error),
                     }
                 }
@@ -141,11 +141,25 @@ impl Table {
             } else if index.eq(&String::from("dora")) {
                 match value {
                     Value::String(v) => {
-                        t.add_dora_indicator(Tile::from_id(Tile::from_text(&v.to_string()[..]).unwrap().prev_id(true, 1)).unwrap());
+                        t.add_dora_indicator(
+                            Tile::from_id(
+                                Tile::from_text(&v.to_string()[..])
+                                    .unwrap()
+                                    .prev_id(true, 1),
+                            )
+                            .unwrap(),
+                        );
                     }
                     Value::Array(v) => {
                         for tile in v.iter() {
-                            t.add_dora_indicator(Tile::from_id(Tile::from_text(&tile.to_string()[..]).unwrap().prev_id(true, 1)).unwrap());
+                            t.add_dora_indicator(
+                                Tile::from_id(
+                                    Tile::from_text(&tile.to_string()[..])
+                                        .unwrap()
+                                        .prev_id(true, 1),
+                                )
+                                .unwrap(),
+                            );
                         }
                     }
                     _ => (),
@@ -397,10 +411,8 @@ impl Table {
     pub fn init_visible_tiles(&mut self) {
         // hand tiles
         let hand = self.get_my_hand().to_owned();
-        for tile_o in hand.get_tiles().iter() {
-            if let Some(tile) = tile_o {
-                &self.add_tile_to_visible_tiles(&tile);
-            }
+        for tile in hand.get_tiles().iter().flatten() {
+            self.add_tile_to_visible_tiles(&tile);
         }
 
         // dora indicator
