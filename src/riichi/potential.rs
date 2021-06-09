@@ -2,6 +2,9 @@ use crate::riichi::hand::Hand;
 use crate::riichi::scores::Score;
 use crate::riichi::table::Table;
 use crate::riichi::yaku::Yaku;
+use num_bigint::ToBigUint;
+use num_integer::binomial;
+use num_traits::cast::ToPrimitive;
 use std::cmp::Ordering;
 
 /// Let's find potential final hands from an incomplete hand
@@ -11,7 +14,7 @@ use std::cmp::Ordering;
 /// 4. if complete, get value of hand, save it somewhere
 /// 5. finish all paths (do some pruning somehow?)
 
-type PotentialList = Vec<(Hand, Option<(Vec<Yaku>, Score)>)>;
+type PotentialList = Vec<(Hand, Option<(Vec<Yaku>, Score)>, f32)>;
 
 pub struct PotentialFinder {}
 
@@ -24,7 +27,7 @@ impl PotentialFinder {
             return None;
         }
 
-        let mut results = self.find(&mut table);
+        let mut results = self.find(&mut table, 0f32, 0);
 
         // sort results by value + speed
         // TODO speed
@@ -61,14 +64,14 @@ impl PotentialFinder {
     }
 
     /// Recursive search through improving tiles until tenpai.
-    fn find(&self, mut table: &mut Table) -> PotentialList {
+    fn find(&self, mut table: &mut Table, chances: f32, depth: u8) -> PotentialList {
         let mut final_hands = vec![];
 
-        let mut hand = table.get_my_hand().to_owned();
+        let hand = table.get_my_hand().to_owned();
 
         if hand.get_shanten() == -1 {
             let yaku = table.yaku();
-            final_hands.push((hand, yaku));
+            final_hands.push((hand, yaku, chances / depth as f32));
 
             return final_hands;
         }
@@ -80,24 +83,39 @@ impl PotentialFinder {
             return final_hands;
         }
 
+        // save table data
+        let old_visible_tiles = table.get_visible_tiles().clone();
+        let old_remaining_tiles = table.get_tiles_remaining();
+
         for (discard_tile_o, imp_tiles, _count) in ukeire.iter() {
             if let Some(discard_tile) = discard_tile_o {
-                hand.remove_tile(discard_tile);
+                table.my_hand_discard(&discard_tile);
             }
 
             for (tile, count) in imp_tiles {
                 // TODO handle visible tiles between iterations correctly
-                hand.draw_tile(&tile);
+                table.my_hand_draw(&tile);
 
-                table.set_my_hand(hand.clone());
-                let draw_chance = self.draw_chance(*count, table.get_tiles_remaining(), table.get_visible_tiles_count());
-                final_hands.append(&mut self.find(&mut table));
+                // table.set_my_hand(hand.clone());
+                let draw_chance = self.draw_chance(
+                    *count,
+                    table.get_tiles_remaining(),
+                    table.get_visible_tiles_count(),
+                );
+                final_hands.append(&mut self.find(&mut table, chances + draw_chance, depth + 1));
 
-                hand.remove_tile(&tile);
+                table.my_hand_discard(&tile);
+
+                // restore table data
+                table.set_visible_tiles(&old_visible_tiles);
+                table.set_tiles_remaining(old_remaining_tiles);
             }
 
             if let Some(discard_tile) = discard_tile_o {
-                hand.add_tile(*discard_tile);
+                table.my_hand_draw(&discard_tile);
+
+                table.set_visible_tiles(&old_visible_tiles);
+                table.set_tiles_remaining(old_remaining_tiles);
             }
         }
 
@@ -110,17 +128,24 @@ impl PotentialFinder {
     ///
     /// We are doing https://en.wikipedia.org/wiki/Hypergeometric_distribution for the probability
     /// So the formula is:
-    /// ((<count> over <need>) * (<invisible_tiles> - <count> over <remaining_draws> - <need>)) / (<invisible_tiles> over <count>)
+    /// ((<count> choose <need>) * (<invisible_tiles> - <count> choose <remaining_draws> - <need>)) / (<invisible_tiles> choose <count>)
     fn draw_chance(&self, count: u8, remaining_tiles: u8, visible_tiles: u8) -> f32 {
-        let need = 1; // let's say we need 1
+        // println!("count: {}, remaining tiles: {}, visible tiles: {}", count, remaining_tiles, visible_tiles);
 
-        let remaining_draws = (remaining_tiles as f32 / 4.0f32).floor() as u8;
-        let invisible_tiles = 136 - &visible_tiles;
-        // let unobtainable_tiles = 136 - visible_tiles - &remaining_draws;
+        let count = count.to_biguint().unwrap();
+        let need = 1.to_biguint().unwrap(); // let's say we need 1
 
-        // what chance do I have to draw a tile? There are <count> of them in <remaining_draws> + <unobtainable_tiles>,
-        // where only if some of them are in <remaining_draws> I can draw them.
-        return remaining_draws as f32 * (count as f32 / invisible_tiles as f32);
+        let remaining_draws = ((remaining_tiles as f32 / 4.0f32).floor())
+            .to_biguint()
+            .unwrap();
+        let invisible_tiles = (136 - &visible_tiles).to_biguint().unwrap();
+
+        (binomial(count.clone(), need.clone())
+            * binomial(
+                invisible_tiles.clone() - count.clone(),
+                remaining_draws.clone() - need,
+            )).to_f32().unwrap()
+            / binomial(invisible_tiles, remaining_draws).to_f32().unwrap()
     }
 }
 
@@ -141,9 +166,9 @@ mod tests {
             Some(hands) => {
                 let hands_strings: Vec<String> = hands
                     .iter()
-                    .map(|(h, o)| {
+                    .map(|(h, o, p)| {
                         format!(
-                            "{}{}",
+                            "{}{} {}",
                             h.to_string(),
                             match o {
                                 None => "".to_string(),
@@ -159,7 +184,8 @@ mod tests {
                                         )
                                     }
                                 }
-                            }
+                            },
+                            p
                         )
                     })
                     .collect();
@@ -187,5 +213,39 @@ mod tests {
     fn find_potential_4_shanten() {
         let hands = test_hand("277m1459p699s346z6m");
         assert!(hands.is_none());
+    }
+
+    #[test]
+    fn draw_chance() {
+        let p = PotentialFinder {};
+        let res = p.draw_chance(4, 69, 0);
+
+        println!("{}", res);
+
+        let part1 = binomial(4, 1);
+        let part2 = binomial(
+            67 - 4,
+            5 - 1,
+        );
+        let part3 = binomial(67, 5);
+
+        println!("{} {} {}, {}, {}", part1, part2, part3, part1 * part2, (part1 * part2).to_f64().unwrap() / part3.to_f64().unwrap());
+
+        let test = (
+            (
+                binomial(4, 1)
+                * binomial(
+                    67 - 4,
+                    5 - 1,
+                )
+            )
+            / binomial(67, 5)
+        )
+        .to_f64()
+        .unwrap();
+
+        println!("{}", test);
+
+        assert!(res > 0f32);
     }
 }

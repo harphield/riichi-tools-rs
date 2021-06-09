@@ -101,7 +101,10 @@ impl Table {
             if index.eq(&String::from("my_hand")) {
                 if let Value::String(s) = value {
                     match Hand::from_text(s, false) {
-                        Ok(hand) => t.set_my_hand(hand),
+                        Ok(hand) => {
+                            t.set_my_hand(hand);
+                            t.init_visible_tiles();
+                        },
                         Err(error) => return Err(error),
                     }
                 }
@@ -236,7 +239,8 @@ impl Table {
         let mut hand = match &self.my_hand {
             None => panic!("No hand!"),
             Some(hand) => hand,
-        }.clone();
+        }
+        .clone();
 
         hand.draw_tile(&tile);
         self.add_tile_to_visible_tiles(&tile);
@@ -249,7 +253,8 @@ impl Table {
         let mut hand = match &self.my_hand {
             None => panic!("No hand!"),
             Some(hand) => hand,
-        }.clone();
+        }
+        .clone();
 
         hand.remove_tile(&tile);
         self.set_my_hand(hand);
@@ -375,6 +380,26 @@ impl Table {
         self.p1_safe_tiles = vec![];
         self.p2_safe_tiles = vec![];
         self.p3_safe_tiles = vec![];
+    }
+
+    pub fn init_visible_tiles(&mut self) {
+        // hand tiles
+        let hand = self.get_my_hand().to_owned();
+        for tile_o in hand.get_tiles().iter() {
+            if let Some(tile) = tile_o {
+                &self.add_tile_to_visible_tiles(&tile);
+            }
+        }
+
+        // dora indicator
+        let indicators = self.get_dora_indicators().to_owned();
+        for tile in indicators.iter() {
+            self.add_tile_to_visible_tiles(&tile);
+        }
+    }
+
+    pub fn set_visible_tiles(&mut self, tiles: &[u8; 34]) {
+        self.visible_tiles = *tiles;
     }
 
     pub fn get_visible_tiles(&self) -> &[u8; 34] {
