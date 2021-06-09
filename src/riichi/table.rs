@@ -138,6 +138,18 @@ impl Table {
                     }
                     _ => (),
                 }
+            } else if index.eq(&String::from("dora")) {
+                match value {
+                    Value::String(v) => {
+                        t.add_dora_indicator(Tile::from_id(Tile::from_text(&v.to_string()[..]).unwrap().prev_id(true, 1)).unwrap());
+                    }
+                    Value::Array(v) => {
+                        for tile in v.iter() {
+                            t.add_dora_indicator(Tile::from_id(Tile::from_text(&tile.to_string()[..]).unwrap().prev_id(true, 1)).unwrap());
+                        }
+                    }
+                    _ => (),
+                }
             }
         }
 

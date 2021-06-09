@@ -93,7 +93,6 @@ impl PotentialFinder {
             }
 
             for (tile, count) in imp_tiles {
-                // TODO handle visible tiles between iterations correctly
                 table.my_hand_draw(&tile);
 
                 // table.set_my_hand(hand.clone());
@@ -157,6 +156,7 @@ mod tests {
     fn test_hand(hand: &str) -> Option<PotentialList> {
         let mut map = Map::new();
         map.insert("my_hand".to_string(), Value::from(hand));
+        map.insert("dora".to_string(), Value::from("6m"));
 
         let finder = PotentialFinder {};
         let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
