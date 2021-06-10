@@ -6,6 +6,7 @@ use num_bigint::ToBigUint;
 use num_integer::binomial;
 use num_traits::cast::ToPrimitive;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 /// Let's find potential final hands from an incomplete hand
 /// 1. get ukeire tiles
@@ -15,11 +16,28 @@ use std::cmp::Ordering;
 /// 5. finish all paths (do some pruning somehow?)
 
 type PotentialList = Vec<(Hand, Option<(Vec<Yaku>, Score)>, f32)>;
+type DrawChanceParams = (u8, u8, u8);
 
-pub struct PotentialFinder {}
+pub struct PotentialFinder {
+    chances: HashMap<DrawChanceParams, f32>,
+}
+
+impl Default for PotentialFinder {
+    fn default() -> Self {
+        Self {
+            chances: HashMap::new(),
+        }
+    }
+}
 
 impl PotentialFinder {
-    pub fn find_potential(&self, table: &Table) -> Option<PotentialList> {
+    pub fn new() -> PotentialFinder {
+        PotentialFinder {
+            ..Default::default()
+        }
+    }
+
+    pub fn find_potential(&mut self, table: &Table) -> Option<PotentialList> {
         let mut table = table.clone();
 
         // just don't
@@ -64,7 +82,7 @@ impl PotentialFinder {
     }
 
     /// Recursive search through improving tiles until tenpai.
-    fn find(&self, mut table: &mut Table, chances: f32, depth: u8) -> PotentialList {
+    fn find(&mut self, mut table: &mut Table, chances: f32, depth: u8) -> PotentialList {
         let mut final_hands = vec![];
 
         let hand = table.get_my_hand().to_owned();
@@ -128,10 +146,19 @@ impl PotentialFinder {
     /// We are doing https://en.wikipedia.org/wiki/Hypergeometric_distribution for the probability
     /// So the formula is:
     /// ((<count> choose <need>) * (<invisible_tiles> - <count> choose <remaining_draws> - <need>)) / (<invisible_tiles> choose <count>)
-    fn draw_chance(&self, count: u8, remaining_tiles: u8, visible_tiles: u8) -> f32 {
+    fn draw_chance(&mut self, count: u8, remaining_tiles: u8, visible_tiles: u8) -> f32 {
+        if self
+            .chances
+            .contains_key(&(count, remaining_tiles, visible_tiles))
+        {
+            return *self
+                .chances
+                .get(&(count, remaining_tiles, visible_tiles))
+                .unwrap();
+        }
         // println!("count: {}, remaining tiles: {}, visible tiles: {}", count, remaining_tiles, visible_tiles);
 
-        let count = count.to_biguint().unwrap();
+        let count_bu = count.to_biguint().unwrap();
         let need = 1.to_biguint().unwrap(); // let's say we need 1
 
         let remaining_draws = ((remaining_tiles as f32 / 4.0f32).floor())
@@ -139,14 +166,19 @@ impl PotentialFinder {
             .unwrap();
         let invisible_tiles = (136 - &visible_tiles).to_biguint().unwrap();
 
-        (binomial(count.clone(), need.clone())
+        let result = (binomial(count_bu.clone(), need.clone())
             * binomial(
-                invisible_tiles.clone() - count,
+                invisible_tiles.clone() - count_bu,
                 remaining_draws.clone() - need,
             ))
         .to_f32()
         .unwrap()
-            / binomial(invisible_tiles, remaining_draws).to_f32().unwrap()
+            / binomial(invisible_tiles, remaining_draws).to_f32().unwrap();
+
+        self.chances
+            .insert((count, remaining_tiles, visible_tiles), result);
+
+        result
     }
 }
 
@@ -160,7 +192,7 @@ mod tests {
         map.insert("my_hand".to_string(), Value::from(hand));
         map.insert("dora".to_string(), Value::from("6m"));
 
-        let finder = PotentialFinder {};
+        let mut finder = PotentialFinder::new();
         let hands = finder.find_potential(&mut Table::from_map(&map).unwrap());
 
         match hands {
@@ -219,7 +251,7 @@ mod tests {
 
     #[test]
     fn draw_chance() {
-        let p = PotentialFinder {};
+        let mut p = PotentialFinder::new();
         let res = p.draw_chance(4, 69, 0);
 
         println!("{}", res);
