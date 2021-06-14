@@ -48,9 +48,14 @@ impl PotentialFinder {
         let mut results = self.find(&mut table, 0f32, 0);
 
         // sort results by value + speed
-        // TODO speed
         results.sort_by(|a, b| {
             if a.1.is_none() && b.1.is_none() {
+                if a.2 > b.2 {
+                    return Ordering::Greater;
+                } else if b.2 > a.2 {
+                    return Ordering::Less;
+                }
+
                 return Ordering::Equal;
             }
 
@@ -71,6 +76,12 @@ impl PotentialFinder {
 
             if a_score.1.total_points() > b_score.1.total_points() {
                 return Ordering::Greater;
+            }
+
+            if a.2 > b.2 {
+                return Ordering::Greater;
+            } else if b.2 > a.2 {
+                return Ordering::Less;
             }
 
             Ordering::Equal
