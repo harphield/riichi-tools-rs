@@ -40,9 +40,15 @@ impl PotentialFinder {
     pub fn find_potential(&mut self, table: &Table) -> Option<PotentialList> {
         let mut table = table.clone();
 
+        let shanten = table.get_my_hand().get_shanten();
+
         // just don't
-        if table.get_my_hand().get_shanten() > 3 {
+        if shanten > 3 {
             return None;
+        }
+
+        if shanten == 0 {
+            // TODO with a tenpai hand we should check for upgrades
         }
 
         let mut results = self.find(&mut table, 0f32, 0);
@@ -100,6 +106,7 @@ impl PotentialFinder {
 
         if hand.get_shanten() == -1 {
             let yaku = table.yaku();
+            // averaging the chances. Not sure if this is the right way to do it though.
             final_hands.push((hand, yaku, chances / depth as f32));
 
             return final_hands;
@@ -243,8 +250,14 @@ mod tests {
     }
 
     #[test]
+    fn find_potential_1_shanten() {
+        let hands = test_hand("1345m34599p13578s");
+        assert!(hands.unwrap().len() > 0);
+    }
+
+    #[test]
     fn find_potential_2_shanten() {
-        let hands = test_hand("347m13478s34599p");
+        let hands = test_hand("1347m34599p13478s");
         assert!(hands.unwrap().len() > 0);
     }
 
