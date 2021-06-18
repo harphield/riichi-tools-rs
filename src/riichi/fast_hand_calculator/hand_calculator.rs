@@ -41,12 +41,12 @@ impl HandCalculator {
                 None => {}
                 Some(tile) => {
                     if !tile.is_open && !tile.is_kan {
-                        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
-                        let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
-                        self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
+                        self.in_hand_by_type[tile.get_id_minus_1() as usize] += 1;
+                        let prev_tile_count = self.concealed_tiles[tile.get_id_minus_1() as usize];
+                        self.concealed_tiles[tile.get_id_minus_1() as usize] += 1;
 
                         self.kokushi
-                            .draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
+                            .draw(tile.get_id_minus_1() as u32, prev_tile_count as u32);
                         self.chiitoi.draw(prev_tile_count);
 
                         match tile.tile_type {
@@ -75,25 +75,25 @@ impl HandCalculator {
         for shape in hand.get_open_shapes() {
             match shape {
                 OpenShape::Chi(tiles) => {
-                    self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
-                    self.in_hand_by_type[tiles[1].to_id_minus_1() as usize] += 1;
-                    self.in_hand_by_type[tiles[2].to_id_minus_1() as usize] += 1;
-                    self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
-                    self.concealed_tiles[tiles[1].to_id_minus_1() as usize] += 1;
-                    self.concealed_tiles[tiles[2].to_id_minus_1() as usize] += 1;
+                    self.in_hand_by_type[tiles[0].get_id_minus_1() as usize] += 1;
+                    self.in_hand_by_type[tiles[1].get_id_minus_1() as usize] += 1;
+                    self.in_hand_by_type[tiles[2].get_id_minus_1() as usize] += 1;
+                    self.concealed_tiles[tiles[0].get_id_minus_1() as usize] += 1;
+                    self.concealed_tiles[tiles[1].get_id_minus_1() as usize] += 1;
+                    self.concealed_tiles[tiles[2].get_id_minus_1() as usize] += 1;
 
                     let called_tile = tiles.iter().find(|t| t.called_from != 0).unwrap();
-                    self.in_hand_by_type[called_tile.to_id_minus_1() as usize] -= 1;
-                    self.concealed_tiles[called_tile.to_id_minus_1() as usize] -= 1;
+                    self.in_hand_by_type[called_tile.get_id_minus_1() as usize] -= 1;
+                    self.concealed_tiles[called_tile.get_id_minus_1() as usize] -= 1;
 
                     self.chii(&tiles[0], &called_tile);
                 }
                 OpenShape::Pon(tiles) => {
                     for _i in 0..2 {
                         let prev_tile_count =
-                            self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
-                        self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
-                        self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+                            self.concealed_tiles[tiles[0].get_id_minus_1() as usize];
+                        self.in_hand_by_type[tiles[0].get_id_minus_1() as usize] += 1;
+                        self.concealed_tiles[tiles[0].get_id_minus_1() as usize] += 1;
 
                         match tiles[0].tile_type {
                             TileType::Number(_, _) => {}
@@ -112,9 +112,9 @@ impl HandCalculator {
                         OpenKan::Daiminkan(tiles) => {
                             for _i in 0..3 {
                                 let prev_tile_count =
-                                    self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
-                                self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
-                                self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+                                    self.concealed_tiles[tiles[0].get_id_minus_1() as usize];
+                                self.in_hand_by_type[tiles[0].get_id_minus_1() as usize] += 1;
+                                self.concealed_tiles[tiles[0].get_id_minus_1() as usize] += 1;
 
                                 match tiles[0].tile_type {
                                     TileType::Number(_, _) => {}
@@ -133,9 +133,9 @@ impl HandCalculator {
                             // first we pon, then shouminkan
                             for _i in 0..2 {
                                 let prev_tile_count =
-                                    self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
-                                self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
-                                self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+                                    self.concealed_tiles[tiles[0].get_id_minus_1() as usize];
+                                self.in_hand_by_type[tiles[0].get_id_minus_1() as usize] += 1;
+                                self.concealed_tiles[tiles[0].get_id_minus_1() as usize] += 1;
 
                                 match tiles[0].tile_type {
                                     TileType::Number(_, _) => {}
@@ -151,9 +151,9 @@ impl HandCalculator {
                             self.pon(&tiles[0]);
 
                             let prev_tile_count =
-                                self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
-                            self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
-                            self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+                                self.concealed_tiles[tiles[0].get_id_minus_1() as usize];
+                            self.in_hand_by_type[tiles[0].get_id_minus_1() as usize] += 1;
+                            self.concealed_tiles[tiles[0].get_id_minus_1() as usize] += 1;
 
                             match tiles[0].tile_type {
                                 TileType::Number(_, _) => {}
@@ -175,9 +175,9 @@ impl HandCalculator {
         for shape in hand.get_shapes().iter() {
             if let CompleteShape::Closed(ClosedShape::Kantsu(tiles)) = shape {
                 for _i in 0..4 {
-                    let prev_tile_count = self.concealed_tiles[tiles[0].to_id_minus_1() as usize];
-                    self.in_hand_by_type[tiles[0].to_id_minus_1() as usize] += 1;
-                    self.concealed_tiles[tiles[0].to_id_minus_1() as usize] += 1;
+                    let prev_tile_count = self.concealed_tiles[tiles[0].get_id_minus_1() as usize];
+                    self.in_hand_by_type[tiles[0].get_id_minus_1() as usize] += 1;
+                    self.concealed_tiles[tiles[0].get_id_minus_1() as usize] += 1;
 
                     match tiles[0].tile_type {
                         TileType::Number(_, _) => {}
@@ -203,16 +203,16 @@ impl HandCalculator {
             panic!("Can only draw with a 13 tile hand.");
         }
 
-        if self.in_hand_by_type[tile.to_id_minus_1() as usize] == 4 {
+        if self.in_hand_by_type[tile.get_id_minus_1() as usize] == 4 {
             panic!("Can't draw a tile with 4 of that tile in hand.");
         }
 
-        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
-        let prev_tile_count = self.concealed_tiles[tile.to_id_minus_1() as usize];
-        self.concealed_tiles[tile.to_id_minus_1() as usize] += 1;
+        self.in_hand_by_type[tile.get_id_minus_1() as usize] += 1;
+        let prev_tile_count = self.concealed_tiles[tile.get_id_minus_1() as usize];
+        self.concealed_tiles[tile.get_id_minus_1() as usize] += 1;
 
         self.kokushi
-            .draw(tile.to_id_minus_1() as u32, prev_tile_count as u32);
+            .draw(tile.get_id_minus_1() as u32, prev_tile_count as u32);
         self.chiitoi.draw(prev_tile_count);
 
         match tile.tile_type {
@@ -243,16 +243,16 @@ impl HandCalculator {
             panic!("Can only discard with a 14 tile hand.");
         }
 
-        if self.in_hand_by_type[tile.to_id_minus_1() as usize] == 0 {
+        if self.in_hand_by_type[tile.get_id_minus_1() as usize] == 0 {
             panic!("Can't discard from 0");
         }
 
-        self.in_hand_by_type[tile.to_id_minus_1() as usize] -= 1;
-        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 1;
-        let tile_count_after_discard = self.concealed_tiles[tile.to_id_minus_1() as usize];
+        self.in_hand_by_type[tile.get_id_minus_1() as usize] -= 1;
+        self.concealed_tiles[tile.get_id_minus_1() as usize] -= 1;
+        let tile_count_after_discard = self.concealed_tiles[tile.get_id_minus_1() as usize];
 
         self.kokushi
-            .discard(tile.to_id_minus_1() as u32, tile_count_after_discard as u32);
+            .discard(tile.get_id_minus_1() as u32, tile_count_after_discard as u32);
         self.chiitoi.discard(tile_count_after_discard);
 
         match tile.tile_type {
@@ -289,14 +289,14 @@ impl HandCalculator {
             _ => {}
         }
 
-        if lowest_tile.to_id_minus_1() != called_tile.to_id_minus_1() {
-            self.concealed_tiles[lowest_tile.to_id_minus_1() as usize] -= 1;
+        if lowest_tile.get_id_minus_1() != called_tile.get_id_minus_1() {
+            self.concealed_tiles[lowest_tile.get_id_minus_1() as usize] -= 1;
         }
-        if lowest_tile.to_id_minus_1() + 1 != called_tile.to_id_minus_1() {
-            self.concealed_tiles[(lowest_tile.to_id_minus_1() + 1) as usize] -= 1;
+        if lowest_tile.get_id_minus_1() + 1 != called_tile.get_id_minus_1() {
+            self.concealed_tiles[(lowest_tile.get_id_minus_1() + 1) as usize] -= 1;
         }
-        if lowest_tile.to_id_minus_1() + 2 != called_tile.to_id_minus_1() {
-            self.concealed_tiles[(lowest_tile.to_id_minus_1() + 2) as usize] -= 1;
+        if lowest_tile.get_id_minus_1() + 2 != called_tile.get_id_minus_1() {
+            self.concealed_tiles[(lowest_tile.get_id_minus_1() + 2) as usize] -= 1;
         }
 
         if let TileType::Number(value, color) = lowest_tile.tile_type {
@@ -326,7 +326,7 @@ impl HandCalculator {
         }
 
         self.meld_count += 1;
-        self.in_hand_by_type[called_tile.to_id_minus_1() as usize] += 1;
+        self.in_hand_by_type[called_tile.get_id_minus_1() as usize] += 1;
     }
 
     pub fn pon(&mut self, tile: &Tile) {
@@ -334,8 +334,8 @@ impl HandCalculator {
             // panic!("Pon only after discard.");
         }
 
-        let prev_tiles = self.concealed_tiles[tile.to_id_minus_1() as usize];
-        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 2;
+        let prev_tiles = self.concealed_tiles[tile.get_id_minus_1() as usize];
+        self.concealed_tiles[tile.get_id_minus_1() as usize] -= 2;
 
         match tile.tile_type {
             TileType::Number(value, color) => match color {
@@ -368,7 +368,7 @@ impl HandCalculator {
         }
 
         self.meld_count += 1;
-        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
+        self.in_hand_by_type[tile.get_id_minus_1() as usize] += 1;
     }
 
     pub fn shouminkan(&mut self, tile: &Tile) {
@@ -376,7 +376,7 @@ impl HandCalculator {
             // panic!("Shouminkan only after draw.");
         }
 
-        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 1;
+        self.concealed_tiles[tile.get_id_minus_1() as usize] -= 1;
 
         match tile.tile_type {
             TileType::Number(value, color) => {
@@ -408,7 +408,7 @@ impl HandCalculator {
             // panic!("Ankan only after draw.");
         }
 
-        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 4;
+        self.concealed_tiles[tile.get_id_minus_1() as usize] -= 4;
         self.meld_count += 1;
 
         match tile.tile_type {
@@ -435,8 +435,8 @@ impl HandCalculator {
             // panic!("Daiminkan only after discard.");
         }
 
-        self.in_hand_by_type[tile.to_id_minus_1() as usize] += 1;
-        self.concealed_tiles[tile.to_id_minus_1() as usize] -= 3;
+        self.in_hand_by_type[tile.get_id_minus_1() as usize] += 1;
+        self.concealed_tiles[tile.get_id_minus_1() as usize] -= 3;
         self.meld_count += 1;
 
         match tile.tile_type {

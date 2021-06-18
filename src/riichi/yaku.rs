@@ -744,11 +744,11 @@ impl Yaku {
                                             info = [false, false, false];
                                         }
 
-                                        if suit.to_char() == 'm' {
+                                        if suit.get_char() == 'm' {
                                             info[0] = true;
-                                        } else if suit.to_char() == 'p' {
+                                        } else if suit.get_char() == 'p' {
                                             info[1] = true;
-                                        } else if suit.to_char() == 's' {
+                                        } else if suit.get_char() == 's' {
                                             info[2] = true;
                                         }
 
@@ -774,11 +774,11 @@ impl Yaku {
                                             info = [false, false, false];
                                         }
 
-                                        if suit.to_char() == 'm' {
+                                        if suit.get_char() == 'm' {
                                             info[0] = true;
-                                        } else if suit.to_char() == 'p' {
+                                        } else if suit.get_char() == 'p' {
                                             info[1] = true;
-                                        } else if suit.to_char() == 's' {
+                                        } else if suit.get_char() == 's' {
                                             info[2] = true;
                                         }
 
@@ -805,27 +805,27 @@ impl Yaku {
                                 ClosedShape::Shuntsu(tiles) => {
                                     if let TileType::Number(value, color) = tiles[0].tile_type {
                                         if value == 1 {
-                                            if color.to_char() == 'm' && parts[0] == 0 {
+                                            if color.get_char() == 'm' && parts[0] == 0 {
                                                 parts[0] = 1;
-                                            } else if color.to_char() == 'p' && parts[1] == 0 {
+                                            } else if color.get_char() == 'p' && parts[1] == 0 {
                                                 parts[1] = 1;
-                                            } else if color.to_char() == 's' && parts[2] == 0 {
+                                            } else if color.get_char() == 's' && parts[2] == 0 {
                                                 parts[2] = 1;
                                             }
                                         } else if value == 4 {
-                                            if color.to_char() == 'm' && parts[0] == 1 {
+                                            if color.get_char() == 'm' && parts[0] == 1 {
                                                 parts[0] = 2;
-                                            } else if color.to_char() == 'p' && parts[1] == 1 {
+                                            } else if color.get_char() == 'p' && parts[1] == 1 {
                                                 parts[1] = 2;
-                                            } else if color.to_char() == 's' && parts[2] == 1 {
+                                            } else if color.get_char() == 's' && parts[2] == 1 {
                                                 parts[2] = 2;
                                             }
                                         } else if value == 7 {
-                                            if color.to_char() == 'm' && parts[0] == 2 {
+                                            if color.get_char() == 'm' && parts[0] == 2 {
                                                 parts[0] = 3;
-                                            } else if color.to_char() == 'p' && parts[1] == 2 {
+                                            } else if color.get_char() == 'p' && parts[1] == 2 {
                                                 parts[1] = 3;
-                                            } else if color.to_char() == 's' && parts[2] == 2 {
+                                            } else if color.get_char() == 's' && parts[2] == 2 {
                                                 parts[2] = 3;
                                             }
                                         }
@@ -838,27 +838,27 @@ impl Yaku {
                                 if let OpenShape::Chi(tiles) = open {
                                     if let TileType::Number(value, color) = tiles[0].tile_type {
                                         if value == 1 {
-                                            if color.to_char() == 'm' && parts[0] == 0 {
+                                            if color.get_char() == 'm' && parts[0] == 0 {
                                                 parts[0] = 1;
-                                            } else if color.to_char() == 'p' && parts[1] == 0 {
+                                            } else if color.get_char() == 'p' && parts[1] == 0 {
                                                 parts[1] = 1;
-                                            } else if color.to_char() == 's' && parts[2] == 0 {
+                                            } else if color.get_char() == 's' && parts[2] == 0 {
                                                 parts[2] = 1;
                                             }
                                         } else if value == 4 {
-                                            if color.to_char() == 'm' && parts[0] == 1 {
+                                            if color.get_char() == 'm' && parts[0] == 1 {
                                                 parts[0] = 2;
-                                            } else if color.to_char() == 'p' && parts[1] == 1 {
+                                            } else if color.get_char() == 'p' && parts[1] == 1 {
                                                 parts[1] = 2;
-                                            } else if color.to_char() == 's' && parts[2] == 1 {
+                                            } else if color.get_char() == 's' && parts[2] == 1 {
                                                 parts[2] = 2;
                                             }
                                         } else if value == 7 {
-                                            if color.to_char() == 'm' && parts[0] == 2 {
+                                            if color.get_char() == 'm' && parts[0] == 2 {
                                                 parts[0] = 3;
-                                            } else if color.to_char() == 'p' && parts[1] == 2 {
+                                            } else if color.get_char() == 'p' && parts[1] == 2 {
                                                 parts[1] = 3;
-                                            } else if color.to_char() == 's' && parts[2] == 2 {
+                                            } else if color.get_char() == 's' && parts[2] == 2 {
                                                 parts[2] = 3;
                                             }
                                         }
@@ -1597,7 +1597,7 @@ impl Yaku {
                     match o_t {
                         None => {}
                         Some(tile) => {
-                            if !([20, 21, 22, 24, 26, 33].contains(&tile.to_id())) {
+                            if !([20, 21, 22, 24, 26, 33].contains(&tile.get_id())) {
                                 return false;
                             }
                         }
@@ -1697,12 +1697,12 @@ impl Yaku {
                 ShapeType::Complete(cs) => match cs {
                     CompleteShape::Closed(closed) => match closed {
                         ClosedShape::Koutsu(tiles) => {
-                            if tiles[0].to_id() == tile_id {
+                            if tiles[0].get_id() == tile_id {
                                 return true;
                             }
                         }
                         ClosedShape::Kantsu(tiles) => {
-                            if tiles[0].to_id() == tile_id {
+                            if tiles[0].get_id() == tile_id {
                                 return true;
                             }
                         }
@@ -1711,7 +1711,7 @@ impl Yaku {
                     CompleteShape::Open(open) => match open {
                         OpenShape::Chi(_) => {}
                         OpenShape::Pon(tiles) => {
-                            if tiles[0].to_id() == tile_id {
+                            if tiles[0].get_id() == tile_id {
                                 return true;
                             }
                         }
@@ -1720,7 +1720,7 @@ impl Yaku {
                                 OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => tls,
                             };
 
-                            if tiles[0].to_id() == tile_id {
+                            if tiles[0].get_id() == tile_id {
                                 return true;
                             }
                         }
@@ -1800,11 +1800,11 @@ impl Yaku {
                 info = [false, false, false];
             }
 
-            if suit.to_char() == 'm' {
+            if suit.get_char() == 'm' {
                 info[0] = true;
-            } else if suit.to_char() == 'p' {
+            } else if suit.get_char() == 'p' {
                 info[1] = true;
-            } else if suit.to_char() == 's' {
+            } else if suit.get_char() == 's' {
                 info[2] = true;
             }
 

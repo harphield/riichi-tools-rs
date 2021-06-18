@@ -96,8 +96,8 @@ impl Shape {
         for i in 0..tile_count as usize {
             if i < tile_count as usize - 1 {
                 if !Shape::are_in_shape(
-                    tiles.get(i).unwrap().to_id(),
-                    tiles.get(i + 1).unwrap().to_id(),
+                    tiles.get(i).unwrap().get_id(),
+                    tiles.get(i + 1).unwrap().get_id(),
                 ) {
                     return Err(RiichiError::new(
                         121,

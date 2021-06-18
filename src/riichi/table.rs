@@ -386,7 +386,7 @@ impl Table {
 
     pub fn add_dora_indicator(&mut self, indicator: Tile) {
         self.dora_indicators.push(indicator);
-        self.visible_tiles[(indicator.to_id() - 1) as usize] += 1;
+        self.visible_tiles[(indicator.get_id() - 1) as usize] += 1;
     }
 
     pub fn get_dora_indicators(&self) -> &Vec<Tile> {
@@ -394,7 +394,7 @@ impl Table {
     }
 
     pub fn add_tile_to_visible_tiles(&mut self, tile: &Tile) {
-        self.visible_tiles[(tile.to_id() - 1) as usize] += 1;
+        self.visible_tiles[(tile.get_id() - 1) as usize] += 1;
     }
 
     pub fn reset_tile_vectors(&mut self) {
@@ -507,7 +507,7 @@ impl Table {
             return None;
         }
 
-        let tile_id = tile.to_id();
+        let tile_id = tile.get_id();
 
         let array_34 = hand.get_34_array(true);
         let mut can_pon = false;
@@ -524,7 +524,7 @@ impl Table {
         let mut ret_tiles = vec![];
         for t in hand.get_tiles().iter().filter(|t_o| {
             if let Some(t) = t_o {
-                return t.to_id() == tile_id;
+                return t.get_id() == tile_id;
             }
 
             false
@@ -570,7 +570,7 @@ impl Table {
             // I can only kan with tiles that won't change my hand structure
             // I can also only kan with the drawn tile
             let mut drawn_tile = *hand.get_drawn_tile().unwrap();
-            let drawn_tile_id = drawn_tile.to_id();
+            let drawn_tile_id = drawn_tile.get_id();
 
             if !kannable_tiles.contains(&drawn_tile_id) {
                 return None;
@@ -757,8 +757,8 @@ mod tests {
 
         let can_pon_tiles = table.can_pon(&Tile::from_text("1m").unwrap()).unwrap();
         assert_eq!(can_pon_tiles.len(), 2);
-        assert_eq!(can_pon_tiles.get(0).unwrap().to_id(), 1);
-        assert_eq!(can_pon_tiles.get(1).unwrap().to_id(), 1);
+        assert_eq!(can_pon_tiles.get(0).unwrap().get_id(), 1);
+        assert_eq!(can_pon_tiles.get(1).unwrap().get_id(), 1);
     }
 
     #[test]

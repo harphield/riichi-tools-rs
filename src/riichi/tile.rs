@@ -20,9 +20,9 @@ pub enum TileType {
 }
 
 impl TileType {
-    pub fn to_char(&self) -> char {
+    pub fn get_char(&self) -> char {
         match &self {
-            TileType::Number(_number, color) => color.to_char(),
+            TileType::Number(_number, color) => color.get_char(),
             TileType::Wind(_number) => 'z',
             TileType::Dragon(_number) => 'z',
         }
@@ -46,7 +46,7 @@ impl TileColor {
         }
     }
 
-    pub fn to_char(&self) -> char {
+    pub fn get_char(&self) -> char {
         match &self {
             TileColor::Manzu => 'm',
             TileColor::Pinzu => 'p',
@@ -57,7 +57,7 @@ impl TileColor {
 
 impl fmt::Display for TileColor {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_char())
+        write!(f, "{}", self.get_char())
     }
 }
 
@@ -176,7 +176,7 @@ impl Tile {
     }
 
     /// Gets the id of this tile based on its type
-    pub fn to_id(&self) -> u8 {
+    pub fn get_id(&self) -> u8 {
         match &self.tile_type {
             TileType::Number(number, color) => match color {
                 TileColor::Manzu => *number,
@@ -189,13 +189,13 @@ impl Tile {
     }
 
     /// Some algorithms use ids starting from 0
-    pub fn to_id_minus_1(&self) -> u8 {
-        self.to_id() - 1
+    pub fn get_id_minus_1(&self) -> u8 {
+        self.get_id() - 1
     }
 
     /// Returns an ID of the next tile in order.
     pub fn next_id(&self, dora: bool, depth: u8) -> u8 {
-        let id = self.to_id();
+        let id = self.get_id();
 
         // manzu
         if id < 9 - (depth - 1) {
@@ -256,7 +256,7 @@ impl Tile {
 
     /// Returns an ID of the previous tile in order.
     pub fn prev_id(&self, dora: bool, depth: u8) -> u8 {
-        let id = self.to_id();
+        let id = self.get_id();
 
         // manzu
         if id > (1 + depth - 1) && id <= 9 {
@@ -391,7 +391,7 @@ impl Tile {
 
     pub fn get_type_char(&self) -> char {
         match &self.tile_type {
-            TileType::Number(_number, color) => color.to_char(),
+            TileType::Number(_number, color) => color.get_char(),
             TileType::Wind(_number) => 'z',
             TileType::Dragon(_number) => 'z',
         }
