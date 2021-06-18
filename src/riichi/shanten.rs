@@ -235,10 +235,10 @@ impl ShantenFinder {
         let second = tile.next(false);
 
         if let Some(t2) = second {
-            if array_34[(t2.to_id() - 1) as usize] > 0 {
+            if array_34[(t2.get_id() - 1) as usize] > 0 {
                 let third = t2.next(false);
                 if let Some(t3) = third {
-                    if array_34[(t3.to_id() - 1) as usize] > 0 {
+                    if array_34[(t3.get_id() - 1) as usize] > 0 {
                         // found a complete meld!
                         array_34[depth] -= 1;
                         array_34[depth + 1] -= 1;
@@ -273,7 +273,7 @@ impl ShantenFinder {
         let second = tile.next(false);
 
         if let Some(t2) = second {
-            if array_34[(t2.to_id() - 1) as usize] > 0 {
+            if array_34[(t2.get_id() - 1) as usize] > 0 {
                 // found an incomplete meld!
                 array_34[depth] -= 1;
                 array_34[depth + 1] -= 1;
@@ -304,7 +304,7 @@ impl ShantenFinder {
         if let Some(t2) = second {
             let third = t2.next(false);
             if let Some(t3) = third {
-                if array_34[(t3.to_id() - 1) as usize] > 0 {
+                if array_34[(t3.get_id() - 1) as usize] > 0 {
                     // found an incomplete meld!
                     array_34[depth] -= 1;
                     array_34[depth + 2] -= 1;

@@ -128,9 +128,9 @@ impl ShapeFinder {
 
             // shuntsu
             if let Some(t) = current_tile.next(false) {
-                if array_34[(t.to_id() - 1) as usize] > 0 {
+                if array_34[(t.get_id() - 1) as usize] > 0 {
                     if let Some(t2) = t.next(false) {
-                        if array_34[(t2.to_id() - 1) as usize] > 0 {
+                        if array_34[(t2.get_id() - 1) as usize] > 0 {
                             // found it!
                             self.add_shape(vec![current_tile, t, t2], array_34);
                             if array_34[depth] > 0 {
@@ -152,7 +152,7 @@ impl ShapeFinder {
         self.current_variant
             .push(Shape::from_tiles(&tiles, false, true).unwrap());
         for t in tiles.iter() {
-            array_34[(t.to_id() - 1) as usize] -= 1;
+            array_34[(t.get_id() - 1) as usize] -= 1;
         }
     }
 
@@ -164,7 +164,7 @@ impl ShapeFinder {
             if hash == s.to_string() {
                 self.current_variant.remove(i);
                 for t in tiles.iter() {
-                    array_34[(t.to_id() - 1) as usize] += 1;
+                    array_34[(t.get_id() - 1) as usize] += 1;
                 }
 
                 return;

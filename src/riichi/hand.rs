@@ -89,7 +89,7 @@ impl Hand {
         for tile in self.tiles.iter().flatten() {
             // ignoring open tiles and kanned tiles
             if !(remove_open_tiles && (tile.is_open || tile.is_kan)) {
-                array_34[(tile.to_id() - 1) as usize] += 1;
+                array_34[(tile.get_id() - 1) as usize] += 1;
             }
         }
 
@@ -695,7 +695,7 @@ impl Hand {
         for (i, hand_tile) in self.tiles.iter().enumerate() {
             match hand_tile {
                 Some(t) => {
-                    if !t.is_open && !t.is_kan && t.to_id() == tile.to_id() {
+                    if !t.is_open && !t.is_kan && t.get_id() == tile.get_id() {
                         found = i;
                         break;
                     }
@@ -891,8 +891,8 @@ impl Hand {
                 None => {}
                 Some(tile) => {
                     if !tile.is_open && tile.is_kan {
-                        array_34[(tile.to_id() - 1) as usize] += 1;
-                        if array_34[(tile.to_id() - 1) as usize] == 4 {
+                        array_34[(tile.get_id() - 1) as usize] += 1;
+                        if array_34[(tile.get_id() - 1) as usize] == 4 {
                             cnt += 1;
                         }
                     }
@@ -1182,11 +1182,11 @@ impl Hand {
                             continue;
                         }
 
-                        if tried.contains(&t.to_id()) {
+                        if tried.contains(&t.get_id()) {
                             continue;
                         }
 
-                        tried.push(t.to_id());
+                        tried.push(t.get_id());
                         self.remove_tile(t);
                         self.reset_shanten();
                         let new_shanten = self.shanten();
@@ -1272,11 +1272,11 @@ impl Hand {
                             continue;
                         }
 
-                        if tried.contains(&t.to_id()) {
+                        if tried.contains(&t.get_id()) {
                             continue;
                         }
 
-                        tried.push(t.to_id());
+                        tried.push(t.get_id());
                         hc.discard(&t);
 
                         let new_shanten = hc.shanten();
@@ -1332,7 +1332,7 @@ impl Hand {
                     }
 
                     // get this tile, -1, -2, +1, +2
-                    let t_id = t.to_id();
+                    let t_id = t.get_id();
                     if !try_tiles.contains(&t_id) {
                         try_tiles.push(t_id);
                     }
@@ -1745,7 +1745,7 @@ mod tests {
         let mut hand = Hand::from_text("1234s123p999m456z", false).unwrap();
 
         let mut visible_tiles = hand.get_34_array(false);
-        visible_tiles[Tile::from_text("1s").unwrap().to_id() as usize - 1] += 2; // 1s is also somewhere else
+        visible_tiles[Tile::from_text("1s").unwrap().get_id() as usize - 1] += 2; // 1s is also somewhere else
 
         let result = hand.find_shanten_improving_tiles(Some(&visible_tiles));
 
