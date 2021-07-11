@@ -18,7 +18,7 @@ pub struct HandCalculator {
     /// tiles in hand by tile type, including melds, kan is 4 tiles here
     in_hand_by_type: [u8; 34],
     /// non-honors, identified by meldId, youngest meld in least significant bits
-    melds: [u8; 3],
+    melds: [u32; 3],
     /// bit=1 for honor pon, least significant bit represents east wind. bit=0 for both kan and no meld.
     jihai_meld_bit: u8,
     suit_classifiers: [SuitClassifier; 3],
@@ -303,21 +303,21 @@ impl HandCalculator {
             match color {
                 TileColor::Manzu => {
                     self.melds[0] <<= 6;
-                    self.melds[0] += 1 + (value - 1);
+                    self.melds[0] += (1 + (value - 1)) as u32;
 
                     self.suit_classifiers[0].set_melds(self.melds[0]);
                     self.update_value(0);
                 }
                 TileColor::Pinzu => {
                     self.melds[1] <<= 6;
-                    self.melds[1] += 1 + (value - 1);
+                    self.melds[1] += (1 + (value - 1)) as u32;
 
                     self.suit_classifiers[1].set_melds(self.melds[1]);
                     self.update_value(1);
                 }
                 TileColor::Souzu => {
                     self.melds[2] <<= 6;
-                    self.melds[2] += 1 + (value - 1);
+                    self.melds[2] += (1 + (value - 1)) as u32;
 
                     self.suit_classifiers[2].set_melds(self.melds[2]);
                     self.update_value(2);
@@ -341,21 +341,21 @@ impl HandCalculator {
             TileType::Number(value, color) => match color {
                 TileColor::Manzu => {
                     self.melds[0] <<= 6;
-                    self.melds[0] += 1 + 7 + (value - 1);
+                    self.melds[0] += (1 + 7 + (value - 1)) as u32;
 
                     self.suit_classifiers[0].set_melds(self.melds[0]);
                     self.update_value(0);
                 }
                 TileColor::Pinzu => {
                     self.melds[1] <<= 6;
-                    self.melds[1] += 1 + 7 + (value - 1);
+                    self.melds[1] += (1 + 7 + (value - 1)) as u32;
 
                     self.suit_classifiers[1].set_melds(self.melds[1]);
                     self.update_value(1);
                 }
                 TileColor::Souzu => {
                     self.melds[2] <<= 6;
-                    self.melds[2] += 1 + 7 + (value - 1);
+                    self.melds[2] += (1 + 7 + (value - 1)) as u32;
 
                     self.suit_classifiers[2].set_melds(self.melds[2]);
                     self.update_value(2);
@@ -386,7 +386,7 @@ impl HandCalculator {
                     TileColor::Souzu => 2,
                 };
 
-                let pon = 1 + 7 + (value - 1);
+                let pon = 1 + 7 + (value as u32 - 1);
                 for i in 0..4 {
                     if (self.melds[c] >> (6 * i) & 0b111111) == pon {
                         self.melds[c] += 9 << (6 * i);
@@ -420,7 +420,7 @@ impl HandCalculator {
                 };
 
                 self.melds[c] <<= 6;
-                self.melds[c] += 1 + 7 + 9 + (value - 1);
+                self.melds[c] += 1 + 7 + 9 + (value as u32 - 1);
                 self.suit_classifiers[c].set_melds(self.melds[c]);
                 self.update_value(c);
             }
@@ -448,7 +448,7 @@ impl HandCalculator {
                 };
 
                 self.melds[c] <<= 6;
-                self.melds[c] += 1 + 7 + 9 + (value - 1);
+                self.melds[c] += 1 + 7 + 9 + (value as u32 - 1);
                 self.suit_classifiers[c].set_melds(self.melds[c]);
                 self.update_value(c);
             }
