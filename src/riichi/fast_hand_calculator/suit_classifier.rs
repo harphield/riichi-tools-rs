@@ -12,7 +12,7 @@ impl SuitClassifier {
         }
     }
 
-    pub fn set_melds(&mut self, mut melds: u8) {
+    pub fn set_melds(&mut self, mut melds: u32) {
         let mut current = 0;
         self.meld_count = 0;
         for _i in 0..5 {
