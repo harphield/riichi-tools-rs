@@ -10,6 +10,7 @@ use crate::riichi::tile::{Tile, TileColor, TileType};
 /// the 0 index is not used
 static BASE5TABLE: [u32; 10] = [0, 1, 5, 25, 125, 625, 3125, 15625, 78125, 390625];
 
+/// A fast shanten & ukeire calculator, originally by spinesheath (https://github.com/spinesheath/Spines.Mahjong)
 pub struct HandCalculator {
     arrangement_values: [u32; 4],
     /// base 5 representation of concealed suits. Not relevant with a meld.
@@ -86,7 +87,7 @@ impl HandCalculator {
                     self.in_hand_by_type[called_tile.get_id_minus_1() as usize] -= 1;
                     self.concealed_tiles[called_tile.get_id_minus_1() as usize] -= 1;
 
-                    self.chii(&tiles[0], &called_tile);
+                    self.chii(&tiles[0], called_tile);
                 }
                 OpenShape::Pon(tiles) => {
                     for _i in 0..2 {
@@ -551,7 +552,7 @@ impl HandCalculator {
     }
 
     fn calculate_shanten(&self, arrangement_values: &[u32; 4]) -> i8 {
-        let shanten = ArrangementClassifier::new().classify(&arrangement_values);
+        let shanten = ArrangementClassifier::new().classify(arrangement_values);
         if self.meld_count > 0 {
             return shanten as i8;
         }

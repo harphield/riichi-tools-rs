@@ -1107,7 +1107,7 @@ impl Hand {
     /// Get shanten of this hand
     #[cfg(not(feature = "fast_shanten"))]
     pub fn get_shanten(&self) -> i8 {
-        match ShantenFinder::new().shanten(&self) {
+        match ShantenFinder::new().shanten(self) {
             Ok(shanten) => shanten,
             Err(_error) => 99,
         }
@@ -1118,7 +1118,7 @@ impl Hand {
     pub fn shanten(&mut self) -> i8 {
         if self.shanten == 99 {
             let mut hc = HandCalculator::new();
-            hc.init(&self);
+            hc.init(self);
 
             self.shanten = hc.shanten();
         }
@@ -1130,7 +1130,7 @@ impl Hand {
     #[cfg(feature = "fast_shanten")]
     pub fn get_shanten(&self) -> i8 {
         let mut hc = HandCalculator::new();
-        hc.init(&self);
+        hc.init(self);
 
         hc.shanten()
     }
@@ -1219,7 +1219,7 @@ impl Hand {
         visible_tiles: Option<&[u8; 34]>,
     ) -> Vec<(Option<Tile>, Vec<(Tile, u8)>, u8)> {
         let mut hc = HandCalculator::new();
-        hc.init(&self);
+        hc.init(self);
 
         let mut imp_tiles = vec![];
         let count_total_ukeire =
@@ -1249,7 +1249,7 @@ impl Hand {
 
             let mut tiles = vec![];
             for (tile_id, uke_count) in results.iter().enumerate() {
-                add_uke_ire_reuslt_to_tiles(&tile_id, &uke_count, &mut tiles);
+                add_uke_ire_reuslt_to_tiles(&tile_id, uke_count, &mut tiles);
             }
 
             tiles.sort();
@@ -1277,7 +1277,7 @@ impl Hand {
                         }
 
                         tried.push(t.get_id());
-                        hc.discard(&t);
+                        hc.discard(t);
 
                         let new_shanten = hc.shanten();
 
@@ -1287,7 +1287,7 @@ impl Hand {
 
                             let mut tiles = vec![];
                             for (tile_id, uke_count) in results.iter().enumerate() {
-                                add_uke_ire_reuslt_to_tiles(&tile_id, &uke_count, &mut tiles);
+                                add_uke_ire_reuslt_to_tiles(&tile_id, uke_count, &mut tiles);
                             }
 
                             tiles.sort();
@@ -1295,7 +1295,7 @@ impl Hand {
                             imp_tiles.push((Some(*t), tiles, cnt));
                         }
 
-                        hc.draw(&t);
+                        hc.draw(t);
                     }
                     None => (),
                 }
@@ -1364,7 +1364,7 @@ impl Hand {
         // terminals and honors check
         if hand.is_closed() {
             for tile_id in [1, 9, 10, 18, 19, 27, 28, 29, 30, 31, 32, 33, 34].iter() {
-                if !try_tiles.contains(&tile_id) {
+                if !try_tiles.contains(tile_id) {
                     try_tiles.push(*tile_id);
                 }
             }

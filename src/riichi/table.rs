@@ -227,7 +227,7 @@ impl Table {
     pub fn get_my_hand(&self) -> &Hand {
         match &self.my_hand {
             None => panic!("No hand!"),
-            Some(hand) => &hand,
+            Some(hand) => hand,
         }
     }
 
@@ -578,25 +578,25 @@ impl Table {
             0.0, // p3 (shimocha)
         ];
 
-        if discards[0].contains(&tile)
-            || safe_tiles[0].contains(&tile)
-            || self.is_temporary_furiten(&tile, vec![&last_discards[1], &last_discards[2]])
+        if discards[0].contains(tile)
+            || safe_tiles[0].contains(tile)
+            || self.is_temporary_furiten(tile, vec![&last_discards[1], &last_discards[2]])
         {
             safeties[0] = 1.0;
         } else {
         }
 
-        if discards[1].contains(&tile)
-            || safe_tiles[1].contains(&tile)
-            || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[2]])
+        if discards[1].contains(tile)
+            || safe_tiles[1].contains(tile)
+            || self.is_temporary_furiten(tile, vec![&last_discards[0], &last_discards[2]])
         {
             safeties[1] = 1.0;
         } else {
         }
 
-        if discards[2].contains(&tile)
-            || safe_tiles[2].contains(&tile)
-            || self.is_temporary_furiten(&tile, vec![&last_discards[0], &last_discards[1]])
+        if discards[2].contains(tile)
+            || safe_tiles[2].contains(tile)
+            || self.is_temporary_furiten(tile, vec![&last_discards[0], &last_discards[1]])
         {
             safeties[2] = 1.0;
         } else {
