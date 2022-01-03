@@ -57,6 +57,7 @@ pub struct Table {
 }
 
 impl Table {
+    /// Parse a Map and create a Table
     pub fn from_map(params: &Map<String, Value>) -> Result<Table, RiichiError> {
         let mut t = Table {
             my_hand: None,
@@ -140,10 +141,12 @@ impl Table {
         Ok(t)
     }
 
+    /// Set my seat wind
     pub fn set_seat(&mut self, seat: u8) {
         self.my_seat_wind = Some(seat);
     }
 
+    /// Am I the dealer?
     pub fn am_i_oya(&self) -> bool {
         match self.my_seat_wind {
             None => false,
@@ -151,48 +154,61 @@ impl Table {
         }
     }
 
+    /// Set player 0's (me) tsumo
     pub fn set_my_tsumo(&mut self, value: bool) {
         self.my_tsumo = Some(value);
     }
+    /// Set player 1's tsumo
     pub fn set_p1_tsumo(&mut self, value: bool) {
         self.p1_tsumo = Some(value);
     }
+    /// Set player 2's tsumo
     pub fn set_p2_tsumo(&mut self, value: bool) {
         self.p2_tsumo = Some(value);
     }
+    /// Set player 3's tsumo
     pub fn set_p3_tsumo(&mut self, value: bool) {
         self.p3_tsumo = Some(value);
     }
 
+    /// Did I win by tsumo?
     pub fn did_i_tsumo(&self) -> bool {
         self.my_tsumo.unwrap_or(false)
     }
 
+    /// Set player 0 (me) riichi
     pub fn set_my_riichi(&mut self, value: bool) {
         self.my_riichi = Some(value);
     }
+    /// Set player 1 riichi
     pub fn set_p1_riichi(&mut self, value: bool) {
         self.p1_riichi = Some(value);
     }
+    /// Set player 2 riichi
     pub fn set_p2_riichi(&mut self, value: bool) {
         self.p2_riichi = Some(value);
     }
+    /// Set player 3 riichi
     pub fn set_p3_riichi(&mut self, value: bool) {
         self.p3_riichi = Some(value);
     }
 
+    /// Did player 1 riichi?
     pub fn get_p1_riichi(&self) -> bool {
         self.p1_riichi.unwrap_or(false)
     }
 
+    /// Did player 2 riichi?
     pub fn get_p2_riichi(&self) -> bool {
         self.p2_riichi.unwrap_or(false)
     }
 
+    /// Did player 3 riichi?
     pub fn get_p3_riichi(&self) -> bool {
         self.p3_riichi.unwrap_or(false)
     }
 
+    /// Set the riichi declaring player
     pub fn set_riichi_declaring_player(&mut self, player_id: u8) {
         self.riichi_declaring_player = Some(player_id);
 
@@ -205,14 +221,17 @@ impl Table {
         }
     }
 
+    /// Reset the riichi declaring player
     pub fn unset_riichi_declaring_player(&mut self) {
         self.riichi_declaring_player = None;
     }
 
+    /// Was there a riichi declaring player right now?
     pub fn get_riichi_declaring_player(&self) -> Option<u8> {
         self.riichi_declaring_player
     }
 
+    /// Did I riichi?
     pub fn did_i_riichi(&self) -> bool {
         match &self.my_riichi {
             None => false,
@@ -220,10 +239,12 @@ impl Table {
         }
     }
 
+    /// Set my hand
     pub fn set_my_hand(&mut self, hand: Hand) {
         self.my_hand = Some(hand);
     }
 
+    /// Get my hand
     pub fn get_my_hand(&self) -> &Hand {
         match &self.my_hand {
             None => panic!("No hand!"),
@@ -231,10 +252,12 @@ impl Table {
         }
     }
 
+    /// Get an Option with my hand
     pub fn get_my_hand_option(&self) -> &Option<Hand> {
         &self.my_hand
     }
 
+    /// What tile was it that won me the hand?
     pub fn get_my_winning_tile(&self) -> Tile {
         match &self.my_hand {
             None => panic!("No drawn tile in hand!"),
@@ -242,14 +265,17 @@ impl Table {
         }
     }
 
+    /// Set the number of remaining tiles in the wall
     pub fn set_tiles_remaining(&mut self, value: u8) {
         self.tiles_remaining = Some(value);
     }
 
+    /// How many tiles are there remaining in the wall?
     pub fn get_tiles_remaining(&self) -> Option<u8> {
         self.tiles_remaining
     }
 
+    /// Decrement the number of tiles remaining in the wall
     pub fn decrement_tiles_remaining(&mut self) {
         match self.tiles_remaining {
             None => {
@@ -261,38 +287,47 @@ impl Table {
         }
     }
 
+    /// Set my current seat wind
     pub fn set_my_seat_wind(&mut self, value: u8) {
         self.my_seat_wind = Some(value);
     }
 
+    /// Get my current seat wind
     pub fn get_my_seat_wind(&self) -> Option<u8> {
         self.my_seat_wind
     }
 
+    /// Set my inital seat wind
     pub fn set_my_initial_seat_wind(&mut self, value: u8) {
         self.my_initial_seat_wind = Some(value);
     }
 
+    /// Get my initial seat wind
     pub fn get_my_initial_seat_wind(&self) -> Option<u8> {
         self.my_initial_seat_wind
     }
 
+    /// Set prevalent wind
     pub fn set_prevalent_wind(&mut self, value: u8) {
         self.prevalent_wind = Some(value);
     }
 
+    /// Get prevalent wind
     pub fn get_prevalent_wind(&self) -> Option<u8> {
         self.prevalent_wind
     }
 
+    /// Set dealer turn
     pub fn set_dealer_turn(&mut self, value: u8) {
         self.dealer_turn = Some(value);
     }
 
+    /// Get dealer turn
     pub fn get_dealer_turn(&self) -> Option<u8> {
         self.dealer_turn
     }
 
+    /// Set points for a player
     pub fn set_points(&mut self, player: u8, value: i32) {
         match player {
             0 => self.my_points = Some(value),
@@ -303,10 +338,12 @@ impl Table {
         }
     }
 
+    /// Return my points
     pub fn get_my_points(&self) -> Option<i32> {
         self.my_points
     }
 
+    /// Return my placing based on score
     pub fn get_placing(&self) -> u8 {
         // TODO: account for different tie-breaking rules
         let initial_seat_winds = match self.my_initial_seat_wind {
@@ -332,23 +369,28 @@ impl Table {
             + 1
     }
 
+    /// Set the dora indicators list
     pub fn set_dora_indicators(&mut self, indicators: Vec<Tile>) {
         self.dora_indicators = indicators;
     }
 
+    /// Add a dora indicator tile
     pub fn add_dora_indicator(&mut self, indicator: Tile) {
         self.dora_indicators.push(indicator);
         self.visible_tiles[(indicator.get_id() - 1) as usize] += 1;
     }
 
+    /// Return a vector of tiles that are open as dora indicators in the dead wall
     pub fn get_dora_indicators(&self) -> &Vec<Tile> {
         &self.dora_indicators
     }
 
+    /// Add a Tile to the visible list
     pub fn add_tile_to_visible_tiles(&mut self, tile: Tile) {
         self.visible_tiles[(tile.get_id() - 1) as usize] += 1;
     }
 
+    /// Resets the tile state lists
     pub fn reset_tile_vectors(&mut self) {
         self.visible_tiles = [0; 34];
         self.my_discards = vec![];
@@ -360,46 +402,57 @@ impl Table {
         self.p3_safe_tiles = vec![];
     }
 
+    /// Return an array of visible tiles
     pub fn get_visible_tiles(&self) -> &[u8; 34] {
         &self.visible_tiles
     }
 
+    /// Set the total round of the game
     pub fn set_total_round(&mut self, value: u8) {
         self.total_round = Some(value);
     }
 
+    /// What round of the game is it?
     pub fn get_total_round(&self) -> Option<u8> {
         self.total_round
     }
 
+    /// Set the number of riichi sticks in the pot
     pub fn set_riichi_sticks(&mut self, value: u8) {
         self.riichi_sticks_in_pot = Some(value);
     }
 
+    /// Return the number of riichi sticks in the pot
     pub fn get_riichi_sticks(&self) -> u8 {
         self.riichi_sticks_in_pot.unwrap_or(0)
     }
 
+    /// Set the number of repeating round counters (tsumibo)
     pub fn set_tsumibo(&mut self, value: u8) {
         self.tsumibo = Some(value);
     }
 
+    /// Return the number of repeating round counters (tsumibo)
     pub fn get_tsumibo(&self) -> u8 {
         self.tsumibo.unwrap_or(0)
     }
 
+    /// Set the Rules of this Table
     pub fn set_rules(&mut self, rules: Rules) {
         self.rules = Some(rules);
     }
 
+    /// Return the Rules that this Table has
     pub fn get_rules(&self) -> &Option<Rules> {
         &self.rules
     }
 
+    /// Return a vector of Tiles that I discarded
     pub fn get_my_discards(&self) -> &Vec<Tile> {
         &self.my_discards
     }
 
+    /// Add a Tile to a player's discard list (not pile, since also called tiles are in here)
     pub fn add_tile_to_discards(&mut self, player: u8, tile: Tile) {
         match player {
             0 => self.my_discards.push(tile),
@@ -410,6 +463,7 @@ impl Table {
         }
     }
 
+    /// Add a Tile to a player's safe tiles list
     pub fn add_tile_to_safe_tiles(&mut self, player: u8, tile: Tile) {
         match player {
             1 => self.p1_safe_tiles.push(tile),
