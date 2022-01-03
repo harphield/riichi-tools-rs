@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use wasm_bindgen::__rt::std::collections::hash_map::Entry;
 
 #[derive(IntoEnumIterator, Debug, Clone)]
+#[doc(hidden)]
 pub enum Yaku {
     // 1 han closed
     MenzenTsumo,
@@ -66,9 +67,11 @@ pub enum Yaku {
     Chiihou,
 }
 
+/// Finds yaku in a hand
 pub struct YakuFinder {}
 
 impl YakuFinder {
+    /// New constructor
     pub fn new() -> YakuFinder {
         YakuFinder {}
     }
@@ -300,6 +303,7 @@ impl Default for YakuFinder {
 ////////////////
 
 impl Yaku {
+    /// Yaku name in english
     pub fn get_name(&self) -> &str {
         match self {
             Yaku::MenzenTsumo => "Menzen tsumo",
@@ -353,6 +357,7 @@ impl Yaku {
         }
     }
 
+    /// How many han does this yaku have?
     pub fn get_han(&self, table: &mut Table) -> u8 {
         match self {
             Yaku::MenzenTsumo => 1,
@@ -1675,6 +1680,7 @@ impl Yaku {
         false
     }
 
+    /// Is this yaku a yakuman?
     pub fn is_yakuman(&self) -> bool {
         if matches!(
             self,

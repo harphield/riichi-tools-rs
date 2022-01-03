@@ -12,14 +12,19 @@ use wasm_bindgen::__rt::core::fmt::{Display, Formatter};
 //  W    G     R
 // '5z', '6z', '7z'
 
+/// Tile type
 #[derive(Debug, Clone, Copy, Hash)]
 pub enum TileType {
+    /// 0-9 m, p or s
     Number(u8, TileColor),
+    /// 1-4z
     Wind(u8),
+    /// 5-7z
     Dragon(u8),
 }
 
 impl TileType {
+    /// Get the character representation of this tile type's color
     pub fn get_char(&self) -> char {
         match &self {
             TileType::Number(_number, color) => color.get_char(),
@@ -29,14 +34,19 @@ impl TileType {
     }
 }
 
+/// Tile color variants
 #[derive(Debug, Clone, Copy, Hash)]
 pub enum TileColor {
+    /// M or characters
     Manzu,
+    /// P or circles
     Pinzu,
+    /// S or bamboo
     Souzu,
 }
 
 impl TileColor {
+    /// Parse the character representation of a tile color
     pub fn from_char(rep: &char) -> Result<TileColor, RiichiError> {
         match rep {
             'm' => Ok(TileColor::Manzu),
@@ -46,6 +56,7 @@ impl TileColor {
         }
     }
 
+    /// Tile color character representation (m, p or s)
     pub fn get_char(&self) -> char {
         match &self {
             TileColor::Manzu => 'm',
@@ -61,22 +72,35 @@ impl fmt::Display for TileColor {
     }
 }
 
+/// Tile representation
 #[derive(Debug, Clone, Copy)]
 pub struct Tile {
+    /// Tile type
     pub tile_type: TileType,
+    /// Is this tile red?
     pub is_red: bool,
+    /// Is this tile in an open shape?
     pub is_open: bool,
+    /// Was this tile just drawn?
     pub is_draw: bool,
+    /// Is this tile in a chi shape?
     pub is_chi: bool,
+    /// Is this tile in a pon?
     pub is_pon: bool,
+    /// Which player was this tile called from?
     pub called_from: u8,
+    /// Is this tile in a kan?
     pub is_kan: bool,
+    /// Is this a riichi tile?
     pub is_riichi: bool,
+    /// Was this tile discarded right after drawing?
     pub is_tsumogiri: bool,
+    /// Tenhou type 136 id
     pub id_136: Option<u8>,
 }
 
 impl Tile {
+    /// Construct a new tile from a tile type
     pub fn new(tile_type: TileType) -> Tile {
         match &tile_type {
             TileType::Number(number, _color) => {
@@ -102,6 +126,7 @@ impl Tile {
         }
     }
 
+    /// Parse a text representation of a tile
     pub fn from_text(representation: &str) -> Result<Tile, RiichiError> {
         if representation.len() != 2 {
             return Err(RiichiError::new(105, "Tile length must be 2"));
@@ -355,6 +380,7 @@ impl Tile {
         }
     }
 
+    /// Get the previous tile. Honors don't have previous tiles.
     pub fn prev(&self) -> Option<Tile> {
         let new_color;
 
@@ -371,6 +397,7 @@ impl Tile {
         }
     }
 
+    /// Is this tile a terminal?
     pub fn is_terminal(&self) -> bool {
         match &self.tile_type {
             TileType::Number(number, _color) => *number == 1 || *number == 9,
@@ -378,6 +405,7 @@ impl Tile {
         }
     }
 
+    /// Is this tile an honor?
     pub fn is_honor(&self) -> bool {
         match &self.tile_type {
             TileType::Number(_, _) => false,
@@ -385,10 +413,12 @@ impl Tile {
         }
     }
 
+    /// Is this tile a terminal or an honor?
     pub fn is_terminal_or_honor(&self) -> bool {
         self.is_terminal() || self.is_honor()
     }
 
+    /// Returns the type of a tile: m, p, s or z
     pub fn get_type_char(&self) -> char {
         match &self.tile_type {
             TileType::Number(_number, color) => color.get_char(),
@@ -397,6 +427,7 @@ impl Tile {
         }
     }
 
+    /// Get the tile's value (1m = 1, 2p = 2, etc.)
     pub fn get_value(&self) -> u8 {
         match &self.tile_type {
             TileType::Number(number, _color) => {
