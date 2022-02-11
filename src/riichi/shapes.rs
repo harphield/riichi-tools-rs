@@ -17,47 +17,61 @@ pub struct Shape {
     is_open: bool,
 }
 
+/// Shape type
 #[derive(Debug, Clone, Copy)]
 pub enum ShapeType {
+    /// A complete shape
     Complete(CompleteShape),
+    /// An incomplete shape
     Incomplete(ClosedShape, Tile),
 }
 
+/// A complete shape
 #[derive(Debug, Clone, Copy)]
 pub enum CompleteShape {
+    /// A closed shape
     Closed(ClosedShape),
+    /// An open shape
     Open(OpenShape),
 }
 
+/// A closed shape
 #[derive(Debug, Clone, Copy)]
 pub enum ClosedShape {
-    // meld
+    /// Meld
     Shuntsu([Tile; 3]),
-    // triplet
+    /// Triplet
     Koutsu([Tile; 3]),
-    // kan
+    /// Kan
     Kantsu([Tile; 4]),
-    // pair
+    /// A pair
     Toitsu([Tile; 2]),
+    /// Single tile
     Single(Tile),
 }
 
+/// An open shape
 #[derive(Debug, Clone, Copy)]
 pub enum OpenShape {
+    /// Chi (sequence of 3 tiles)
     Chi([Tile; 3]),
+    /// Pon (3 of a kind)
     Pon([Tile; 3]),
+    /// Kan (4 of a kind)
     Kan(OpenKan),
 }
 
+/// A kan that is open
 #[derive(Debug, Clone, Copy)]
 pub enum OpenKan {
-    // kan opened by a call
+    /// kan opened by a call
     Daiminkan([Tile; 4]),
-    // kan added to pon
+    /// kan added to pon
     Shouminkan([Tile; 4]),
 }
 
 impl Shape {
+    /// Create a new Shape
     pub fn new(shape_type: ShapeType, tile_count: u8, is_open: bool) -> Shape {
         Shape {
             shape_type,
@@ -66,10 +80,12 @@ impl Shape {
         }
     }
 
+    /// Get the shape's type
     pub fn get_shape_type(&self) -> &ShapeType {
         &self.shape_type
     }
 
+    /// Is this shape open?
     pub fn is_open(&self) -> bool {
         self.is_open
     }

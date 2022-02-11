@@ -252,8 +252,10 @@ impl HandCalculator {
         self.concealed_tiles[tile.get_id_minus_1() as usize] -= 1;
         let tile_count_after_discard = self.concealed_tiles[tile.get_id_minus_1() as usize];
 
-        self.kokushi
-            .discard(tile.get_id_minus_1() as u32, tile_count_after_discard as u32);
+        self.kokushi.discard(
+            tile.get_id_minus_1() as u32,
+            tile_count_after_discard as u32,
+        );
         self.chiitoi.discard(tile_count_after_discard);
 
         match tile.tile_type {

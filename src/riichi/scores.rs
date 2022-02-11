@@ -1,12 +1,16 @@
+/// Score representation
 #[derive(Debug)]
 pub struct Score {
+    /// number of han
     pub han: u8,
+    /// number of fu
     pub fu: u8,
     oya: bool,
     tsumo: bool,
 }
 
 impl Score {
+    /// Create a new Score
     pub fn new(han: u8, fu: u8, oya: bool, tsumo: bool) -> Score {
         let mut new_fu = fu;
         if fu != 25 {
