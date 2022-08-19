@@ -15,6 +15,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use regex::Regex;
 
+/// A representation of a mahjong hand
 #[derive(Clone)]
 pub struct Hand {
     /// a hand consists of 13 tiles + 1 drawn tile
@@ -27,6 +28,7 @@ pub struct Hand {
 }
 
 impl Hand {
+    /// Construct a hand from tiles
     pub fn new(mut tiles: Vec<Option<Tile>>) -> Hand {
         tiles.sort();
 
@@ -60,10 +62,12 @@ impl Hand {
         true
     }
 
+    /// Return tiles of this hand
     pub fn get_tiles(&self) -> &Vec<Option<Tile>> {
         &self.tiles
     }
 
+    /// Return shapes of this hand
     pub fn get_shapes(&self) -> &Vec<CompleteShape> {
         &self.shapes
     }
@@ -824,6 +828,7 @@ impl Hand {
         self.shapes.push(CompleteShape::Open(*shape));
     }
 
+    /// Add a closed kan to this hand
     pub fn add_closed_kan(&mut self, kan: ClosedShape) {
         match kan {
             ClosedShape::Kantsu(tiles) => {
@@ -883,6 +888,7 @@ impl Hand {
         self.get_34_array(false)[(tile_id - 1) as usize]
     }
 
+    /// How many closed kans does this hand have?
     pub fn get_closed_kans(&self) -> u8 {
         let mut array_34 = [0u8; 34];
         let mut cnt = 0;
@@ -903,6 +909,7 @@ impl Hand {
         cnt
     }
 
+    /// Is this hand closed?
     pub fn is_closed(&self) -> bool {
         self.get_open_shapes().is_empty()
     }
@@ -1402,6 +1409,7 @@ impl Hand {
         tiles_and_counts
     }
 
+    /// Unset the is_draw flag from all tiles
     pub fn reset_drawn_tiles(&mut self) {
         let mut new_tiles = vec![];
         for p_tile in self.tiles.iter() {
@@ -1418,6 +1426,7 @@ impl Hand {
         self.tiles = new_tiles;
     }
 
+    /// Return the last tile that was drawn
     pub fn get_drawn_tile(&self) -> Option<&Tile> {
         for p_tile in self.tiles.iter() {
             match p_tile {
