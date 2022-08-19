@@ -189,16 +189,16 @@ impl Shape {
         is_open: bool,
     ) -> Result<Shape, RiichiError> {
         if tile_1.eq(tile_2) && tile_2.eq(tile_3) {
-            let shape_type;
-            if is_open {
-                shape_type = ShapeType::Complete(CompleteShape::Open(OpenShape::Pon([
-                    *tile_1, *tile_2, *tile_3,
-                ])));
-            } else {
-                shape_type = ShapeType::Complete(CompleteShape::Closed(ClosedShape::Koutsu([
-                    *tile_1, *tile_2, *tile_3,
-                ])));
-            }
+            let shape_type =
+                if is_open {
+                    ShapeType::Complete(CompleteShape::Open(OpenShape::Pon([
+                        *tile_1, *tile_2, *tile_3,
+                    ])))
+                } else {
+                    ShapeType::Complete(CompleteShape::Closed(ClosedShape::Koutsu([
+                        *tile_1, *tile_2, *tile_3,
+                    ])))
+                };
 
             return Result::Ok(Shape::new(shape_type, 3, is_open));
         }
@@ -208,7 +208,7 @@ impl Shape {
 
     /// Are these two tiles in a shape together?
     pub fn are_in_shape(first_tile_id: u8, second_tile_id: u8) -> bool {
-        if !(1..=34).contains(&first_tile_id) || second_tile_id < 1 || second_tile_id > 34 {
+        if !(1..=34).contains(&first_tile_id) && !(1..=34).contains(&second_tile_id) {
             panic!("Wrong tile IDs");
         }
 
@@ -264,17 +264,17 @@ impl Display for Shape {
         let closed_to_string = |closed| match closed {
             ClosedShape::Shuntsu(tiles) | ClosedShape::Koutsu(tiles) => format!(
                 "{}{}{}",
-                tiles[0].to_string(),
-                tiles[1].to_string(),
-                tiles[2].to_string()
+                tiles[0],
+                tiles[1],
+                tiles[2]
             ),
-            ClosedShape::Kantsu(tiles) => format!("(k{})", tiles[0].to_string(),),
+            ClosedShape::Kantsu(tiles) => format!("(k{})", tiles[0],),
             ClosedShape::Toitsu(tiles) => {
-                format!("{}{}", tiles[0].to_string(), tiles[1].to_string())
+                format!("{}{}", tiles[0], tiles[1])
             }
             ClosedShape::Single(tile) => tile.to_string(),
         };
-        return write!(
+        write!(
             f,
             "{}",
             match &self.shape_type {
@@ -318,7 +318,7 @@ impl Display for Shape {
                                 panic!("Invalid pon - who did we call it from?");
                             }
 
-                            format!("(p{}{})", tiles[0].to_string(), called_from)
+                            format!("(p{}{})", tiles[0], called_from)
                         }
                         OpenShape::Kan(open_kan) => {
                             let mut kan_type = 'k';
@@ -342,14 +342,14 @@ impl Display for Shape {
                                 panic!("Invalid kan - who did we call it from?");
                             }
 
-                            format!("({}{}{})", kan_type, tiles[0].to_string(), called_from,)
+                            format!("({}{}{})", kan_type, tiles[0], called_from,)
                         }
                     },
                 },
                 ShapeType::Incomplete(closed, missing) =>
-                    format!("{}{}", closed_to_string(*closed), missing.to_string()),
+                    format!("{}{}", closed_to_string(*closed), missing),
             }
-        );
+        )
     }
 }
 
