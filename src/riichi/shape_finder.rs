@@ -4,6 +4,7 @@ use crate::riichi::shapes::{CompleteShape, OpenShape};
 use crate::riichi::shapes::{OpenKan, ShapeType};
 use crate::riichi::tile::Tile;
 
+#[derive(Default)]
 pub struct ShapeFinder {
     variants: Vec<Vec<Shape>>,
     current_variant: Vec<Shape>,
@@ -95,9 +96,9 @@ impl ShapeFinder {
             // 3
             self.add_shape(vec![current_tile, current_tile, current_tile], array_34);
             if array_34[depth] > 0 {
-                self.search(array_34, depth, &mut add_shapes);
+                self.search(array_34, depth, add_shapes);
             } else {
-                self.search(array_34, depth + 1, &mut add_shapes);
+                self.search(array_34, depth + 1, add_shapes);
             }
             self.remove_shape(vec![current_tile, current_tile, current_tile], array_34);
         }
@@ -106,9 +107,9 @@ impl ShapeFinder {
             // 2
             self.add_shape(vec![current_tile, current_tile], array_34);
             if array_34[depth] > 0 {
-                self.search(array_34, depth, &mut add_shapes);
+                self.search(array_34, depth, add_shapes);
             } else {
-                self.search(array_34, depth + 1, &mut add_shapes);
+                self.search(array_34, depth + 1, add_shapes);
             }
             self.remove_shape(vec![current_tile, current_tile], array_34);
         }
@@ -119,9 +120,9 @@ impl ShapeFinder {
             if [1, 9, 10, 18, 19, 27].contains(&(depth + 1)) || (depth + 1) >= 28 {
                 self.add_shape(vec![current_tile], array_34);
                 if array_34[depth] > 0 {
-                    self.search(array_34, depth, &mut add_shapes);
+                    self.search(array_34, depth, add_shapes);
                 } else {
-                    self.search(array_34, depth + 1, &mut add_shapes);
+                    self.search(array_34, depth + 1, add_shapes);
                 }
                 self.remove_shape(vec![current_tile], array_34);
             }
@@ -134,9 +135,9 @@ impl ShapeFinder {
                             // found it!
                             self.add_shape(vec![current_tile, t, t2], array_34);
                             if array_34[depth] > 0 {
-                                self.search(array_34, depth, &mut add_shapes);
+                                self.search(array_34, depth, add_shapes);
                             } else {
-                                self.search(array_34, depth + 1, &mut add_shapes);
+                                self.search(array_34, depth + 1, add_shapes);
                             }
                             self.remove_shape(vec![current_tile, t, t2], array_34);
                         }
@@ -144,7 +145,7 @@ impl ShapeFinder {
                 }
             }
         } else {
-            self.search(array_34, depth + 1, &mut add_shapes);
+            self.search(array_34, depth + 1, add_shapes);
         }
     }
 
@@ -284,15 +285,6 @@ impl ShapeFinder {
         }
 
         true
-    }
-}
-
-impl Default for ShapeFinder {
-    fn default() -> ShapeFinder {
-        ShapeFinder {
-            variants: vec![],
-            current_variant: vec![],
-        }
     }
 }
 
