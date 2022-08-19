@@ -68,6 +68,7 @@ pub enum Yaku {
 }
 
 /// Finds yaku in a hand
+#[derive(Default)]
 pub struct YakuFinder {}
 
 impl YakuFinder {
@@ -86,7 +87,7 @@ impl YakuFinder {
         }
 
         let mut sf = ShapeFinder::new();
-        let variants = sf.find(&mut hand);
+        let variants = sf.find(hand);
         let mut best_variant: (Vec<Yaku>, Score) = (vec![], Score::new(0, 0, false, false));
 
         for (i, variant) in variants.iter().enumerate() {
@@ -100,7 +101,7 @@ impl YakuFinder {
                     continue;
                 }
 
-                if yaku_type.is_in_hand(&mut table, variant) {
+                if yaku_type.is_in_hand(table, variant) {
                     yakus.push(yaku_type.clone());
                 }
             }
@@ -113,7 +114,7 @@ impl YakuFinder {
                         continue;
                     }
 
-                    if yaku_type.is_in_hand(&mut table, variant) {
+                    if yaku_type.is_in_hand(table, variant) {
                         match yaku_type {
                             Yaku::Pinfu => {
                                 if table.did_i_tsumo() {
@@ -291,12 +292,6 @@ impl YakuFinder {
 
         // println!("{:#?}", best_variant);
         Some(best_variant)
-    }
-}
-
-impl Default for YakuFinder {
-    fn default() -> YakuFinder {
-        YakuFinder {}
     }
 }
 
@@ -1756,9 +1751,9 @@ impl Yaku {
                         ClosedShape::Shuntsu(tiles) => {
                             let key = format!(
                                 "{}{}{}",
-                                tiles[0].to_string(),
-                                tiles[1].to_string(),
-                                tiles[2].to_string()
+                                tiles[0],
+                                tiles[1],
+                                tiles[2]
                             );
 
                             match map.entry(key.clone()) {
