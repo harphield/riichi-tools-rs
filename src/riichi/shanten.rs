@@ -223,15 +223,26 @@ impl ShantenFinder {
     }
 
     fn add_complete_meld(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let tile;
-        match Tile::from_id((depth + 1) as u8) {
-            Ok(t) => {
-                tile = t;
-            }
-            Err(_) => {
-                return false;
-            }
-        };
+        // let tile;
+        // match Tile::from_id((depth + 1) as u8) {
+        //     Ok(t) => {
+        //         tile = t;
+        //     }
+        //     Err(_) => {
+        //         return false;
+        //     }
+        // };
+
+        let tile =
+            match Tile::from_id((depth + 1) as u8) {
+                Ok(t) => {
+                    t
+                }
+                Err(_) => {
+                    return false;
+                }
+            };
+
         let second = tile.next(false);
 
         if let Some(t2) = second {
@@ -263,12 +274,18 @@ impl ShantenFinder {
 
     /// ryanmen or penchan wait
     fn add_incomplete_meld_1(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let tile;
+        // let tile;
+        // match Tile::from_id((depth + 1) as u8) {
+        //     Ok(t) => tile = t,
+        //     Err(_) => return false,
+        // }
 
-        match Tile::from_id((depth + 1) as u8) {
-            Ok(t) => tile = t,
-            Err(_) => return false,
-        }
+        // how does this work? Clippy pls
+        let tile =
+            match Tile::from_id((depth + 1) as u8) {
+                Ok(t) => t,
+                Err(_) => return false,
+            };
 
         let second = tile.next(false);
 
@@ -294,11 +311,18 @@ impl ShantenFinder {
 
     /// kanchan wait
     fn add_incomplete_meld_2(&mut self, array_34: &mut [u8; 34], depth: usize) -> bool {
-        let tile;
-        match Tile::from_id((depth + 1) as u8) {
-            Ok(t) => tile = t,
-            Err(_) => return false,
-        }
+        // let tile;
+        // match Tile::from_id((depth + 1) as u8) {
+        //     Ok(t) => tile = t,
+        //     Err(_) => return false,
+        // }
+
+        // clippy told me to do it like this, but I'm not sure about it. It compiles, but...
+        let tile =
+            match Tile::from_id((depth + 1) as u8) {
+                Ok(t) => t,
+                Err(_) => return false,
+            };
         let second = tile.next(false);
 
         if let Some(t2) = second {
