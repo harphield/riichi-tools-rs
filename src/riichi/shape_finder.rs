@@ -70,7 +70,7 @@ impl ShapeFinder {
         self.variants.to_owned()
     }
 
-    fn search(&mut self, array_34: &mut [u8; 34], depth: usize, mut add_shapes: &mut Vec<Shape>) {
+    fn search(&mut self, array_34: &mut [u8; 34], depth: usize, add_shapes: &mut Vec<Shape>) {
         if depth > 33 {
             // check validity
             if self.is_current_variant_valid() && self.current_variant_is_not_included_yet() {
