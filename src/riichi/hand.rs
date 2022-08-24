@@ -120,12 +120,12 @@ impl Hand {
             }
 
             // open or closed shape?
-            let open_or_closed: bool;
-            if !closed {
-                open_or_closed = rng.gen_bool(0.5);
-            } else {
-                open_or_closed = false;
-            }
+            let open_or_closed =
+                if !closed {
+                    rng.gen_bool(0.5)
+                } else {
+                    false
+                };
 
             if open_or_closed {
                 // TODO open
@@ -446,7 +446,7 @@ impl Hand {
             return Err(RiichiError::new(333, "Closed hand not defined correctly"));
         }
 
-        let mut tiles = match Hand::parse_closed_hand(closed.get(0).unwrap()) {
+        let mut tiles = match Hand::parse_closed_hand(closed.first().unwrap()) {
             Ok(t) => t,
             Err(e) => return Err(e),
         };
@@ -932,16 +932,16 @@ impl Hand {
             match complete_shape {
                 CompleteShape::Closed(closed_shape) => {
                     if let ClosedShape::Kantsu(closed_kan) = closed_shape {
-                        self.remove_meld_from_tiles(&closed_kan.to_vec(), &mut tiles);
+                        self.remove_meld_from_tiles(closed_kan.as_ref(), &mut tiles);
                     }
                 }
                 CompleteShape::Open(open_shape) => match open_shape {
                     OpenShape::Chi(tls) | OpenShape::Pon(tls) => {
-                        self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles);
+                        self.remove_meld_from_tiles(tls.as_ref(), &mut tiles);
                     }
                     OpenShape::Kan(open_kan) => match open_kan {
                         OpenKan::Daiminkan(tls) | OpenKan::Shouminkan(tls) => {
-                            self.remove_meld_from_tiles(&tls.to_vec(), &mut tiles)
+                            self.remove_meld_from_tiles(tls.as_ref(), &mut tiles)
                         }
                     },
                 },
