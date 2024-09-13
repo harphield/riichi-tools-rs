@@ -129,7 +129,7 @@ impl Hand {
 
             if open_or_closed {
                 // TODO open
-                let open_shape_type = rng.gen_range(0, 3);
+                let open_shape_type = rng.gen_range(0..3);
                 match open_shape_type {
                     // Chi
                     0 => {}
@@ -149,7 +149,7 @@ impl Hand {
 
                 let mut closed_shape_type;
                 loop {
-                    closed_shape_type = rng.gen_range(0, max);
+                    closed_shape_type = rng.gen_range(0..max);
                     if closed_shape_type == 2 && !kans {
                         continue;
                     }
@@ -163,7 +163,7 @@ impl Hand {
                         let mut tile_id: u8;
 
                         loop {
-                            tile_id = rng.gen_range(0, 27); // we don't need honors
+                            tile_id = rng.gen_range(0..27); // we don't need honors
 
                             if used_tiles[tile_id as usize] == 4 {
                                 continue;
@@ -245,7 +245,7 @@ impl Hand {
                         let mut tile_id: u8;
 
                         loop {
-                            tile_id = rng.gen_range(0, 34);
+                            tile_id = rng.gen_range(0..34);
 
                             if used_tiles[tile_id as usize] > 1 {
                                 continue;
@@ -263,7 +263,7 @@ impl Hand {
                         let mut tile_id: u8;
 
                         loop {
-                            tile_id = rng.gen_range(0, 34);
+                            tile_id = rng.gen_range(0..34);
 
                             if used_tiles[tile_id as usize] > 0 {
                                 continue;
@@ -320,7 +320,7 @@ impl Hand {
         for i in 0..14 {
             let mut tile_id;
             loop {
-                tile_id = rng.gen_range(1, 35);
+                tile_id = rng.gen_range(1..35);
 
                 if used_tiles[tile_id - 1_usize] == 4 {
                     continue;
@@ -343,19 +343,19 @@ impl Hand {
                         if value == 5 {
                             match color {
                                 TileColor::Manzu => {
-                                    if !red5s[0] && rng.gen_range(0, 4) == 0 {
+                                    if !red5s[0] && rng.gen_range(0..4) == 0 {
                                         tile.is_red = true;
                                         red5s[0] = true;
                                     }
                                 }
                                 TileColor::Pinzu => {
-                                    if !red5s[1] && rng.gen_range(0, 4) == 0 {
+                                    if !red5s[1] && rng.gen_range(0..4) == 0 {
                                         tile.is_red = true;
                                         red5s[1] = true;
                                     }
                                 }
                                 TileColor::Souzu => {
-                                    if !red5s[2] && rng.gen_range(0, 4) == 0 {
+                                    if !red5s[2] && rng.gen_range(0..4) == 0 {
                                         tile.is_red = true;
                                         red5s[2] = true;
                                     }
@@ -376,7 +376,7 @@ impl Hand {
         let mut rng = rand::thread_rng();
         let mut tile_id: u8;
         loop {
-            tile_id = rng.gen_range(0, 34);
+            tile_id = rng.gen_range(0..34);
             if used_tiles[tile_id as usize] < 3 {
                 break;
             }
