@@ -3,11 +3,11 @@ use crate::riichi::shape_finder::ShapeFinder;
 use crate::riichi::shapes::{ClosedShape, CompleteShape, OpenKan, OpenShape, Shape, ShapeType};
 use crate::riichi::table::Table;
 use crate::riichi::tile::{Tile, TileType};
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::{all, Sequence};
 use std::collections::HashMap;
 use wasm_bindgen::__rt::std::collections::hash_map::Entry;
 
-#[derive(IntoEnumIterator, Debug, Clone)]
+#[derive(Sequence, Debug, Clone)]
 #[doc(hidden)]
 pub enum Yaku {
     // 1 han closed
@@ -96,7 +96,7 @@ impl YakuFinder {
             let mut fu: u8 = 0;
 
             // first find potential yakumans
-            for yaku_type in Yaku::into_enum_iter() {
+            for yaku_type in all::<Yaku>() {
                 if !yaku_type.is_yakuman() {
                     continue;
                 }
@@ -109,7 +109,7 @@ impl YakuFinder {
             if !yakus.is_empty() {
                 han = 13;
             } else {
-                for yaku_type in Yaku::into_enum_iter() {
+                for yaku_type in all::<Yaku>() {
                     if yaku_type.is_yakuman() {
                         continue;
                     }
